@@ -51,7 +51,8 @@ export interface PropertySet {
 }
 
 export interface PlayerState {
-  id: string;
+  id: string; // Internal player ID
+  sessionId: string; // For reconnections
   name: string;
   isConnected: boolean;
   hand: string[]; // Hand is private, but included in state. We'll filter this when sending to others.
@@ -67,6 +68,21 @@ export interface TimerState {
   durationMs: number;
 }
 
+export interface PendingAction {
+  initiatorId: string;
+  targetId?: string;
+  cardId: string; // The action card played
+  // We can track the chain of "Just Say No"s
+  cancelChain: string[]; // Array of playerIds who played 'Just Say No'
+}
+
+export interface DebtState {
+  creditorId: string;
+  debtorId: string;
+  amount: number;
+  paidAmount: number;
+}
+
 export interface GameState {
   roomId: string;
   status: GamePhase;
@@ -76,4 +92,6 @@ export interface GameState {
   deckCount: number; // Hide the actual deck, just send count
   discardPile: string[]; // Top cards in discard pile
   activeTimer: TimerState | null;
+  pendingAction: PendingAction | null;
+  activeDebt: DebtState | null;
 }
