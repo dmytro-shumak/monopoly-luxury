@@ -1,17 +1,37 @@
-export type CardType = "PROPERTY" | "MONEY" | "ACTION" | "PROPERTY_WILDCARD";
+export enum CardType {
+  PROPERTY = "PROPERTY",
+  MONEY = "MONEY",
+  ACTION = "ACTION",
+  PROPERTY_WILDCARD = "PROPERTY_WILDCARD"
+}
 
-export type CardColor = 
-  | "PINK" | "ORANGE" | "BROWN" | "LIGHT_GREEN" | "PURPLE" 
-  | "DARK_BLUE" | "LIGHT_BLUE" | "GREEN" | "RED" | "MAROON" 
-  | "DARK_GREEN" | "DARK_MAROON" | "ALL_COLOR";
+export enum CardColor {
+  PINK = "PINK",
+  ORANGE = "ORANGE",
+  BROWN = "BROWN",
+  LIGHT_GREEN = "LIGHT_GREEN",
+  PURPLE = "PURPLE",
+  DARK_BLUE = "DARK_BLUE",
+  LIGHT_BLUE = "LIGHT_BLUE",
+  GREEN = "GREEN",
+  RED = "RED",
+  MAROON = "MAROON",
+  DARK_GREEN = "DARK_GREEN",
+  DARK_MAROON = "DARK_MAROON",
+  ALL_COLOR = "ALL_COLOR"
+}
+
+export enum BuildingType {
+  HOUSE = "HOUSE",
+  HOTEL = "HOTEL"
+}
 
 export interface CardDefinition {
   id: string; // e.g., "prop_pink_1", "action_sly_deal"
   type: CardType;
-  value: number; // Value when placed in the bank (or printed value for debt payment)
+  value?: number; // Optional because only money and property cards have value
   colors?: CardColor[]; // For properties and wildcards
-  isBuilding?: "HOUSE" | "HOTEL";
-  rentValues?: number[]; // [1 property rent, 2 properties rent, ...]
+  isBuilding?: BuildingType;
 }
 
 export type GamePhase = 
@@ -26,7 +46,7 @@ export type GamePhase =
 export interface PropertySet {
   color: CardColor;
   cards: string[]; // Array of card IDs
-  buildings: ("HOUSE" | "HOTEL")[];
+  buildings: BuildingType[];
   isComplete: boolean;
 }
 

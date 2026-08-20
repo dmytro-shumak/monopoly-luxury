@@ -37,7 +37,7 @@ io.on("connection", (socket: Socket) => {
     // TODO
   });
 
-  socket.on("join_room", (roomId: string) => {
+  socket.on("join_room", (_roomId: string) => {
     // TODO
   });
 
