@@ -70,9 +70,10 @@ export interface TimerState {
 
 export interface PendingAction {
   initiatorId: string;
-  targetId?: string;
+  targetId: string;
   cardId: string; // The action card played
-  // We can track the chain of "Just Say No"s
+  actionType: "BIRTHDAY" | "DEBT_COLLECTOR" | "RENT" | "DOUBLE_RENT" | "SLY_DEAL" | "FORCED_DEAL" | "DEAL_BREAKER";
+  payload?: any; // For extra data like targeted property colors or specific cards
   cancelChain: string[]; // Array of playerIds who played 'Just Say No'
 }
 
@@ -86,12 +87,19 @@ export interface DebtState {
 export interface GameState {
   roomId: string;
   status: GamePhase;
+  hostId: string | null;
   activePlayerId: string | null;
   players: Record<string, PlayerState>;
   playerOrder: string[];
-  deckCount: number; // Hide the actual deck, just send count
-  discardPile: string[]; // Top cards in discard pile
+  deckCount: number;
+  discardPile: string[];
   activeTimer: TimerState | null;
-  pendingAction: PendingAction | null;
-  activeDebt: DebtState | null;
+  
+  actionQueue: PendingAction[];
+  currentAction: PendingAction | null;
+  
+  debtQueue: DebtState[];
+  currentDebt: DebtState | null;
+  
+  winnerId: string | null;
 }

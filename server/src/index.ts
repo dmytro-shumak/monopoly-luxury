@@ -110,7 +110,7 @@ io.on("connection", (socket: Socket) => {
   socket.on("start_game", () => {
     const ctx = getPlayerContext();
     if (!ctx) return;
-    const res = ctx.room.startGame();
+    const res = ctx.room.startGame(ctx.playerId);
     handleError(res.error);
   });
 
