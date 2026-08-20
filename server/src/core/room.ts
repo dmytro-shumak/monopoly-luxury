@@ -12,9 +12,11 @@ export class GameRoom {
   private deckManager: DeckManager;
   private disconnectTimers: Record<string, NodeJS.Timeout> = {};
   private gameTimers: Record<string, NodeJS.Timeout> = {};
+  private onStateChange: () => void;
 
-  constructor(roomId: string) {
+  constructor(roomId: string, onStateChange: () => void = () => {}) {
     this.deckManager = new DeckManager();
+    this.onStateChange = onStateChange;
     this.state = {
       roomId,
       status: "LOBBY",
@@ -27,6 +29,10 @@ export class GameRoom {
       pendingAction: null,
       activeDebt: null,
     };
+  }
+
+  private notify() {
+    this.onStateChange();
   }
 
   // --- LOBBY & CONNECTION LOGIC ---
@@ -51,6 +57,7 @@ export class GameRoom {
       actionsRemaining: 0,
     };
     this.state.playerOrder.push(playerId);
+    this.notify();
     return { success: true, playerId };
   }
 
@@ -62,6 +69,7 @@ export class GameRoom {
         clearTimeout(this.disconnectTimers[playerId]);
         delete this.disconnectTimers[playerId];
       }
+      this.notify();
     }
   }
 
@@ -70,6 +78,7 @@ export class GameRoom {
     if (player) {
       player.isConnected = false;
       this.disconnectTimers[playerId] = setTimeout(() => this.handlePlayerAbandon(playerId), DISCONNECT_TIMEOUT_MS);
+      this.notify();
     }
   }
 
@@ -80,6 +89,7 @@ export class GameRoom {
     } else {
       this.state.status = "GAME_OVER"; // Basic abandon handling for now
     }
+    this.notify();
   }
 
   // --- TIMERS ---
@@ -87,9 +97,11 @@ export class GameRoom {
   private startTimer(durationMs: number, type: "REACTION" | "DEBT", targetId: string, callback: () => void) {
     this.clearActiveTimer();
     this.state.activeTimer = { type, targetPlayerId: targetId, durationMs, expiresAt: Date.now() + durationMs };
+    this.notify();
     this.gameTimers["main"] = setTimeout(() => {
       this.state.activeTimer = null;
       callback();
+      this.notify(); // Extra notify for when callback finishes
     }, durationMs);
   }
 
@@ -99,6 +111,7 @@ export class GameRoom {
       delete this.gameTimers["main"];
     }
     this.state.activeTimer = null;
+    this.notify();
   }
 
   // --- CORE GAME LOOP ---
@@ -113,7 +126,7 @@ export class GameRoom {
     }
 
     this.state.activePlayerId = this.state.playerOrder[0] ?? null;
-    this.startTurn();
+    this.startTurn(); // This will call notify()
     return { success: true };
   }
 
@@ -127,6 +140,7 @@ export class GameRoom {
       player.actionsRemaining = 3;
     }
     this.updateDeckCount();
+    this.notify();
   }
 
   public endTurn(playerId: string): { success: boolean; error?: string } {
@@ -136,10 +150,11 @@ export class GameRoom {
     const player = this.state.players[playerId];
     if (player && player.hand.length > 7) {
       this.state.status = "DISCARD_PHASE";
+      this.notify();
       return { success: true };
     }
 
-    this.passTurnToNextPlayer();
+    this.passTurnToNextPlayer(); // This will call notify()
     return { success: true };
   }
 
@@ -157,7 +172,7 @@ export class GameRoom {
         this.discardCard(cardId);
       }
     }
-    this.passTurnToNextPlayer();
+    this.passTurnToNextPlayer(); // Calls notify()
     return { success: true };
   }
 
@@ -229,6 +244,7 @@ export class GameRoom {
       }
     }
 
+    this.notify();
     return { success: true };
   }
 
@@ -264,6 +280,7 @@ export class GameRoom {
       this.executePendingAction();
     });
 
+    this.notify();
     return { success: true };
   }
 
@@ -284,6 +301,7 @@ export class GameRoom {
 
     // If canceled or done, go back to action phase
     this.state.status = "ACTION_PHASE";
+    this.notify();
   }
 
   // --- DEBT LOGIC ---
@@ -292,9 +310,11 @@ export class GameRoom {
     this.state.status = "DEBT_PAYMENT_PHASE";
     this.state.activeDebt = { creditorId, debtorId, amount, paidAmount: 0 };
     
+    this.notify();
     this.startTimer(DEBT_TIMEOUT_MS, "DEBT", debtorId, () => {
       // 60s AFK timeout -> Auto Loss
       this.state.status = "GAME_OVER"; // We'll refine eliminating a single player later
+      this.notify();
     });
   }
 
@@ -306,10 +326,11 @@ export class GameRoom {
     // and sum up the value of the assets.
     // For now, this is a stub that accepts payment and ends the debt phase.
     
-    this.clearActiveTimer();
+    this.clearActiveTimer(); // This notifies
     this.state.activeDebt = null;
     this.state.status = "ACTION_PHASE"; // return to action phase of the initiator
     
+    this.notify();
     return { success: true };
   }
 }
