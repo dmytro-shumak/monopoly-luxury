@@ -128,7 +128,7 @@ export class GameRoom {
 
     this.deckManager.initDeck();
     for (const playerId of this.state.playerOrder) {
-      this.state.players[playerId]!.hand = this.deckManager.drawCards(5);
+      this.state.players[playerId]!.hand = this.drawCardsFromDeck(5);
     }
 
     this.state.activePlayerId = this.state.playerOrder[0] ?? null;
@@ -141,7 +141,7 @@ export class GameRoom {
     this.state.status = "TURN_START";
     const player = this.state.players[this.state.activePlayerId];
     if (player) {
-      player.hand.push(...this.deckManager.drawCards(2));
+      player.hand.push(...this.drawCardsFromDeck(2));
       this.state.status = "ACTION_PHASE";
       player.actionsRemaining = 3;
     }
@@ -190,15 +190,28 @@ export class GameRoom {
   }
 
   private discardCard(cardId: string) {
-    this.state.discardPile.unshift(cardId);
-    this.deckManager.discard([cardId]);
+    this.state.discardPile.push(cardId);
+  }
+
+  private drawCardsFromDeck(count: number): string[] {
+    const drawn: string[] = [];
+    for (let i = 0; i < count; i++) {
+      if (this.deckManager.getDrawPileCount() === 0) {
+        if (this.state.discardPile.length > 0) {
+          // Pass room discard pile to deckManager to reshuffle
+          this.deckManager.discard([...this.state.discardPile]);
+          this.state.discardPile = [];
+        }
+      }
+      const c = this.deckManager.drawCards(1);
+      if (c.length > 0) drawn.push(c[0]!);
+    }
+    return drawn;
   }
 
   private updateDeckCount() {
-    this.state.deckCount = this.deckManager.getDrawPileCount();
-  }
-
-  // --- WIN CONDITION ---
+    // Legacy, not strictly needed anymore since drawCardsFromDeck handles it, but keeps state clean
+  } // --- WIN CONDITION ---
 
   private checkWinCondition() {
     if (this.state.status === "GAME_OVER") return;
@@ -240,6 +253,20 @@ export class GameRoom {
     const cardDef = CARDS_DICTIONARY[cardId];
     if (!cardDef) return { success: false, error: "Unknown card" };
 
+    let multiplier = 1;
+    if (options?.modifierCardId) {
+      const modIndex = player.hand.indexOf(options.modifierCardId);
+      if (modIndex === -1) return { success: false, error: "Modifier card not in hand" };
+      const modDef = CARDS_DICTIONARY[options.modifierCardId];
+      if (modDef?.id.includes("rent_double")) {
+        if (player.actionsRemaining < 2) return { success: false, error: "Double Rent requires 2 actions" };
+        player.actionsRemaining -= 1;
+        player.hand.splice(modIndex, 1);
+        multiplier = 2;
+        this.discardCard(options.modifierCardId);
+      }
+    }
+
     player.actionsRemaining -= 1;
     player.hand.splice(handIndex, 1);
 
@@ -261,7 +288,7 @@ export class GameRoom {
 
       // Handle Immediate Actions
       if (cardDef.id.includes("pass_go")) {
-        player.hand.push(...this.deckManager.drawCards(2));
+        player.hand.push(...this.drawCardsFromDeck(2));
         this.updateDeckCount();
       } else if (cardDef.id.includes("birthday")) {
         // Queue actions for all other players
@@ -312,12 +339,25 @@ export class GameRoom {
             if (hasHotel) amount += 4;
           }
         }
+        amount *= multiplier;
         
         this.state.actionQueue.push({
           initiatorId: playerId, targetId: options.targetId, cardId, actionType: "RENT", cancelChain: [], payload: { amount }
         });
         this.processNextAction();
         return { success: true };
+      } else if (cardDef.id.includes("house") || cardDef.id.includes("hotel")) {
+        if (!options?.propertyColor) return { success: false, error: "Must specify color to build on" };
+        const set = player.table.find(s => s.color === options.propertyColor && s.isComplete);
+        if (!set) return { success: false, error: "Must build on a complete monopoly" };
+        
+        const hasHouse = set.cards.some(c => CARDS_DICTIONARY[c]?.isBuilding === BuildingType.HOUSE);
+        const hasHotel = set.cards.some(c => CARDS_DICTIONARY[c]?.isBuilding === BuildingType.HOTEL);
+        
+        if (cardDef.id.includes("house") && hasHouse) return { success: false, error: "Already has a house" };
+        if (cardDef.id.includes("hotel") && (!hasHouse || hasHotel)) return { success: false, error: "Must have house first, and no hotel" };
+        
+        set.cards.push(cardId);
       }
     }
 
@@ -337,13 +377,72 @@ export class GameRoom {
     const required = rules[set.color] || 99;
     
     let propCount = 0;
+    let standardCount = 0;
     for (const c of set.cards) {
-      if (CARDS_DICTIONARY[c]?.type === CardType.PROPERTY || CARDS_DICTIONARY[c]?.type === CardType.PROPERTY_WILDCARD) {
+      const d = CARDS_DICTIONARY[c];
+      if (d?.type === CardType.PROPERTY || d?.type === CardType.PROPERTY_WILDCARD) {
         propCount++;
+      }
+      if (d?.type === CardType.PROPERTY || (d?.type === CardType.PROPERTY_WILDCARD && d?.colors?.[0] !== CardColor.ALL_COLOR)) {
+        standardCount++;
       }
     }
     
-    set.isComplete = propCount >= required;
+    set.isComplete = propCount >= required && standardCount > 0;
+  }
+
+  public moveProperty(playerId: string, cardId: string, toColor: string): { success: boolean, error?: string } {
+    if (this.state.activePlayerId !== playerId) return { success: false, error: "Not your turn" };
+    if (this.state.status !== "ACTION_PHASE") return { success: false, error: "Wrong phase" };
+
+    const player = this.state.players[playerId];
+    if (!player) return { success: false, error: "Player not found" };
+
+    // Find current set
+    let currentSet: PropertySet | null = null;
+    let cardIndex = -1;
+    for (const s of player.table) {
+      cardIndex = s.cards.indexOf(cardId);
+      if (cardIndex !== -1) {
+        currentSet = s;
+        break;
+      }
+    }
+
+    if (!currentSet || cardIndex === -1) return { success: false, error: "Card not on table" };
+    if (currentSet.isComplete) return { success: false, error: "Cannot move cards from a complete monopoly (Color Lock)" };
+    
+    // Validate wildcard
+    const cardDef = CARDS_DICTIONARY[cardId];
+    if (!cardDef || cardDef.type !== CardType.PROPERTY_WILDCARD) return { success: false, error: "Only wildcards can be moved/changed" };
+    if (!cardDef.colors?.includes(toColor as CardColor) && cardDef.colors?.[0] !== CardColor.ALL_COLOR) {
+       return { success: false, error: "Wildcard cannot be this color" };
+    }
+    if (cardDef.colors?.[0] === CardColor.ALL_COLOR && currentSet.color !== toColor) {
+       return { success: false, error: "All-Color wildcard cannot change color once played" };
+    }
+
+    // Changing color of 2-color wildcard costs 1 action
+    const isTwoColor = cardDef.colors && cardDef.colors.length === 2;
+    if (isTwoColor && currentSet.color !== toColor) {
+       if (player.actionsRemaining <= 0) return { success: false, error: "No actions left to change color" };
+       player.actionsRemaining -= 1;
+    }
+
+    currentSet.cards.splice(cardIndex, 1);
+    this.updateSetCompletion(currentSet);
+
+    let targetSet = player.table.find(s => s.color === toColor && !s.isComplete);
+    if (!targetSet) {
+      targetSet = { color: toColor as CardColor, cards: [], buildings: [], isComplete: false };
+      player.table.push(targetSet);
+    }
+    targetSet.cards.push(cardId);
+    this.updateSetCompletion(targetSet);
+    
+    this.checkWinCondition();
+    this.notify();
+    return { success: true };
   }
 
   // --- QUEUE PROCESSING ---
@@ -431,6 +530,7 @@ export class GameRoom {
         const initiator = this.state.players[action.initiatorId];
         const payload = action.payload;
         if (target && initiator && payload && payload.targetCardId && payload.propertyColor) {
+           if (CARDS_DICTIONARY[payload.targetCardId]?.isBuilding) return;
            const setIndex = target.table.findIndex(s => s.color === payload.propertyColor);
            if (setIndex !== -1 && !target.table[setIndex]!.isComplete) {
               const cIdx = target.table[setIndex]!.cards.indexOf(payload.targetCardId);
@@ -455,6 +555,7 @@ export class GameRoom {
         const initiator = this.state.players[action.initiatorId];
         const payload = action.payload;
         if (target && initiator && payload) {
+           if (CARDS_DICTIONARY[payload.targetCardId]?.isBuilding || CARDS_DICTIONARY[payload.myCardId]?.isBuilding) return;
            const targetSetIndex = target.table.findIndex(s => s.color === payload.propertyColor);
            const initSetIndex = initiator.table.findIndex(s => s.color === payload.myPropertyColor);
            if (targetSetIndex !== -1 && initSetIndex !== -1 && !target.table[targetSetIndex]!.isComplete && !initiator.table[initSetIndex]!.isComplete) {
@@ -524,6 +625,7 @@ export class GameRoom {
     for (const assetId of assetIds) {
       const cardDef = CARDS_DICTIONARY[assetId];
       if (!cardDef || cardDef.value === undefined) return { success: false, error: `Invalid asset ${assetId}` };
+      if (cardDef.isBuilding) return { success: false, error: "Cannot use buildings to pay debts" };
       
       const inBank = debtor.bank.includes(assetId);
       if (inBank) {
@@ -553,24 +655,14 @@ export class GameRoom {
     const bankRemainingValue = debtor.bank.filter(id => !assetIds.includes(id)).reduce((acc, id) => acc + (CARDS_DICTIONARY[id]?.value || 0), 0);
     const freePropsRemaining = debtor.table.filter(s => !s.isComplete).flatMap(s => s.cards).filter(id => !assetIds.includes(id));
     
-    if (totalValue < this.state.currentDebt.amount) {
-       // debt forgiveness is possible if nothing remains, checked later
-    } else {
-       if (usingFreeProp && bankRemainingValue > 0) {
-           // We are paying with free prop, but we still have bank money!
-           // This is only allowed if the bank money is not enough to cover the debt alone.
-           // Actually, the rule is "Bank -> Free Props". If Bank can cover it, use Bank.
-           // If we selected free props, check if we could have satisfied it with Bank.
-           // This is complex to calculate optimally. Let's enforce: you can't use Table if Bank alone can pay it.
-           const selectedBankValue = assetsToRemove.filter(a => a.source === "BANK").reduce((acc, a) => acc + (CARDS_DICTIONARY[a.id]?.value || 0), 0);
-           if (selectedBankValue + bankRemainingValue >= this.state.currentDebt.amount && usingFreeProp) {
-               return { success: false, error: "Must use bank money first" };
-           }
-       }
-       if (usingMonopoly && freePropsRemaining.length > 0) {
-           // Can't break monopoly if we have free props
-           return { success: false, error: "Must use free properties before breaking monopolies" };
-       }
+    // Strict Payment Hierarchy Check
+    // 1. Bank Money MUST be exhausted before Free Properties
+    // 2. Free Properties MUST be exhausted before Monopolies
+    if (usingFreeProp && bankRemainingValue > 0) {
+        return { success: false, error: "Must use bank money first" };
+    }
+    if (usingMonopoly && (freePropsRemaining.length > 0 || bankRemainingValue > 0)) {
+        return { success: false, error: "Must use bank and free properties before breaking monopolies" };
     }
 
     // Debt forgiveness check: if value < amount, ensure they have NOTHING else

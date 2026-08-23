@@ -114,12 +114,21 @@ io.on("connection", (socket: Socket) => {
     handleError(res.error);
   });
 
-  socket.on("play_card", (data: { cardId: string; targetId?: string; propertyColor?: string }) => {
+  socket.on("move_property", ({ cardId, toColor }: { cardId: string; toColor: string }) => {
+    const ctx = getPlayerContext();
+    if (!ctx) return;
+    const res = ctx.room.moveProperty(ctx.playerId, cardId, toColor);
+    handleError(res.error);
+  });
+
+  socket.on("play_card", (data: { cardId: string; targetId?: string; propertyColor?: string; modifierCardId?: string; payload?: any }) => {
     const ctx = getPlayerContext();
     if (!ctx) return;
     const options: any = {};
     if (data.targetId) options.targetId = data.targetId;
     if (data.propertyColor) options.propertyColor = data.propertyColor;
+    if (data.modifierCardId) options.modifierCardId = data.modifierCardId;
+    if (data.payload) options.payload = data.payload;
     const res = ctx.room.playCard(ctx.playerId, data.cardId, options);
     handleError(res.error);
   });
