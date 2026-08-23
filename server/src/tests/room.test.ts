@@ -480,5 +480,23 @@ describe('Monopoly Deal - Exhaustive Test Suite', () => {
       expect(res.success).toBe(false);
       expect(res.error).toBe("All-Color wildcard cannot change color once played");
     });
+
+    it('Double Rent must be played alongside a Rent card', () => {
+      const { p1, p2 } = setupGame();
+      room.state.players[p1]!.hand = ["action_pass_go_1", "rent_double_1"];
+      const res = room.playCard(p1, "action_pass_go_1", { modifierCardId: "rent_double_1" });
+      expect(res.success).toBe(false);
+      expect(res.error).toBe("Double Rent must be played with a Rent card");
+    });
+
+    it('Rent card cannot be used for an unmatched color', () => {
+      const { p1, p2 } = setupGame();
+      room.state.players[p1]!.hand = ["rent_red_pink_1"];
+      room.state.players[p1]!.table = [{ color: CardColor.GREEN, cards: ["prop_green_1"], buildings: [], isComplete: false }];
+      
+      const res = room.playCard(p1, "rent_red_pink_1", { targetId: p2, propertyColor: CardColor.GREEN });
+      expect(res.success).toBe(false);
+      expect(res.error).toBe("Rent card cannot be used for this color");
+    });
   });
 });

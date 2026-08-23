@@ -259,6 +259,7 @@ export class GameRoom {
       if (modIndex === -1) return { success: false, error: "Modifier card not in hand" };
       const modDef = CARDS_DICTIONARY[options.modifierCardId];
       if (modDef?.id.includes("rent_double")) {
+        if (!cardDef.id.includes("rent")) return { success: false, error: "Double Rent must be played with a Rent card" };
         if (player.actionsRemaining < 2) return { success: false, error: "Double Rent requires 2 actions" };
         player.actionsRemaining -= 1;
         player.hand.splice(modIndex, 1);
@@ -326,6 +327,9 @@ export class GameRoom {
         this.processNextAction();
         return { success: true };
       } else if (cardDef.id.includes("rent") && options?.targetId && options?.propertyColor) {
+        if (!cardDef.colors?.includes(CardColor.ALL_COLOR) && !cardDef.colors?.includes(options.propertyColor as CardColor)) {
+            return { success: false, error: "Rent card cannot be used for this color" };
+        }
         let amount = 0;
         const set = player.table.find(s => s.color === options.propertyColor);
         if (set) {
