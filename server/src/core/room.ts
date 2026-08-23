@@ -98,6 +98,15 @@ export class GameRoom {
     this.notify();
   }
 
+  public passReaction(playerId: string): { success: boolean; error?: string } {
+    if (this.state.status !== "REACTION_PHASE" || !this.state.currentAction) return { success: false, error: "Not in reaction phase" };
+    if (playerId !== this.state.currentAction.targetId) return { success: false, error: "Not your turn to react" };
+    
+    this.clearActiveTimer();
+    this.executePendingAction();
+    return { success: true };
+  }
+
   // --- TIMERS ---
 
   private startTimer(durationMs: number, type: "REACTION" | "DEBT", targetId: string, callback: () => void) {
@@ -305,6 +314,10 @@ export class GameRoom {
         this.updateSetCompletion(set);
       };
     } else if (cardDef.type === CardType.ACTION) {
+      if (options?.targetId && options.targetId === playerId) {
+          return { success: false, error: "Cannot target yourself" };
+      }
+
       if (cardDef.id.includes("pass_go")) {
         effect = () => {
           this.discardCard(cardId);
@@ -316,7 +329,7 @@ export class GameRoom {
           this.discardCard(cardId);
           for (const otherId of this.state.playerOrder) {
             if (otherId !== playerId) {
-              this.state.actionQueue.push({ initiatorId: playerId, targetId: otherId, cardId, actionType: "BIRTHDAY", cancelChain: [] });
+              this.state.debtQueue.push({ creditorId: playerId, debtorId: otherId, amount: 2, paidAmount: 0 });
             }
           }
           this.processNextAction();
@@ -324,7 +337,7 @@ export class GameRoom {
       } else if (cardDef.id.includes("debt_collector") && options?.targetId) {
         effect = () => {
           this.discardCard(cardId);
-          this.state.actionQueue.push({ initiatorId: playerId, targetId: options.targetId!, cardId, actionType: "DEBT_COLLECTOR", cancelChain: [] });
+          this.state.debtQueue.push({ creditorId: playerId, debtorId: options.targetId!, amount: 5, paidAmount: 0 });
           this.processNextAction();
         };
       } else if (cardDef.id.includes("sly_deal") && options?.targetId) {
@@ -399,7 +412,7 @@ export class GameRoom {
         
         effect = () => {
           this.discardCard(cardId);
-          this.state.actionQueue.push({ initiatorId: playerId, targetId: options.targetId!, cardId, actionType: "RENT", cancelChain: [], payload: { amount } });
+          this.state.debtQueue.push({ creditorId: playerId, debtorId: options.targetId!, amount, paidAmount: 0 });
           this.processNextAction();
         };
       } else if (cardDef.id.includes("house") || cardDef.id.includes("hotel")) {
@@ -502,7 +515,11 @@ export class GameRoom {
     }
 
     currentSet.cards.splice(cardIndex, 1);
-    this.updateSetCompletion(currentSet);
+    if (currentSet.cards.length === 0) {
+      player.table = player.table.filter(s => s !== currentSet);
+    } else {
+      this.updateSetCompletion(currentSet);
+    }
 
     let targetSet = player.table.find(s => s.color === toColor && !s.isComplete);
     if (!targetSet) {
@@ -554,17 +571,6 @@ export class GameRoom {
   }
 
   public reactJustSayNo(playerId: string, cardId: string): { success: boolean; error?: string } {
-    if (this.state.status !== "REACTION_PHASE" || !this.state.currentAction) return { success: false, error: "Not in reaction phase" };
-
-    const action = this.state.currentAction;
-    
-    // RULE: "Just Say No cannot be canceled"
-    if (action.cancelChain.length > 0) {
-      return { success: false, error: "Cannot cancel a Just Say No" };
-    }
-
-    if (playerId !== action.targetId) return { success: false, error: "Not your turn to react" };
-
     const player = this.state.players[playerId];
     if (!player) return { success: false, error: "Player not found" };
 
@@ -574,15 +580,34 @@ export class GameRoom {
     const cardDef = CARDS_DICTIONARY[cardId];
     if (!cardDef || !cardDef.id.includes("just_say_no")) return { success: false, error: "Not a Just Say No card" };
 
-    player.hand.splice(handIndex, 1);
-    this.discardCard(cardId);
-    action.cancelChain.push(playerId);
+    if (this.state.status === "REACTION_PHASE" && this.state.currentAction) {
+      const action = this.state.currentAction;
+      if (action.cancelChain.length > 0) return { success: false, error: "Cannot cancel a Just Say No" };
+      if (playerId !== action.targetId) return { success: false, error: "Not your turn to react" };
 
-    // It was canceled successfully. Execute immediately (which will do nothing because it's canceled)
-    this.clearActiveTimer();
-    this.executePendingAction(); // This handles moving to the next action
-    
-    return { success: true };
+      player.hand.splice(handIndex, 1);
+      this.discardCard(cardId);
+      action.cancelChain.push(playerId);
+
+      this.clearActiveTimer();
+      this.executePendingAction(); 
+      return { success: true };
+    } else if (this.state.status === "DEBT_PAYMENT_PHASE" && this.state.currentDebt) {
+      const debt = this.state.currentDebt;
+      if (playerId !== debt.debtorId) return { success: false, error: "Not your debt" };
+      
+      player.hand.splice(handIndex, 1);
+      this.discardCard(cardId);
+      
+      this.clearActiveTimer();
+      this.state.currentDebt = null;
+      
+      this.checkWinCondition();
+      this.processNextDebt();
+      return { success: true };
+    }
+
+    return { success: false, error: "Not in a valid phase to react" };
   }
 
   private executePendingAction() {
@@ -592,11 +617,7 @@ export class GameRoom {
 
     if (action && action.cancelChain.length === 0) {
       // Execute the effect
-      if (action.actionType === "BIRTHDAY") {
-        this.state.debtQueue.push({ creditorId: action.initiatorId, debtorId: action.targetId, amount: 2, paidAmount: 0 });
-      } else if (action.actionType === "DEBT_COLLECTOR") {
-        this.state.debtQueue.push({ creditorId: action.initiatorId, debtorId: action.targetId, amount: 5, paidAmount: 0 });
-      } else if (action.actionType === "SLY_DEAL") {
+      if (action.actionType === "SLY_DEAL") {
         // payload should have { targetCardId: string, destinationColor?: CardColor }
         const target = this.state.players[action.targetId];
         const initiator = this.state.players[action.initiatorId];
@@ -609,6 +630,11 @@ export class GameRoom {
               if (cIdx !== -1) {
                  // Steal card
                  target.table[setIndex]!.cards.splice(cIdx, 1);
+                 if (target.table[setIndex]!.cards.length === 0) {
+                    target.table.splice(setIndex, 1);
+                 } else {
+                    this.updateSetCompletion(target.table[setIndex]!);
+                 }
                  
                  // Add to initiator
                  const stolenCardDef = CARDS_DICTIONARY[payload.targetCardId];
@@ -643,7 +669,18 @@ export class GameRoom {
                  const targetOldColor = target.table[targetSetIndex]!.color;
                  const initOldColor = initiator.table[initSetIndex]!.color;
                  target.table[targetSetIndex]!.cards.splice(targetCardIdx, 1);
+                 if (target.table[targetSetIndex]!.cards.length === 0) {
+                    target.table.splice(targetSetIndex, 1);
+                 } else {
+                    this.updateSetCompletion(target.table[targetSetIndex]!);
+                 }
+                 
                  initiator.table[initSetIndex]!.cards.splice(initCardIdx, 1);
+                 if (initiator.table[initSetIndex]!.cards.length === 0) {
+                    initiator.table.splice(initSetIndex, 1);
+                 } else {
+                    this.updateSetCompletion(initiator.table[initSetIndex]!);
+                 }
                  
                  // Add target card to initiator
                  const targetCardDef = CARDS_DICTIONARY[payload.targetCardId];
@@ -690,10 +727,6 @@ export class GameRoom {
               initiator.table.push(stolenSet);
            }
         }
-      } else if (action.actionType === "RENT" || action.actionType === "DOUBLE_RENT") {
-        // payload: { amount: number }
-        const amount = action.payload?.amount || 1;
-        this.state.debtQueue.push({ creditorId: action.initiatorId, debtorId: action.targetId, amount, paidAmount: 0 });
       }
     }
 
@@ -791,7 +824,11 @@ export class GameRoom {
         }
 
         set.cards = set.cards.filter(id => id !== asset.id);
-        this.updateSetCompletion(set);
+        if (set.cards.length === 0) {
+           debtor.table = debtor.table.filter(s => s !== set);
+        } else {
+           this.updateSetCompletion(set);
+        }
         
         // Add to creditor's table (lazy: match color if available)
         const assetCardDef = CARDS_DICTIONARY[asset.id];

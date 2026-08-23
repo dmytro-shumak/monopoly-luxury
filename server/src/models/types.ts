@@ -71,7 +71,7 @@ export interface PendingAction {
   initiatorId: string;
   targetId: string;
   cardId: string; // The action card played
-  actionType: "BIRTHDAY" | "DEBT_COLLECTOR" | "RENT" | "DOUBLE_RENT" | "SLY_DEAL" | "FORCED_DEAL" | "DEAL_BREAKER";
+  actionType: "SLY_DEAL" | "FORCED_DEAL" | "DEAL_BREAKER";
   payload?: any; // For extra data like targeted property colors or specific cards
   cancelChain: string[]; // Array of playerIds who played 'Just Say No'
 }
