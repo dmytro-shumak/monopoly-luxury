@@ -26,12 +26,27 @@ export enum BuildingType {
   HOTEL = "HOTEL"
 }
 
+export enum ActionCardType {
+  PASS_GO = "PASS_GO",
+  SLY_DEAL = "SLY_DEAL",
+  FORCED_DEAL = "FORCED_DEAL",
+  DEAL_BREAKER = "DEAL_BREAKER",
+  JUST_SAY_NO = "JUST_SAY_NO",
+  DEBT_COLLECTOR = "DEBT_COLLECTOR",
+  BIRTHDAY = "BIRTHDAY",
+  HOUSE = "HOUSE",
+  HOTEL = "HOTEL",
+  RENT = "RENT",
+  DOUBLE_RENT = "DOUBLE_RENT"
+}
+
 export interface CardDefinition {
   id: string; // e.g., "prop_pink_1", "action_sly_deal"
   type: CardType;
   value?: number; // Optional because only money and property cards have value
   colors?: CardColor[]; // For properties and wildcards
   isBuilding?: BuildingType;
+  actionType?: ActionCardType; // For action cards
 }
 
 export type GamePhase = 
@@ -65,6 +80,20 @@ export interface TimerState {
   type: "REACTION" | "DEBT";
   targetPlayerId?: string; 
   durationMs: number;
+}
+
+export interface IGameRoom {
+  state: GameState;
+  discardCard(cardId: string): void;
+  clearActiveTimer(): void;
+  startTimer(ms: number, type: string, playerId: string, callback: () => void): void;
+  checkWinCondition(): void;
+  processNextDebt(): void;
+  processNextAction(): void;
+  updateSetCompletion(set: PropertySet): void;
+  drawCardsFromDeck(count: number): string[];
+  updateDeckCount(): void;
+  notify(): void;
 }
 
 export interface PendingAction {

@@ -1,4 +1,4 @@
-import { CardColor, CardType, BuildingType } from "../models/types.js";
+import { CardColor, CardType, BuildingType, ActionCardType } from "../models/types.js";
 import type { CardDefinition } from "../models/types.js";
 
 type ConfigItem = { baseId: string; template: Omit<CardDefinition, 'id' | 'value'>; values?: number[]; count?: number };
@@ -61,24 +61,24 @@ const cardsConfig: ConfigItem[] = [
   createWild('wild_all', [CardColor.ALL_COLOR], [0, 0]),
 
   // Actions
-  createAction('action_pass_go', 9),
-  createAction('action_sly_deal', 4),
-  createAction('action_forced_deal', 3),
-  createAction('action_deal_breaker', 2),
-  createAction('action_just_say_no', 3),
-  createAction('action_debt_collector', 3),
-  createAction('action_birthday', 3),
-  createAction('action_house', 2, { isBuilding: BuildingType.HOUSE }),
-  createAction('action_hotel', 2, { isBuilding: BuildingType.HOTEL }),
+  createAction('action_pass_go', 9, { actionType: ActionCardType.PASS_GO }),
+  createAction('action_sly_deal', 4, { actionType: ActionCardType.SLY_DEAL }),
+  createAction('action_forced_deal', 3, { actionType: ActionCardType.FORCED_DEAL }),
+  createAction('action_deal_breaker', 2, { actionType: ActionCardType.DEAL_BREAKER }),
+  createAction('action_just_say_no', 3, { actionType: ActionCardType.JUST_SAY_NO }),
+  createAction('action_debt_collector', 3, { actionType: ActionCardType.DEBT_COLLECTOR }),
+  createAction('action_birthday', 3, { actionType: ActionCardType.BIRTHDAY }),
+  createAction('action_house', 2, { isBuilding: BuildingType.HOUSE, actionType: ActionCardType.HOUSE }),
+  createAction('action_hotel', 2, { isBuilding: BuildingType.HOTEL, actionType: ActionCardType.HOTEL }),
 
   // Rent Actions
-  createAction('rent_green_lightblue', 4, { colors: [CardColor.GREEN, CardColor.LIGHT_BLUE] }),
-  createAction('rent_red_pink', 2, { colors: [CardColor.RED, CardColor.PINK] }),
-  createAction('rent_orange_green', 2, { colors: [CardColor.ORANGE, CardColor.GREEN] }),
-  createAction('rent_darkblue_purple', 1, { colors: [CardColor.DARK_BLUE, CardColor.PURPLE] }),
-  createAction('rent_lightgreen_maroon', 1, { colors: [CardColor.LIGHT_GREEN, CardColor.MAROON] }),
-  createAction('rent_wild', 3, { colors: [CardColor.ALL_COLOR] }),
-  createAction('rent_double', 2)
+  createAction('rent_green_lightblue', 4, { colors: [CardColor.GREEN, CardColor.LIGHT_BLUE], actionType: ActionCardType.RENT }),
+  createAction('rent_red_pink', 2, { colors: [CardColor.RED, CardColor.PINK], actionType: ActionCardType.RENT }),
+  createAction('rent_orange_green', 2, { colors: [CardColor.ORANGE, CardColor.GREEN], actionType: ActionCardType.RENT }),
+  createAction('rent_darkblue_purple', 1, { colors: [CardColor.DARK_BLUE, CardColor.PURPLE], actionType: ActionCardType.RENT }),
+  createAction('rent_lightgreen_maroon', 1, { colors: [CardColor.LIGHT_GREEN, CardColor.MAROON], actionType: ActionCardType.RENT }),
+  createAction('rent_wild', 3, { colors: [CardColor.ALL_COLOR], actionType: ActionCardType.RENT }),
+  createAction('rent_double', 2, { actionType: ActionCardType.DOUBLE_RENT })
 ];
 
 // --- Generation ---

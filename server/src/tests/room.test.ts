@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { GameRoom } from '../core/room.js';
-import { CardType, CardColor, BuildingType } from '../models/types.js';
+import { CardColor } from '../models/types.js';
 
 describe('Monopoly Deal - Exhaustive Test Suite', () => {
   let room: GameRoom;
@@ -71,7 +71,7 @@ describe('Monopoly Deal - Exhaustive Test Suite', () => {
     });
 
     it('reshuffles discard pile into deck when deck is empty', () => {
-      const { p1 } = setupGame();
+      setupGame();
       room.state.discardPile = ["money_1_1", "money_2_1"];
       room["deckManager"]["drawPile"] = []; // Empty deck
       
@@ -133,7 +133,7 @@ describe('Monopoly Deal - Exhaustive Test Suite', () => {
     it('can cancel Rent', () => {
       const { p1, p2 } = setupGame();
       room.state.players[p1]!.hand = ["rent_wild_1"];
-      room.state.players[p1]!.table = [{ color: CardColor.GREEN, cards: ["prop_green_1"], buildings: [], isComplete: false }];
+      room.state.players[p1]!.table = [{ color: CardColor.GREEN, cards: ["prop_green_1"], isComplete: false }];
       room.state.players[p2]!.hand = ["action_just_say_no_1"];
       
       room.playCard(p1, "rent_wild_1", { targetId: p2, propertyColor: CardColor.GREEN });
@@ -145,7 +145,7 @@ describe('Monopoly Deal - Exhaustive Test Suite', () => {
       const { p1, p2 } = setupGame();
       room.state.players[p1]!.hand = ["action_sly_deal_1"];
       room.state.players[p2]!.hand = ["action_just_say_no_1"];
-      room.state.players[p2]!.table = [{ color: CardColor.PINK, cards: ["prop_pink_1"], buildings: [], isComplete: false }];
+      room.state.players[p2]!.table = [{ color: CardColor.PINK, cards: ["prop_pink_1"], isComplete: false }];
       
       room.playCard(p1, "action_sly_deal_1", { targetId: p2, payload: { targetCardId: "prop_pink_1", propertyColor: CardColor.PINK } });
       room.reactJustSayNo(p2, "action_just_say_no_1");
@@ -188,7 +188,7 @@ describe('Monopoly Deal - Exhaustive Test Suite', () => {
     it('Sly Deal: steals a free property', () => {
       const { p1, p2 } = setupGame();
       room.state.players[p1]!.hand = ["action_sly_deal_1"];
-      room.state.players[p2]!.table = [{ color: CardColor.PINK, cards: ["prop_pink_1"], buildings: [], isComplete: false }];
+      room.state.players[p2]!.table = [{ color: CardColor.PINK, cards: ["prop_pink_1"], isComplete: false }];
       
       room.playCard(p1, "action_sly_deal_1", { targetId: p2, payload: { targetCardId: "prop_pink_1", propertyColor: CardColor.PINK } });
       room['executePendingAction']();
@@ -200,7 +200,7 @@ describe('Monopoly Deal - Exhaustive Test Suite', () => {
     it('Sly Deal: fails if targeting a complete monopoly', () => {
       const { p1, p2 } = setupGame();
       room.state.players[p1]!.hand = ["action_sly_deal_1"];
-      room.state.players[p2]!.table = [{ color: CardColor.DARK_BLUE, cards: ["prop_dark_blue_1", "prop_dark_blue_2", "prop_dark_blue_3"], buildings: [], isComplete: true }];
+      room.state.players[p2]!.table = [{ color: CardColor.DARK_BLUE, cards: ["prop_dark_blue_1", "prop_dark_blue_2", "prop_dark_blue_3"], isComplete: true }];
       
       room.playCard(p1, "action_sly_deal_1", { targetId: p2, payload: { targetCardId: "prop_dark_blue_1", propertyColor: CardColor.DARK_BLUE } });
       room['executePendingAction']();
@@ -211,8 +211,8 @@ describe('Monopoly Deal - Exhaustive Test Suite', () => {
     it('Forced Deal: swaps properties', () => {
       const { p1, p2 } = setupGame();
       room.state.players[p1]!.hand = ["action_forced_deal_1"];
-      room.state.players[p1]!.table = [{ color: CardColor.BROWN, cards: ["prop_brown_1"], buildings: [], isComplete: false }];
-      room.state.players[p2]!.table = [{ color: CardColor.PINK, cards: ["prop_pink_1"], buildings: [], isComplete: false }];
+      room.state.players[p1]!.table = [{ color: CardColor.BROWN, cards: ["prop_brown_1"], isComplete: false }];
+      room.state.players[p2]!.table = [{ color: CardColor.PINK, cards: ["prop_pink_1"], isComplete: false }];
       
       room.playCard(p1, "action_forced_deal_1", { targetId: p2, payload: { targetCardId: "prop_pink_1", propertyColor: CardColor.PINK, myCardId: "prop_brown_1", myPropertyColor: CardColor.BROWN } });
       room['executePendingAction']();
@@ -224,7 +224,7 @@ describe('Monopoly Deal - Exhaustive Test Suite', () => {
     it('Deal Breaker: steals a complete monopoly', () => {
       const { p1, p2 } = setupGame();
       room.state.players[p1]!.hand = ["action_deal_breaker_1"];
-      room.state.players[p2]!.table = [{ color: CardColor.GREEN, cards: ["prop_green_1", "prop_green_2"], buildings: [], isComplete: true }];
+      room.state.players[p2]!.table = [{ color: CardColor.GREEN, cards: ["prop_green_1", "prop_green_2"], isComplete: true }];
       
       room.playCard(p1, "action_deal_breaker_1", { targetId: p2, payload: { propertyColor: CardColor.GREEN } });
       room['executePendingAction']();
@@ -239,7 +239,7 @@ describe('Monopoly Deal - Exhaustive Test Suite', () => {
     it('Rent: Base rent for 1 card', () => {
       const { p1, p2 } = setupGame();
       room.state.players[p1]!.hand = ["rent_wild_1"];
-      room.state.players[p1]!.table = [{ color: CardColor.PINK, cards: ["prop_pink_1"], buildings: [], isComplete: false }];
+      room.state.players[p1]!.table = [{ color: CardColor.PINK, cards: ["prop_pink_1"], isComplete: false }];
       
       room.playCard(p1, "rent_wild_1", { targetId: p2, propertyColor: CardColor.PINK });
       room['executePendingAction']();
@@ -249,7 +249,7 @@ describe('Monopoly Deal - Exhaustive Test Suite', () => {
     it('Double Rent: Doubles the base rent and costs 2 actions', () => {
       const { p1, p2 } = setupGame();
       room.state.players[p1]!.hand = ["rent_wild_1", "rent_double_1"];
-      room.state.players[p1]!.table = [{ color: CardColor.PINK, cards: ["prop_pink_1", "prop_pink_2"], buildings: [], isComplete: false }];
+      room.state.players[p1]!.table = [{ color: CardColor.PINK, cards: ["prop_pink_1", "prop_pink_2"], isComplete: false }];
       
       const res = room.playCard(p1, "rent_wild_1", { targetId: p2, propertyColor: CardColor.PINK, modifierCardId: "rent_double_1" });
       expect(res.success).toBe(true);
@@ -275,7 +275,7 @@ describe('Monopoly Deal - Exhaustive Test Suite', () => {
     it('House can be placed on a complete monopoly', () => {
       const { p1 } = setupGame();
       room.state.players[p1]!.hand = ["action_house_1"];
-      room.state.players[p1]!.table = [{ color: CardColor.BROWN, cards: ["prop_brown_1", "prop_brown_2", "prop_brown_3"], buildings: [], isComplete: true }];
+      room.state.players[p1]!.table = [{ color: CardColor.BROWN, cards: ["prop_brown_1", "prop_brown_2", "prop_brown_3"], isComplete: true }];
       
       const res = room.playCard(p1, "action_house_1", { propertyColor: CardColor.BROWN });
       expect(res.success).toBe(true);
@@ -285,7 +285,7 @@ describe('Monopoly Deal - Exhaustive Test Suite', () => {
     it('Hotel can be placed on a monopoly with a House', () => {
       const { p1 } = setupGame();
       room.state.players[p1]!.hand = ["action_hotel_1"];
-      room.state.players[p1]!.table = [{ color: CardColor.BROWN, cards: ["prop_brown_1", "prop_brown_2", "prop_brown_3", "action_house_1"], buildings: [], isComplete: true }];
+      room.state.players[p1]!.table = [{ color: CardColor.BROWN, cards: ["prop_brown_1", "prop_brown_2", "prop_brown_3", "action_house_1"], isComplete: true }];
       
       const res = room.playCard(p1, "action_hotel_1", { propertyColor: CardColor.BROWN });
       expect(res.success).toBe(true);
@@ -294,7 +294,7 @@ describe('Monopoly Deal - Exhaustive Test Suite', () => {
     it('Fails to place House on incomplete set', () => {
       const { p1 } = setupGame();
       room.state.players[p1]!.hand = ["action_house_1"];
-      room.state.players[p1]!.table = [{ color: CardColor.BROWN, cards: ["prop_brown_1"], buildings: [], isComplete: false }];
+      room.state.players[p1]!.table = [{ color: CardColor.BROWN, cards: ["prop_brown_1"], isComplete: false }];
       
       const res = room.playCard(p1, "action_house_1", { propertyColor: CardColor.BROWN });
       expect(res.success).toBe(false);
@@ -303,7 +303,7 @@ describe('Monopoly Deal - Exhaustive Test Suite', () => {
     it('Fails to place Hotel on set without a House', () => {
       const { p1 } = setupGame();
       room.state.players[p1]!.hand = ["action_hotel_1"];
-      room.state.players[p1]!.table = [{ color: CardColor.BROWN, cards: ["prop_brown_1", "prop_brown_2", "prop_brown_3"], buildings: [], isComplete: true }];
+      room.state.players[p1]!.table = [{ color: CardColor.BROWN, cards: ["prop_brown_1", "prop_brown_2", "prop_brown_3"], isComplete: true }];
       
       const res = room.playCard(p1, "action_hotel_1", { propertyColor: CardColor.BROWN });
       expect(res.success).toBe(false);
@@ -314,7 +314,7 @@ describe('Monopoly Deal - Exhaustive Test Suite', () => {
   describe('Wildcards & Move Property', () => {
     it('Moving 2-color wildcard to new color costs 1 action', () => {
       const { p1 } = setupGame();
-      room.state.players[p1]!.table = [{ color: CardColor.PINK, cards: ["wild_green_pink_1"], buildings: [], isComplete: false }];
+      room.state.players[p1]!.table = [{ color: CardColor.PINK, cards: ["wild_green_pink_1"], isComplete: false }];
       
       const res = room.moveProperty(p1, "wild_green_pink_1", CardColor.GREEN);
       expect(res.success).toBe(true);
@@ -323,7 +323,7 @@ describe('Monopoly Deal - Exhaustive Test Suite', () => {
 
     it('Moving 2-color wildcard to same color costs 0 actions', () => {
       const { p1 } = setupGame();
-      room.state.players[p1]!.table = [{ color: CardColor.PINK, cards: ["wild_green_pink_1"], buildings: [], isComplete: false }];
+      room.state.players[p1]!.table = [{ color: CardColor.PINK, cards: ["wild_green_pink_1"], isComplete: false }];
       
       const res = room.moveProperty(p1, "wild_green_pink_1", CardColor.PINK);
       expect(res.success).toBe(true);
@@ -332,7 +332,7 @@ describe('Monopoly Deal - Exhaustive Test Suite', () => {
 
     it('Cannot move cards from a complete monopoly (Color Lock)', () => {
       const { p1 } = setupGame();
-      room.state.players[p1]!.table = [{ color: CardColor.GREEN, cards: ["prop_green_1", "wild_green_pink_1"], buildings: [], isComplete: true }];
+      room.state.players[p1]!.table = [{ color: CardColor.GREEN, cards: ["prop_green_1", "wild_green_pink_1"], isComplete: true }];
       
       const res = room.moveProperty(p1, "wild_green_pink_1", CardColor.PINK);
       expect(res.success).toBe(false);
@@ -361,7 +361,7 @@ describe('Monopoly Deal - Exhaustive Test Suite', () => {
       room["processNextDebt"]();
       
       room.state.players[p1]!.bank = ["money_5_1"];
-      room.state.players[p1]!.table = [{ color: CardColor.PINK, cards: ["prop_pink_1"], buildings: [], isComplete: false }];
+      room.state.players[p1]!.table = [{ color: CardColor.PINK, cards: ["prop_pink_1"], isComplete: false }];
       
       const res = room.payDebt(p1, ["prop_pink_1"]);
       expect(res.success).toBe(false);
@@ -374,7 +374,7 @@ describe('Monopoly Deal - Exhaustive Test Suite', () => {
       room["processNextDebt"]();
       
       room.state.players[p1]!.bank = ["money_3_1", "money_1_1"]; // Total $4
-      room.state.players[p1]!.table = [{ color: CardColor.PINK, cards: ["prop_pink_1"], buildings: [], isComplete: false }];
+      room.state.players[p1]!.table = [{ color: CardColor.PINK, cards: ["prop_pink_1"], isComplete: false }];
       
       // Tries to pay with property and $3, keeping $1 in bank
       const res = room.payDebt(p1, ["prop_pink_1", "money_3_1"]);
@@ -388,8 +388,8 @@ describe('Monopoly Deal - Exhaustive Test Suite', () => {
       room["processNextDebt"]();
       
       room.state.players[p1]!.table = [
-        { color: CardColor.GREEN, cards: ["prop_green_1", "prop_green_2"], buildings: [], isComplete: true },
-        { color: CardColor.PINK, cards: ["prop_pink_1"], buildings: [], isComplete: false }
+        { color: CardColor.GREEN, cards: ["prop_green_1", "prop_green_2"], isComplete: true },
+        { color: CardColor.PINK, cards: ["prop_pink_1"], isComplete: false }
       ];
       
       const res = room.payDebt(p1, ["prop_green_1"]);
@@ -426,9 +426,9 @@ describe('Monopoly Deal - Exhaustive Test Suite', () => {
     it('Does NOT win with 3 monopolies if 2 are the same color', () => {
       const { p1 } = setupGame();
       room.state.players[p1]!.table = [
-        { color: CardColor.GREEN, cards: ["prop_green_1", "prop_green_2"], buildings: [], isComplete: true },
-        { color: CardColor.GREEN, cards: ["prop_green_1", "prop_green_2"], buildings: [], isComplete: true }, // Duplicate color!
-        { color: CardColor.PINK, cards: ["prop_pink_1", "prop_pink_2", "prop_pink_3", "prop_pink_4"], buildings: [], isComplete: true }
+        { color: CardColor.GREEN, cards: ["prop_green_1", "prop_green_2"], isComplete: true },
+        { color: CardColor.GREEN, cards: ["prop_green_1", "prop_green_2"], isComplete: true }, // Duplicate color!
+        { color: CardColor.PINK, cards: ["prop_pink_1", "prop_pink_2", "prop_pink_3", "prop_pink_4"], isComplete: true }
       ];
       room["checkWinCondition"]();
       expect(room.state.status).not.toBe("GAME_OVER");
@@ -442,7 +442,7 @@ describe('Monopoly Deal - Exhaustive Test Suite', () => {
       room.state.debtQueue.push({ creditorId: p2, debtorId: p1, amount: 3, paidAmount: 0 });
       room["processNextDebt"]();
       
-      room.state.players[p1]!.table = [{ color: CardColor.GREEN, cards: ["prop_green_1", "prop_green_2", "action_house_1"], buildings: [], isComplete: true }];
+      room.state.players[p1]!.table = [{ color: CardColor.GREEN, cards: ["prop_green_1", "prop_green_2", "action_house_1"], isComplete: true }];
       
       const res = room.payDebt(p1, ["action_house_1"]);
       expect(res.success).toBe(false);
@@ -452,7 +452,7 @@ describe('Monopoly Deal - Exhaustive Test Suite', () => {
     it('Sly Deal: fails if targeting a building', () => {
       const { p1, p2 } = setupGame();
       room.state.players[p1]!.hand = ["action_sly_deal_1"];
-      room.state.players[p2]!.table = [{ color: CardColor.PINK, cards: ["prop_pink_1", "prop_pink_2", "prop_pink_3", "prop_pink_4", "action_house_1"], buildings: [], isComplete: true }];
+      room.state.players[p2]!.table = [{ color: CardColor.PINK, cards: ["prop_pink_1", "prop_pink_2", "prop_pink_3", "prop_pink_4", "action_house_1"], isComplete: true }];
       
       room.playCard(p1, "action_sly_deal_1", { targetId: p2, payload: { targetCardId: "action_house_1", propertyColor: CardColor.PINK } });
       room['executePendingAction'](); // Will abort inside
@@ -463,8 +463,8 @@ describe('Monopoly Deal - Exhaustive Test Suite', () => {
     it('Forced Deal: fails if targeting a building', () => {
       const { p1, p2 } = setupGame();
       room.state.players[p1]!.hand = ["action_forced_deal_1"];
-      room.state.players[p1]!.table = [{ color: CardColor.BROWN, cards: ["prop_brown_1"], buildings: [], isComplete: false }];
-      room.state.players[p2]!.table = [{ color: CardColor.PINK, cards: ["prop_pink_1", "prop_pink_2", "prop_pink_3", "prop_pink_4", "action_house_1"], buildings: [], isComplete: true }];
+      room.state.players[p1]!.table = [{ color: CardColor.BROWN, cards: ["prop_brown_1"], isComplete: false }];
+      room.state.players[p2]!.table = [{ color: CardColor.PINK, cards: ["prop_pink_1", "prop_pink_2", "prop_pink_3", "prop_pink_4", "action_house_1"], isComplete: true }];
       
       room.playCard(p1, "action_forced_deal_1", { targetId: p2, payload: { targetCardId: "action_house_1", propertyColor: CardColor.PINK, myCardId: "prop_brown_1", myPropertyColor: CardColor.BROWN } });
       room['executePendingAction'](); // Will abort inside
@@ -474,7 +474,7 @@ describe('Monopoly Deal - Exhaustive Test Suite', () => {
 
     it('All-Color wildcard cannot change color once played', () => {
       const { p1 } = setupGame();
-      room.state.players[p1]!.table = [{ color: CardColor.PINK, cards: ["wild_all_1"], buildings: [], isComplete: false }];
+      room.state.players[p1]!.table = [{ color: CardColor.PINK, cards: ["wild_all_1"], isComplete: false }];
       
       const res = room.moveProperty(p1, "wild_all_1", CardColor.GREEN);
       expect(res.success).toBe(false);
@@ -482,7 +482,7 @@ describe('Monopoly Deal - Exhaustive Test Suite', () => {
     });
 
     it('Double Rent must be played alongside a Rent card', () => {
-      const { p1, p2 } = setupGame();
+      const { p1 } = setupGame();
       room.state.players[p1]!.hand = ["action_pass_go_1", "rent_double_1"];
       const res = room.playCard(p1, "action_pass_go_1", { modifierCardId: "rent_double_1" });
       expect(res.success).toBe(false);
@@ -492,7 +492,7 @@ describe('Monopoly Deal - Exhaustive Test Suite', () => {
     it('Rent card cannot be used for an unmatched color', () => {
       const { p1, p2 } = setupGame();
       room.state.players[p1]!.hand = ["rent_red_pink_1"];
-      room.state.players[p1]!.table = [{ color: CardColor.GREEN, cards: ["prop_green_1"], buildings: [], isComplete: false }];
+      room.state.players[p1]!.table = [{ color: CardColor.GREEN, cards: ["prop_green_1"], isComplete: false }];
       
       const res = room.playCard(p1, "rent_red_pink_1", { targetId: p2, propertyColor: CardColor.GREEN });
       expect(res.success).toBe(false);
@@ -525,7 +525,7 @@ describe('Monopoly Deal - Exhaustive Test Suite', () => {
       // Player has a monopoly and a house. Debt is 10.
       // Monopoly is worth 2+2=4. House cannot be used.
       room.state.players[p1]!.table = [
-        { color: CardColor.GREEN, cards: ["prop_green_1", "prop_green_2", "action_house_1"], buildings: [], isComplete: true }
+        { color: CardColor.GREEN, cards: ["prop_green_1", "prop_green_2", "action_house_1"], isComplete: true }
       ];
       
       const res = room.payDebt(p1, ["prop_green_1", "prop_green_2"]);
