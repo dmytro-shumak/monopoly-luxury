@@ -193,7 +193,7 @@ describe('Monopoly Deal - Exhaustive Test Suite', () => {
       room.playCard(p1, "action_sly_deal_1", { targetId: p2, payload: { targetCardId: "prop_pink_1", propertyColor: CardColor.PINK } });
       room['executePendingAction']();
       
-      expect(room.state.players[p2]!.table[0]?.cards.length).toBe(0);
+      expect(room.state.players[p2]!.table.length).toBe(0);
       expect(room.state.players[p1]!.table[0]?.cards.includes("prop_pink_1")).toBe(true);
     });
 

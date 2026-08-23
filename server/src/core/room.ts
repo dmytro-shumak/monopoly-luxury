@@ -279,6 +279,9 @@ export class GameRoom {
       if (modIndex === -1) return { success: false, error: "Modifier card not in hand" };
       
       const modDef = CARDS_DICTIONARY[options.modifierCardId];
+      if (!modDef?.id.includes("rent_double")) {
+        return { success: false, error: "Only Double Rent can be used as a modifier" };
+      }
       if (modDef?.id.includes("rent_double")) {
         if (!cardDef.id.includes("rent")) return { success: false, error: "Double Rent must be played with a Rent card" };
         if (player.actionsRemaining < 2) return { success: false, error: "Double Rent requires 2 actions" };
@@ -391,6 +394,9 @@ export class GameRoom {
       } else if (cardDef.id.includes("rent_double")) {
         return { success: false, error: "Double Rent must be played alongside a Rent card" };
       } else if (cardDef.id.includes("rent") && options?.targetId && options?.propertyColor) {
+        if (options.propertyColor === CardColor.ALL_COLOR) {
+            return { success: false, error: "Cannot target ALL_COLOR for rent" };
+        }
         if (!cardDef.colors?.includes(CardColor.ALL_COLOR) && !cardDef.colors?.includes(options.propertyColor as CardColor)) {
             return { success: false, error: "Rent card cannot be used for this color" };
         }
@@ -607,7 +613,7 @@ export class GameRoom {
       return { success: true };
     }
 
-    return { success: false, error: "Not in a valid phase to react" };
+    return { success: false, error: "Not in reaction phase" };
   }
 
   private executePendingAction() {
@@ -629,6 +635,7 @@ export class GameRoom {
               const cIdx = target.table[setIndex]!.cards.indexOf(payload.targetCardId);
               if (cIdx !== -1) {
                  // Steal card
+                 const targetOldColor = target.table[setIndex]!.color;
                  target.table[setIndex]!.cards.splice(cIdx, 1);
                  if (target.table[setIndex]!.cards.length === 0) {
                     target.table.splice(setIndex, 1);
@@ -640,7 +647,9 @@ export class GameRoom {
                  const stolenCardDef = CARDS_DICTIONARY[payload.targetCardId];
                  let colorToAssign = payload.destinationColor;
                  if (!colorToAssign) {
-                     colorToAssign = stolenCardDef?.colors?.[0] === CardColor.ALL_COLOR ? CardColor.ALL_COLOR : target.table[setIndex]!.color;
+                     colorToAssign = stolenCardDef?.colors?.[0] === CardColor.ALL_COLOR ? CardColor.ALL_COLOR : targetOldColor;
+                 } else if (stolenCardDef?.colors?.[0] !== CardColor.ALL_COLOR && !stolenCardDef?.colors?.includes(colorToAssign as CardColor)) {
+                     colorToAssign = targetOldColor;
                  }
                  let initSet = initiator.table.find(s => s.color === colorToAssign && !s.isComplete);
                  if (!initSet) {
@@ -687,6 +696,8 @@ export class GameRoom {
                  let initColorToAssign = payload.destinationColor;
                  if (!initColorToAssign) {
                      initColorToAssign = targetCardDef?.colors?.[0] === CardColor.ALL_COLOR ? CardColor.ALL_COLOR : targetOldColor;
+                 } else if (targetCardDef?.colors?.[0] !== CardColor.ALL_COLOR && !targetCardDef?.colors?.includes(initColorToAssign as CardColor)) {
+                     initColorToAssign = targetOldColor;
                  }
                  let newInitSet = initiator.table.find(s => s.color === initColorToAssign && !s.isComplete);
                  if (!newInitSet) {
@@ -701,6 +712,8 @@ export class GameRoom {
                  let targetColorToAssign = payload.targetDestinationColor;
                  if (!targetColorToAssign) {
                      targetColorToAssign = myCardDef?.colors?.[0] === CardColor.ALL_COLOR ? CardColor.ALL_COLOR : initOldColor;
+                 } else if (myCardDef?.colors?.[0] !== CardColor.ALL_COLOR && !myCardDef?.colors?.includes(targetColorToAssign as CardColor)) {
+                     targetColorToAssign = initOldColor;
                  }
                  let newTargetSet = target.table.find(s => s.color === targetColorToAssign && !s.isComplete);
                  if (!newTargetSet) {
