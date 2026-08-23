@@ -478,7 +478,7 @@ describe('Monopoly Deal - Exhaustive Test Suite', () => {
       
       const res = room.moveProperty(p1, "wild_all_1", CardColor.GREEN);
       expect(res.success).toBe(false);
-      expect(res.error).toBe("All-Color wildcard cannot change color once played");
+      expect(res.error).toBe("All-Color wildcard cannot change color once assigned");
     });
 
     it('Double Rent must be played alongside a Rent card', () => {

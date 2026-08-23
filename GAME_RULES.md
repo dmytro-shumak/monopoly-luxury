@@ -8,7 +8,7 @@
 *   **Turn Start:** A player automatically draws 2 cards from the deck (even if their hand is empty). If the main draw pile is empty, the discard pile is reshuffled to form a new draw pile.
 *   **Actions:** A player can play 0 to 3 actions per turn. Discarding a card from the hand directly to the discard pile cannot be done as an action.
 *   **Turn End:** If a player has more than 7 cards in their hand at the end of their turn, they must discard the excess cards into the discard pile (this does not consume actions).
-*   **Win Condition:** A player wins instantly if they assemble 3 complete monopolies of different colors on their table during their turn.
+*   **Win Condition:** A player wins instantly if they assemble 3 complete monopolies of different colors on their table.
 
 ## 2. Finances and Debts
 *   **Personal Bank:** Only money cards can be placed in the personal bank on the table. Property cards cannot be used as banked money.

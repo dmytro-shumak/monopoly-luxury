@@ -275,6 +275,9 @@ export class GameRoom {
     if (cardDef.type === CardType.MONEY) {
       player.bank.push(cardId);
     } else if (cardDef.type === CardType.PROPERTY || cardDef.type === CardType.PROPERTY_WILDCARD) {
+      if (cardDef.colors?.[0] === CardColor.ALL_COLOR && (!options?.propertyColor || options.propertyColor === CardColor.ALL_COLOR)) {
+         return { success: false, error: "Must specify a color when playing an All-Color wildcard" };
+      }
       const color = options?.propertyColor ? (options.propertyColor as CardColor) : cardDef.colors?.[0]; 
       if (color) {
         if (!cardDef.colors?.includes(color) && cardDef.colors?.[0] !== CardColor.ALL_COLOR) {
@@ -313,41 +316,75 @@ export class GameRoom {
         this.processNextAction();
         return { success: true };
       } else if (cardDef.id.includes("sly_deal") && options?.targetId) {
+        const target = this.state.players[options.targetId];
+        if (!target) return { success: false, error: "Invalid target player" };
+        const payload = options.payload;
+        if (!payload || !payload.targetCardId || !payload.propertyColor) return { success: false, error: "Missing payload" };
+        if (CARDS_DICTIONARY[payload.targetCardId]?.isBuilding) return { success: false, error: "Cannot steal buildings" };
+        const setIndex = target.table.findIndex(s => s.color === payload.propertyColor);
+        if (setIndex === -1) return { success: false, error: "Target does not have this property" };
+        if (target.table[setIndex]!.isComplete) return { success: false, error: "Cannot steal from a complete monopoly" };
+        if (!target.table[setIndex]!.cards.includes(payload.targetCardId)) return { success: false, error: "Target card not found in set" };
+
         this.state.actionQueue.push({
           initiatorId: playerId, targetId: options.targetId, cardId, actionType: "SLY_DEAL", cancelChain: [], payload: options.payload
         });
         this.processNextAction();
         return { success: true };
       } else if (cardDef.id.includes("deal_breaker") && options?.targetId) {
+        const target = this.state.players[options.targetId];
+        if (!target) return { success: false, error: "Invalid target player" };
+        const payload = options.payload;
+        if (!payload || !payload.propertyColor) return { success: false, error: "Missing payload" };
+        const setIndex = target.table.findIndex(s => s.color === payload.propertyColor && s.isComplete);
+        if (setIndex === -1) return { success: false, error: "Target does not have a complete monopoly of this color" };
+
         this.state.actionQueue.push({
           initiatorId: playerId, targetId: options.targetId, cardId, actionType: "DEAL_BREAKER", cancelChain: [], payload: options.payload
         });
         this.processNextAction();
         return { success: true };
       } else if (cardDef.id.includes("forced_deal") && options?.targetId) {
+        const target = this.state.players[options.targetId];
+        if (!target) return { success: false, error: "Invalid target player" };
+        const payload = options.payload;
+        if (!payload || !payload.targetCardId || !payload.myCardId || !payload.propertyColor || !payload.myPropertyColor) return { success: false, error: "Missing payload" };
+        if (CARDS_DICTIONARY[payload.targetCardId]?.isBuilding || CARDS_DICTIONARY[payload.myCardId]?.isBuilding) return { success: false, error: "Cannot swap buildings" };
+        
+        const targetSetIndex = target.table.findIndex(s => s.color === payload.propertyColor);
+        if (targetSetIndex === -1 || target.table[targetSetIndex]!.isComplete || !target.table[targetSetIndex]!.cards.includes(payload.targetCardId)) return { success: false, error: "Invalid target property" };
+        
+        const mySetIndex = player.table.findIndex(s => s.color === payload.myPropertyColor);
+        if (mySetIndex === -1 || player.table[mySetIndex]!.isComplete || !player.table[mySetIndex]!.cards.includes(payload.myCardId)) return { success: false, error: "Invalid offered property" };
+
         this.state.actionQueue.push({
           initiatorId: playerId, targetId: options.targetId, cardId, actionType: "FORCED_DEAL", cancelChain: [], payload: options.payload
         });
         this.processNextAction();
         return { success: true };
+      } else if (cardDef.id.includes("rent_double")) {
+        return { success: false, error: "Double Rent must be played alongside a Rent card" };
       } else if (cardDef.id.includes("rent") && options?.targetId && options?.propertyColor) {
         if (!cardDef.colors?.includes(CardColor.ALL_COLOR) && !cardDef.colors?.includes(options.propertyColor as CardColor)) {
             return { success: false, error: "Rent card cannot be used for this color" };
         }
-        let amount = 0;
-        const set = player.table.find(s => s.color === options.propertyColor);
-        if (set) {
-          // Base rent = number of property cards
-          amount = set.cards.filter(c => CARDS_DICTIONARY[c]?.type === CardType.PROPERTY || CARDS_DICTIONARY[c]?.type === CardType.PROPERTY_WILDCARD).length;
-          
-          if (set.isComplete) {
-            const hasHouse = set.cards.some(c => CARDS_DICTIONARY[c]?.isBuilding === BuildingType.HOUSE);
-            const hasHotel = set.cards.some(c => CARDS_DICTIONARY[c]?.isBuilding === BuildingType.HOTEL);
-            if (hasHouse) amount += 3;
-            if (hasHotel) amount += 4;
-          }
+        
+        const sets = player.table.filter(s => s.color === options.propertyColor);
+        if (sets.length === 0) {
+            return { success: false, error: "You do not own any properties of this color" };
         }
-        amount *= multiplier;
+        
+        let propertyCardCount = 0;
+        let buildingBonus = 0;
+        for (const set of sets) {
+           propertyCardCount += set.cards.filter(c => CARDS_DICTIONARY[c]?.type === CardType.PROPERTY || CARDS_DICTIONARY[c]?.type === CardType.PROPERTY_WILDCARD).length;
+           if (set.isComplete) {
+              if (set.cards.some(c => CARDS_DICTIONARY[c]?.isBuilding === BuildingType.HOUSE)) buildingBonus += 3;
+              if (set.cards.some(c => CARDS_DICTIONARY[c]?.isBuilding === BuildingType.HOTEL)) buildingBonus += 4;
+           }
+        }
+        
+        const amount = (propertyCardCount + buildingBonus) * multiplier;
         
         this.state.actionQueue.push({
           initiatorId: playerId, targetId: options.targetId, cardId, actionType: "RENT", cancelChain: [], payload: { amount }
@@ -427,7 +464,9 @@ export class GameRoom {
        return { success: false, error: "Wildcard cannot be this color" };
     }
     if (cardDef.colors?.[0] === CardColor.ALL_COLOR && currentSet.color !== toColor) {
-       return { success: false, error: "All-Color wildcard cannot change color once played" };
+       if (currentSet.color !== CardColor.ALL_COLOR) {
+           return { success: false, error: "All-Color wildcard cannot change color once assigned" };
+       }
     }
 
     // Changing color of 2-color wildcard costs 1 action
@@ -547,9 +586,11 @@ export class GameRoom {
                  target.table[setIndex]!.cards.splice(cIdx, 1);
                  
                  // Add to initiator
-                 let initSet = initiator.table.find(s => s.color === payload.propertyColor && !s.isComplete);
+                 const stolenCardDef = CARDS_DICTIONARY[payload.targetCardId];
+                 const colorToAssign = stolenCardDef?.colors?.[0] === CardColor.ALL_COLOR ? CardColor.ALL_COLOR : payload.propertyColor;
+                 let initSet = initiator.table.find(s => s.color === colorToAssign && !s.isComplete);
                  if (!initSet) {
-                   initSet = { color: payload.propertyColor, cards: [], buildings: [], isComplete: false };
+                   initSet = { color: colorToAssign, cards: [], buildings: [], isComplete: false };
                    initiator.table.push(initSet);
                  }
                  initSet.cards.push(payload.targetCardId);
@@ -574,17 +615,21 @@ export class GameRoom {
                  target.table[targetSetIndex]!.cards.splice(targetCardIdx, 1);
                  initiator.table[initSetIndex]!.cards.splice(initCardIdx, 1);
                  // Add target card to initiator
-                 let newInitSet = initiator.table.find(s => s.color === payload.propertyColor && !s.isComplete);
+                 const targetCardDef = CARDS_DICTIONARY[payload.targetCardId];
+                 const initColorToAssign = targetCardDef?.colors?.[0] === CardColor.ALL_COLOR ? CardColor.ALL_COLOR : payload.propertyColor;
+                 let newInitSet = initiator.table.find(s => s.color === initColorToAssign && !s.isComplete);
                  if (!newInitSet) {
-                   newInitSet = { color: payload.propertyColor, cards: [], buildings: [], isComplete: false };
+                   newInitSet = { color: initColorToAssign, cards: [], buildings: [], isComplete: false };
                    initiator.table.push(newInitSet);
                  }
                  newInitSet.cards.push(payload.targetCardId);
                  this.updateSetCompletion(newInitSet);
                  // Add init card to target
-                 let newTargetSet = target.table.find(s => s.color === payload.myPropertyColor && !s.isComplete);
+                 const myCardDef = CARDS_DICTIONARY[payload.myCardId];
+                 const targetColorToAssign = myCardDef?.colors?.[0] === CardColor.ALL_COLOR ? CardColor.ALL_COLOR : payload.myPropertyColor;
+                 let newTargetSet = target.table.find(s => s.color === targetColorToAssign && !s.isComplete);
                  if (!newTargetSet) {
-                   newTargetSet = { color: payload.myPropertyColor, cards: [], buildings: [], isComplete: false };
+                   newTargetSet = { color: targetColorToAssign, cards: [], buildings: [], isComplete: false };
                    target.table.push(newTargetSet);
                  }
                  newTargetSet.cards.push(payload.myCardId);
@@ -710,7 +755,8 @@ export class GameRoom {
         this.updateSetCompletion(set);
         
         // Add to creditor's table (lazy: match color if available)
-        const color = set.color; // Keep the same color
+        const assetCardDef = CARDS_DICTIONARY[asset.id];
+        const color = assetCardDef?.colors?.[0] === CardColor.ALL_COLOR ? CardColor.ALL_COLOR : set.color;
         let creditorSet = creditor.table.find(s => s.color === color && !s.isComplete);
         if (!creditorSet) {
           creditorSet = { color, cards: [], buildings: [], isComplete: false };
