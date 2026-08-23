@@ -169,7 +169,14 @@ export class GameRoom {
     const player = this.state.players[playerId];
     if (!player) return { success: false, error: "No player" };
     
-    if (player.hand.length - cardIds.length > 7) return { success: false, error: "Must discard more cards" };
+    const uniqueIds = new Set(cardIds);
+    if (uniqueIds.size !== cardIds.length) return { success: false, error: "Duplicate card IDs provided" };
+    
+    for (const id of cardIds) {
+      if (!player.hand.includes(id)) return { success: false, error: `Card not in hand` };
+    }
+    
+    if (player.hand.length - cardIds.length !== 7) return { success: false, error: "Must discard exactly down to 7 cards" };
 
     for (const cardId of cardIds) {
       const idx = player.hand.indexOf(cardId);
@@ -253,115 +260,121 @@ export class GameRoom {
     const cardDef = CARDS_DICTIONARY[cardId];
     if (!cardDef) return { success: false, error: "Unknown card" };
 
+    let actionsToDeduct = 1;
     let multiplier = 1;
+    let modIndex = -1;
+
     if (options?.modifierCardId) {
       if (cardId === options.modifierCardId) return { success: false, error: "Cannot use the same card as both main and modifier" };
-      const modIndex = player.hand.indexOf(options.modifierCardId);
+      modIndex = player.hand.indexOf(options.modifierCardId);
       if (modIndex === -1) return { success: false, error: "Modifier card not in hand" };
+      
       const modDef = CARDS_DICTIONARY[options.modifierCardId];
       if (modDef?.id.includes("rent_double")) {
         if (!cardDef.id.includes("rent")) return { success: false, error: "Double Rent must be played with a Rent card" };
         if (player.actionsRemaining < 2) return { success: false, error: "Double Rent requires 2 actions" };
-        player.actionsRemaining -= 1;
-        player.hand.splice(modIndex, 1);
+        actionsToDeduct = 2;
         multiplier = 2;
-        this.discardCard(options.modifierCardId);
       }
     }
 
-    player.actionsRemaining -= 1;
-    player.hand.splice(player.hand.indexOf(cardId), 1); // safe recalculation since modifier might have shifted indices
+    if (player.actionsRemaining < actionsToDeduct) return { success: false, error: "Not enough actions left" };
+
+    let effect: () => void = () => {};
 
     if (cardDef.type === CardType.MONEY) {
-      player.bank.push(cardId);
+      effect = () => player.bank.push(cardId);
     } else if (cardDef.type === CardType.PROPERTY || cardDef.type === CardType.PROPERTY_WILDCARD) {
       if (cardDef.colors?.[0] === CardColor.ALL_COLOR && (!options?.propertyColor || options.propertyColor === CardColor.ALL_COLOR)) {
          return { success: false, error: "Must specify a color when playing an All-Color wildcard" };
       }
       const color = options?.propertyColor ? (options.propertyColor as CardColor) : cardDef.colors?.[0]; 
-      if (color) {
-        if (!cardDef.colors?.includes(color) && cardDef.colors?.[0] !== CardColor.ALL_COLOR) {
-           return { success: false, error: "Property card cannot be played as this color" };
-        }
+      if (!color) return { success: false, error: "No color available" };
+
+      if (!cardDef.colors?.includes(color) && cardDef.colors?.[0] !== CardColor.ALL_COLOR) {
+         return { success: false, error: "Property card cannot be played as this color" };
+      }
+
+      effect = () => {
         let set = player.table.find(s => s.color === color && !s.isComplete);
         if (!set) {
-          set = { color, cards: [], buildings: [], isComplete: false };
+          set = { color, cards: [], isComplete: false };
           player.table.push(set);
         }
         set.cards.push(cardId);
         this.updateSetCompletion(set);
-      }
+      };
     } else if (cardDef.type === CardType.ACTION) {
-      this.discardCard(cardId);
-
-      // Handle Immediate Actions
       if (cardDef.id.includes("pass_go")) {
-        player.hand.push(...this.drawCardsFromDeck(2));
-        this.updateDeckCount();
+        effect = () => {
+          this.discardCard(cardId);
+          player.hand.push(...this.drawCardsFromDeck(2));
+          this.updateDeckCount();
+        };
       } else if (cardDef.id.includes("birthday")) {
-        // Queue actions for all other players
-        for (const otherId of this.state.playerOrder) {
-          if (otherId !== playerId) {
-            this.state.actionQueue.push({
-              initiatorId: playerId, targetId: otherId, cardId, actionType: "BIRTHDAY", cancelChain: []
-            });
+        effect = () => {
+          this.discardCard(cardId);
+          for (const otherId of this.state.playerOrder) {
+            if (otherId !== playerId) {
+              this.state.actionQueue.push({ initiatorId: playerId, targetId: otherId, cardId, actionType: "BIRTHDAY", cancelChain: [] });
+            }
           }
-        }
-        this.processNextAction();
-        return { success: true }; // processNextAction notifies
+          this.processNextAction();
+        };
       } else if (cardDef.id.includes("debt_collector") && options?.targetId) {
-        this.state.actionQueue.push({
-          initiatorId: playerId, targetId: options.targetId, cardId, actionType: "DEBT_COLLECTOR", cancelChain: []
-        });
-        this.processNextAction();
-        return { success: true };
+        effect = () => {
+          this.discardCard(cardId);
+          this.state.actionQueue.push({ initiatorId: playerId, targetId: options.targetId!, cardId, actionType: "DEBT_COLLECTOR", cancelChain: [] });
+          this.processNextAction();
+        };
       } else if (cardDef.id.includes("sly_deal") && options?.targetId) {
         const target = this.state.players[options.targetId];
         if (!target) return { success: false, error: "Invalid target player" };
         const payload = options.payload;
-        if (!payload || !payload.targetCardId || !payload.propertyColor) return { success: false, error: "Missing payload" };
+        if (!payload || !payload.targetCardId) return { success: false, error: "Missing payload" };
         if (CARDS_DICTIONARY[payload.targetCardId]?.isBuilding) return { success: false, error: "Cannot steal buildings" };
-        const setIndex = target.table.findIndex(s => s.color === payload.propertyColor);
+        const setIndex = target.table.findIndex(s => s.cards.includes(payload.targetCardId));
         if (setIndex === -1) return { success: false, error: "Target does not have this property" };
         if (target.table[setIndex]!.isComplete) return { success: false, error: "Cannot steal from a complete monopoly" };
-        if (!target.table[setIndex]!.cards.includes(payload.targetCardId)) return { success: false, error: "Target card not found in set" };
 
-        this.state.actionQueue.push({
-          initiatorId: playerId, targetId: options.targetId, cardId, actionType: "SLY_DEAL", cancelChain: [], payload: options.payload
-        });
-        this.processNextAction();
-        return { success: true };
+        effect = () => {
+          this.discardCard(cardId);
+          this.state.actionQueue.push({ initiatorId: playerId, targetId: options.targetId!, cardId, actionType: "SLY_DEAL", cancelChain: [], payload: options.payload });
+          this.processNextAction();
+        };
       } else if (cardDef.id.includes("deal_breaker") && options?.targetId) {
         const target = this.state.players[options.targetId];
         if (!target) return { success: false, error: "Invalid target player" };
         const payload = options.payload;
         if (!payload || !payload.propertyColor) return { success: false, error: "Missing payload" };
-        const setIndex = target.table.findIndex(s => s.color === payload.propertyColor && s.isComplete);
+        const setIndex = payload.targetSetCardId
+           ? target.table.findIndex(s => s.cards.includes(payload.targetSetCardId) && s.isComplete)
+           : target.table.findIndex(s => s.color === payload.propertyColor && s.isComplete);
         if (setIndex === -1) return { success: false, error: "Target does not have a complete monopoly of this color" };
 
-        this.state.actionQueue.push({
-          initiatorId: playerId, targetId: options.targetId, cardId, actionType: "DEAL_BREAKER", cancelChain: [], payload: options.payload
-        });
-        this.processNextAction();
-        return { success: true };
+        effect = () => {
+          this.discardCard(cardId);
+          this.state.actionQueue.push({ initiatorId: playerId, targetId: options.targetId!, cardId, actionType: "DEAL_BREAKER", cancelChain: [], payload: options.payload });
+          this.processNextAction();
+        };
       } else if (cardDef.id.includes("forced_deal") && options?.targetId) {
         const target = this.state.players[options.targetId];
         if (!target) return { success: false, error: "Invalid target player" };
         const payload = options.payload;
-        if (!payload || !payload.targetCardId || !payload.myCardId || !payload.propertyColor || !payload.myPropertyColor) return { success: false, error: "Missing payload" };
+        if (!payload || !payload.targetCardId || !payload.myCardId) return { success: false, error: "Missing payload" };
         if (CARDS_DICTIONARY[payload.targetCardId]?.isBuilding || CARDS_DICTIONARY[payload.myCardId]?.isBuilding) return { success: false, error: "Cannot swap buildings" };
         
-        const targetSetIndex = target.table.findIndex(s => s.color === payload.propertyColor);
-        if (targetSetIndex === -1 || target.table[targetSetIndex]!.isComplete || !target.table[targetSetIndex]!.cards.includes(payload.targetCardId)) return { success: false, error: "Invalid target property" };
+        const targetSetIndex = target.table.findIndex(s => s.cards.includes(payload.targetCardId));
+        if (targetSetIndex === -1 || target.table[targetSetIndex]!.isComplete) return { success: false, error: "Invalid target property" };
         
-        const mySetIndex = player.table.findIndex(s => s.color === payload.myPropertyColor);
-        if (mySetIndex === -1 || player.table[mySetIndex]!.isComplete || !player.table[mySetIndex]!.cards.includes(payload.myCardId)) return { success: false, error: "Invalid offered property" };
+        const mySetIndex = player.table.findIndex(s => s.cards.includes(payload.myCardId));
+        if (mySetIndex === -1 || player.table[mySetIndex]!.isComplete) return { success: false, error: "Invalid offered property" };
 
-        this.state.actionQueue.push({
-          initiatorId: playerId, targetId: options.targetId, cardId, actionType: "FORCED_DEAL", cancelChain: [], payload: options.payload
-        });
-        this.processNextAction();
-        return { success: true };
+        effect = () => {
+          this.discardCard(cardId);
+          this.state.actionQueue.push({ initiatorId: playerId, targetId: options.targetId!, cardId, actionType: "FORCED_DEAL", cancelChain: [], payload: options.payload });
+          this.processNextAction();
+        };
       } else if (cardDef.id.includes("rent_double")) {
         return { success: false, error: "Double Rent must be played alongside a Rent card" };
       } else if (cardDef.id.includes("rent") && options?.targetId && options?.propertyColor) {
@@ -370,9 +383,7 @@ export class GameRoom {
         }
         
         const sets = player.table.filter(s => s.color === options.propertyColor);
-        if (sets.length === 0) {
-            return { success: false, error: "You do not own any properties of this color" };
-        }
+        if (sets.length === 0) return { success: false, error: "You do not own any properties of this color" };
         
         let propertyCardCount = 0;
         let buildingBonus = 0;
@@ -386,14 +397,16 @@ export class GameRoom {
         
         const amount = (propertyCardCount + buildingBonus) * multiplier;
         
-        this.state.actionQueue.push({
-          initiatorId: playerId, targetId: options.targetId, cardId, actionType: "RENT", cancelChain: [], payload: { amount }
-        });
-        this.processNextAction();
-        return { success: true };
+        effect = () => {
+          this.discardCard(cardId);
+          this.state.actionQueue.push({ initiatorId: playerId, targetId: options.targetId!, cardId, actionType: "RENT", cancelChain: [], payload: { amount } });
+          this.processNextAction();
+        };
       } else if (cardDef.id.includes("house") || cardDef.id.includes("hotel")) {
-        if (!options?.propertyColor) return { success: false, error: "Must specify color to build on" };
-        const set = player.table.find(s => s.color === options.propertyColor && s.isComplete);
+        if (!options?.propertyColor && !options?.targetSetCardId) return { success: false, error: "Must specify color or target set to build on" };
+        const set = options?.targetSetCardId
+           ? player.table.find(s => s.cards.includes(options.targetSetCardId!) && s.isComplete)
+           : player.table.find(s => s.color === options.propertyColor && s.isComplete);
         if (!set) return { success: false, error: "Must build on a complete monopoly" };
         
         const hasHouse = set.cards.some(c => CARDS_DICTIONARY[c]?.isBuilding === BuildingType.HOUSE);
@@ -402,9 +415,21 @@ export class GameRoom {
         if (cardDef.id.includes("house") && hasHouse) return { success: false, error: "Already has a house" };
         if (cardDef.id.includes("hotel") && (!hasHouse || hasHotel)) return { success: false, error: "Must have house first, and no hotel" };
         
-        set.cards.push(cardId);
+        effect = () => { set.cards.push(cardId); };
+      } else {
+         return { success: false, error: "Missing required options for this action" };
       }
     }
+
+    player.actionsRemaining -= actionsToDeduct;
+    if (modIndex !== -1 && options?.modifierCardId) {
+      player.hand.splice(modIndex, 1);
+      this.discardCard(options.modifierCardId);
+    }
+    const finalHandIndex = player.hand.indexOf(cardId);
+    if (finalHandIndex !== -1) player.hand.splice(finalHandIndex, 1);
+    
+    effect();
 
     this.checkWinCondition();
     this.notify();
@@ -481,7 +506,7 @@ export class GameRoom {
 
     let targetSet = player.table.find(s => s.color === toColor && !s.isComplete);
     if (!targetSet) {
-      targetSet = { color: toColor as CardColor, cards: [], buildings: [], isComplete: false };
+      targetSet = { color: toColor as CardColor, cards: [], isComplete: false };
       player.table.push(targetSet);
     }
     targetSet.cards.push(cardId);
@@ -572,13 +597,13 @@ export class GameRoom {
       } else if (action.actionType === "DEBT_COLLECTOR") {
         this.state.debtQueue.push({ creditorId: action.initiatorId, debtorId: action.targetId, amount: 5, paidAmount: 0 });
       } else if (action.actionType === "SLY_DEAL") {
-        // payload should have { targetCardId: string, propertyColor: CardColor }
+        // payload should have { targetCardId: string, destinationColor?: CardColor }
         const target = this.state.players[action.targetId];
         const initiator = this.state.players[action.initiatorId];
         const payload = action.payload;
-        if (target && initiator && payload && payload.targetCardId && payload.propertyColor) {
+        if (target && initiator && payload && payload.targetCardId) {
            if (CARDS_DICTIONARY[payload.targetCardId]?.isBuilding) return;
-           const setIndex = target.table.findIndex(s => s.color === payload.propertyColor);
+           const setIndex = target.table.findIndex(s => s.cards.includes(payload.targetCardId));
            if (setIndex !== -1 && !target.table[setIndex]!.isComplete) {
               const cIdx = target.table[setIndex]!.cards.indexOf(payload.targetCardId);
               if (cIdx !== -1) {
@@ -587,10 +612,13 @@ export class GameRoom {
                  
                  // Add to initiator
                  const stolenCardDef = CARDS_DICTIONARY[payload.targetCardId];
-                 const colorToAssign = stolenCardDef?.colors?.[0] === CardColor.ALL_COLOR ? CardColor.ALL_COLOR : payload.propertyColor;
+                 let colorToAssign = payload.destinationColor;
+                 if (!colorToAssign) {
+                     colorToAssign = stolenCardDef?.colors?.[0] === CardColor.ALL_COLOR ? CardColor.ALL_COLOR : target.table[setIndex]!.color;
+                 }
                  let initSet = initiator.table.find(s => s.color === colorToAssign && !s.isComplete);
                  if (!initSet) {
-                   initSet = { color: colorToAssign, cards: [], buildings: [], isComplete: false };
+                   initSet = { color: colorToAssign, cards: [], isComplete: false };
                    initiator.table.push(initSet);
                  }
                  initSet.cards.push(payload.targetCardId);
@@ -599,37 +627,47 @@ export class GameRoom {
            }
         }
       } else if (action.actionType === "FORCED_DEAL") {
-        // payload: { targetCardId: string, myCardId: string, propertyColor: CardColor, myPropertyColor: CardColor }
+        // payload: { targetCardId: string, myCardId: string, destinationColor?: CardColor, targetDestinationColor?: CardColor }
         const target = this.state.players[action.targetId];
         const initiator = this.state.players[action.initiatorId];
         const payload = action.payload;
-        if (target && initiator && payload) {
+        if (target && initiator && payload && payload.targetCardId && payload.myCardId) {
            if (CARDS_DICTIONARY[payload.targetCardId]?.isBuilding || CARDS_DICTIONARY[payload.myCardId]?.isBuilding) return;
-           const targetSetIndex = target.table.findIndex(s => s.color === payload.propertyColor);
-           const initSetIndex = initiator.table.findIndex(s => s.color === payload.myPropertyColor);
+           const targetSetIndex = target.table.findIndex(s => s.cards.includes(payload.targetCardId));
+           const initSetIndex = initiator.table.findIndex(s => s.cards.includes(payload.myCardId));
            if (targetSetIndex !== -1 && initSetIndex !== -1 && !target.table[targetSetIndex]!.isComplete && !initiator.table[initSetIndex]!.isComplete) {
               const targetCardIdx = target.table[targetSetIndex]!.cards.indexOf(payload.targetCardId);
               const initCardIdx = initiator.table[initSetIndex]!.cards.indexOf(payload.myCardId);
               if (targetCardIdx !== -1 && initCardIdx !== -1) {
                  // Remove from both
+                 const targetOldColor = target.table[targetSetIndex]!.color;
+                 const initOldColor = initiator.table[initSetIndex]!.color;
                  target.table[targetSetIndex]!.cards.splice(targetCardIdx, 1);
                  initiator.table[initSetIndex]!.cards.splice(initCardIdx, 1);
+                 
                  // Add target card to initiator
                  const targetCardDef = CARDS_DICTIONARY[payload.targetCardId];
-                 const initColorToAssign = targetCardDef?.colors?.[0] === CardColor.ALL_COLOR ? CardColor.ALL_COLOR : payload.propertyColor;
+                 let initColorToAssign = payload.destinationColor;
+                 if (!initColorToAssign) {
+                     initColorToAssign = targetCardDef?.colors?.[0] === CardColor.ALL_COLOR ? CardColor.ALL_COLOR : targetOldColor;
+                 }
                  let newInitSet = initiator.table.find(s => s.color === initColorToAssign && !s.isComplete);
                  if (!newInitSet) {
-                   newInitSet = { color: initColorToAssign, cards: [], buildings: [], isComplete: false };
+                   newInitSet = { color: initColorToAssign, cards: [], isComplete: false };
                    initiator.table.push(newInitSet);
                  }
                  newInitSet.cards.push(payload.targetCardId);
                  this.updateSetCompletion(newInitSet);
+                 
                  // Add init card to target
                  const myCardDef = CARDS_DICTIONARY[payload.myCardId];
-                 const targetColorToAssign = myCardDef?.colors?.[0] === CardColor.ALL_COLOR ? CardColor.ALL_COLOR : payload.myPropertyColor;
+                 let targetColorToAssign = payload.targetDestinationColor;
+                 if (!targetColorToAssign) {
+                     targetColorToAssign = myCardDef?.colors?.[0] === CardColor.ALL_COLOR ? CardColor.ALL_COLOR : initOldColor;
+                 }
                  let newTargetSet = target.table.find(s => s.color === targetColorToAssign && !s.isComplete);
                  if (!newTargetSet) {
-                   newTargetSet = { color: targetColorToAssign, cards: [], buildings: [], isComplete: false };
+                   newTargetSet = { color: targetColorToAssign, cards: [], isComplete: false };
                    target.table.push(newTargetSet);
                  }
                  newTargetSet.cards.push(payload.myCardId);
@@ -638,12 +676,14 @@ export class GameRoom {
            }
         }
       } else if (action.actionType === "DEAL_BREAKER") {
-        // payload: { propertyColor: CardColor }
+        // payload: { propertyColor: CardColor, targetSetCardId?: string }
         const target = this.state.players[action.targetId];
         const initiator = this.state.players[action.initiatorId];
         const payload = action.payload;
         if (target && initiator && payload) {
-           const targetSetIndex = target.table.findIndex(s => s.color === payload.propertyColor && s.isComplete);
+           const targetSetIndex = payload.targetSetCardId
+             ? target.table.findIndex(s => s.cards.includes(payload.targetSetCardId) && s.isComplete)
+             : target.table.findIndex(s => s.color === payload.propertyColor && s.isComplete);
            if (targetSetIndex !== -1) {
               // Steal entire set
               const stolenSet = target.table.splice(targetSetIndex, 1)[0]!;
@@ -663,7 +703,7 @@ export class GameRoom {
 
   // --- DEBT PAYMENTS ---
 
-  public payDebt(playerId: string, assetIds: string[]): { success: boolean; error?: string } {
+  public payDebt(playerId: string, assetIds: string[], options?: { wildcardAssignments?: Record<string, string> }): { success: boolean; error?: string } {
     if (this.state.status !== "DEBT_PAYMENT_PHASE" || !this.state.currentDebt) return { success: false, error: "Not in debt phase" };
     if (this.state.currentDebt.debtorId !== playerId) return { success: false, error: "Not your debt" };
 
@@ -747,7 +787,6 @@ export class GameRoom {
                       this.discardCard(bc);
                       set.cards = set.cards.filter(id => id !== bc);
                    }
-               set.buildings = [];
            }
         }
 
@@ -756,10 +795,13 @@ export class GameRoom {
         
         // Add to creditor's table (lazy: match color if available)
         const assetCardDef = CARDS_DICTIONARY[asset.id];
-        const color = assetCardDef?.colors?.[0] === CardColor.ALL_COLOR ? CardColor.ALL_COLOR : set.color;
+        let color = set.color;
+        if (assetCardDef?.colors?.[0] === CardColor.ALL_COLOR) {
+           color = (options?.wildcardAssignments?.[asset.id] as CardColor) || CardColor.ALL_COLOR;
+        }
         let creditorSet = creditor.table.find(s => s.color === color && !s.isComplete);
         if (!creditorSet) {
-          creditorSet = { color, cards: [], buildings: [], isComplete: false };
+          creditorSet = { color, cards: [], isComplete: false };
           creditor.table.push(creditorSet);
         }
         creditorSet.cards.push(asset.id);

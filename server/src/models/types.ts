@@ -46,7 +46,6 @@ export type GamePhase =
 export interface PropertySet {
   color: CardColor;
   cards: string[]; // Array of card IDs
-  buildings: BuildingType[];
   isComplete: boolean;
 }
 
