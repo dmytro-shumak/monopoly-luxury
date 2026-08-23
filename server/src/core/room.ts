@@ -676,7 +676,7 @@ export class GameRoom {
     // Debt forgiveness check: if value < amount, ensure they have NOTHING else
     if (totalValue < this.state.currentDebt.amount) {
       const remainingBank = debtor.bank.filter(id => !assetIds.includes(id));
-      const remainingTable = debtor.table.flatMap(s => s.cards).filter(id => !assetIds.includes(id));
+      const remainingTable = debtor.table.flatMap(s => s.cards).filter(id => !assetIds.includes(id) && !CARDS_DICTIONARY[id]?.isBuilding);
       if (remainingBank.length > 0 || remainingTable.length > 0) {
         return { success: false, error: "Must pay full amount if you have assets" };
       }

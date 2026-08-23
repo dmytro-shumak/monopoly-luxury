@@ -516,5 +516,22 @@ describe('Monopoly Deal - Exhaustive Test Suite', () => {
       expect(res.success).toBe(false);
       expect(res.error).toBe("Cannot use the same card as both main and modifier");
     });
+
+    it('Debt forgiveness works if only remaining assets are buildings', () => {
+      const { p1, p2 } = setupGame();
+      room.state.debtQueue.push({ creditorId: p2, debtorId: p1, amount: 10, paidAmount: 0 });
+      room["processNextDebt"]();
+      
+      // Player has a monopoly and a house. Debt is 10.
+      // Monopoly is worth 2+2=4. House cannot be used.
+      room.state.players[p1]!.table = [
+        { color: CardColor.GREEN, cards: ["prop_green_1", "prop_green_2", "action_house_1"], buildings: [], isComplete: true }
+      ];
+      
+      const res = room.payDebt(p1, ["prop_green_1", "prop_green_2"]);
+      expect(res.success).toBe(true);
+      // Ensure the house was destroyed
+      expect(room.state.discardPile).toContain("action_house_1");
+    });
   });
 });
