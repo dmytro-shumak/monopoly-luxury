@@ -498,5 +498,23 @@ describe('Monopoly Deal - Exhaustive Test Suite', () => {
       expect(res.success).toBe(false);
       expect(res.error).toBe("Rent card cannot be used for this color");
     });
+
+    it('Property card cannot be played as a mismatched color', () => {
+      const { p1 } = setupGame();
+      room.state.players[p1]!.hand = ["prop_pink_1"];
+      
+      const res = room.playCard(p1, "prop_pink_1", { propertyColor: CardColor.GREEN });
+      expect(res.success).toBe(false);
+      expect(res.error).toBe("Property card cannot be played as this color");
+    });
+
+    it('Cannot use the same card as both main and modifier (exploit prevention)', () => {
+      const { p1 } = setupGame();
+      room.state.players[p1]!.hand = ["rent_double_1", "rent_double_2"];
+      
+      const res = room.playCard(p1, "rent_double_1", { modifierCardId: "rent_double_1" });
+      expect(res.success).toBe(false);
+      expect(res.error).toBe("Cannot use the same card as both main and modifier");
+    });
   });
 });

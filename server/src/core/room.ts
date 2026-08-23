@@ -255,6 +255,7 @@ export class GameRoom {
 
     let multiplier = 1;
     if (options?.modifierCardId) {
+      if (cardId === options.modifierCardId) return { success: false, error: "Cannot use the same card as both main and modifier" };
       const modIndex = player.hand.indexOf(options.modifierCardId);
       if (modIndex === -1) return { success: false, error: "Modifier card not in hand" };
       const modDef = CARDS_DICTIONARY[options.modifierCardId];
@@ -269,13 +270,16 @@ export class GameRoom {
     }
 
     player.actionsRemaining -= 1;
-    player.hand.splice(handIndex, 1);
+    player.hand.splice(player.hand.indexOf(cardId), 1); // safe recalculation since modifier might have shifted indices
 
     if (cardDef.type === CardType.MONEY) {
       player.bank.push(cardId);
     } else if (cardDef.type === CardType.PROPERTY || cardDef.type === CardType.PROPERTY_WILDCARD) {
       const color = options?.propertyColor ? (options.propertyColor as CardColor) : cardDef.colors?.[0]; 
       if (color) {
+        if (!cardDef.colors?.includes(color) && cardDef.colors?.[0] !== CardColor.ALL_COLOR) {
+           return { success: false, error: "Property card cannot be played as this color" };
+        }
         let set = player.table.find(s => s.color === color && !s.isComplete);
         if (!set) {
           set = { color, cards: [], buildings: [], isComplete: false };
