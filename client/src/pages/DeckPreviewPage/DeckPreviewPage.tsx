@@ -13,11 +13,19 @@
 
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Card } from '../../components/Card/Card';
+import { LanguageSwitcher } from '../../components/LanguageSwitcher/LanguageSwitcher';
 import { ALL_CARDS } from '../../data/allCards';
 import { type CardModel, CardType, ActionCardType } from '../../types/cards';
 
+const getBaseId = (id: string): string => {
+  const lastUnderscore = id.lastIndexOf('_');
+  return lastUnderscore !== -1 ? id.substring(0, lastUnderscore) : id;
+};
+
 export function DeckPreviewPage() {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<'ALL' | 'MONEY' | 'PROPERTY' | 'WILDCARD' | 'ACTION' | 'RENT'>('ALL');
   const [selectedCard, setSelectedCard] = useState<CardModel | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -33,7 +41,10 @@ export function DeckPreviewPage() {
     // Search query
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
-      const matchName = card.name.toLowerCase().includes(q);
+      const localizedName = t(`cards.${card.id}.name`, {
+        defaultValue: t(`cards.${getBaseId(card.id)}.name`, { defaultValue: card.name })
+      }).toLowerCase();
+      const matchName = card.name.toLowerCase().includes(q) || localizedName.includes(q);
       const matchId = card.id.toLowerCase().includes(q);
       const matchType = card.type.toLowerCase().includes(q);
       const matchColors = card.colors?.some(c => c.toLowerCase().includes(q));
@@ -77,7 +88,9 @@ export function DeckPreviewPage() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <h1 style={{ fontSize: '28px', letterSpacing: '1px' }}>Monopoly Deal — Повна колода ({ALL_CARDS.length} карт)</h1>
+              <h1 style={{ fontSize: '28px', letterSpacing: '1px' }}>
+                {t('deckPreview.title', { count: ALL_CARDS.length })}
+              </h1>
               <Link
                 to="/"
                 style={{
@@ -91,42 +104,45 @@ export function DeckPreviewPage() {
                   fontWeight: 600
                 }}
               >
-                ← До столу гри
+                {t('deckPreview.backToGame')}
               </Link>
             </div>
             <p style={{ color: 'var(--color-text-muted)', fontSize: '14px', margin: '4px 0 0 0' }}>
-              Клікніть на будь-яку картку для детального огляду. Усі 107 карт згідно з бекендом та правилами.
+              {t('deckPreview.subtitle')}
             </p>
           </div>
 
-          <input
-            type="text"
-            placeholder="Пошук карти (наприклад: Хрещатик, rent, 5, wild)..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            style={{
-              background: 'rgba(255,255,255,0.06)',
-              border: '1px solid var(--color-gold)',
-              borderRadius: '8px',
-              padding: '8px 16px',
-              color: '#fff',
-              fontSize: '14px',
-              outline: 'none',
-              minWidth: '280px'
-            }}
-          />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+            <input
+              type="text"
+              placeholder={t('deckPreview.searchPlaceholder')}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid var(--color-gold)',
+                borderRadius: '8px',
+                padding: '8px 16px',
+                color: '#fff',
+                fontSize: '14px',
+                outline: 'none',
+                minWidth: '280px'
+              }}
+            />
+            <LanguageSwitcher />
+          </div>
         </div>
 
         {/* Filter Tabs */}
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
           {(['ALL', 'MONEY', 'PROPERTY', 'WILDCARD', 'ACTION', 'RENT'] as const).map((tab) => {
             const labels = {
-              ALL: `Всі карти (${counts.ALL})`,
-              MONEY: `Гроші (${counts.MONEY})`,
-              PROPERTY: `Нерухомість (${counts.PROPERTY})`,
-              WILDCARD: `Універсальні (${counts.WILDCARD})`,
-              ACTION: `Дії (${counts.ACTION})`,
-              RENT: `Рента (${counts.RENT})`
+              ALL: `${t('deckPreview.tabs.all')} (${counts.ALL})`,
+              MONEY: `${t('deckPreview.tabs.money')} (${counts.MONEY})`,
+              PROPERTY: `${t('deckPreview.tabs.property')} (${counts.PROPERTY})`,
+              WILDCARD: `${t('deckPreview.tabs.wildcard')} (${counts.WILDCARD})`,
+              ACTION: `${t('deckPreview.tabs.action')} (${counts.ACTION})`,
+              RENT: `${t('deckPreview.tabs.rent')} (${counts.RENT})`
             };
 
             const isActive = activeTab === tab;
@@ -177,7 +193,7 @@ export function DeckPreviewPage() {
 
         {filteredCards.length === 0 && (
           <div style={{ padding: '40px', color: 'var(--color-text-muted)', textAlign: 'center', width: '100%' }}>
-            Карток за вашим запитом не знайдено
+            {t('deckPreview.noCardsFound')}
           </div>
         )}
       </main>
@@ -217,7 +233,11 @@ export function DeckPreviewPage() {
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h2 style={{ fontSize: '22px' }}>{selectedCard.name}</h2>
+              <h2 style={{ fontSize: '22px' }}>
+                {t(`cards.${selectedCard.id}.name`, {
+                  defaultValue: t(`cards.${getBaseId(selectedCard.id)}.name`, { defaultValue: selectedCard.name })
+                })}
+              </h2>
               <button
                 onClick={() => setSelectedCard(null)}
                 style={{
@@ -238,23 +258,25 @@ export function DeckPreviewPage() {
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '14px' }}>
-                <div><strong>ID:</strong> <code style={{ color: 'var(--color-gold-light)' }}>{selectedCard.id}</code></div>
-                <div><strong>Тип:</strong> {selectedCard.type}</div>
+                <div><strong>{t('deckPreview.modal.id')}</strong> <code style={{ color: 'var(--color-gold-light)' }}>{selectedCard.id}</code></div>
+                <div><strong>{t('deckPreview.modal.type')}</strong> {selectedCard.type}</div>
                 {selectedCard.value !== undefined && (
-                  <div><strong>Вартість:</strong> ${selectedCard.value}</div>
+                  <div><strong>{t('deckPreview.modal.value')}</strong> ${selectedCard.value}</div>
                 )}
                 {selectedCard.colors && (
-                  <div><strong>Кольори:</strong> {selectedCard.colors.join(', ')}</div>
+                  <div><strong>{t('deckPreview.modal.colors')}</strong> {selectedCard.colors.join(', ')}</div>
                 )}
                 {selectedCard.fullSetSize && (
-                  <div><strong>Розмір комплекту:</strong> {selectedCard.fullSetSize} шт.</div>
+                  <div><strong>{t('deckPreview.modal.setSize')}</strong> {t('card.setInfo', { count: selectedCard.fullSetSize })}</div>
                 )}
                 {selectedCard.rentValues && (
-                  <div><strong>Рента:</strong> {selectedCard.rentValues.map((r, i) => `${i + 1}🏠: $${r}`).join(' | ')}</div>
+                  <div><strong>{t('deckPreview.modal.rentTable')}</strong> {selectedCard.rentValues.map((r, i) => `${i + 1}🏠: $${r}`).join(' | ')}</div>
                 )}
-                {selectedCard.description && (
+                {(selectedCard.description || t(`cards.${selectedCard.id}.description`, { defaultValue: '' })) && (
                   <div style={{ marginTop: '8px', padding: '8px', background: 'rgba(255,255,255,0.05)', borderRadius: '6px', color: '#ddd' }}>
-                    {selectedCard.description}
+                    {t(`cards.${selectedCard.id}.description`, {
+                      defaultValue: t(`cards.${getBaseId(selectedCard.id)}.description`, { defaultValue: selectedCard.description || '' })
+                    })}
                   </div>
                 )}
               </div>
@@ -273,7 +295,7 @@ export function DeckPreviewPage() {
                   cursor: 'pointer'
                 }}
               >
-                Закрити
+                {t('common.close')}
               </button>
             </div>
           </div>

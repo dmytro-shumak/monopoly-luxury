@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import styles from './Card.module.css';
 import { type CardModel, CardType, ActionCardType, CardColor, BuildingType } from '../../types/cards';
 
@@ -9,7 +10,7 @@ export interface CardProps {
 }
 
 // Crisp inline SVGs matching the physical cards in the photo
-const ActionIcons: Record<string, () => React.JSX.Element> = {
+const ActionIcons: Record<string, (arg?: string) => React.JSX.Element> = {
   PASS_GO: () => (
     <svg viewBox="0 0 36 36" width="36" height="36" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="18" cy="18" r="15" stroke="var(--color-gold)" strokeWidth="1.5" strokeDasharray="3 2" />
@@ -17,10 +18,10 @@ const ActionIcons: Record<string, () => React.JSX.Element> = {
       <path d="M15 12H24V21" stroke="var(--color-gold-light)" strokeWidth="3" />
     </svg>
   ),
-  JUST_SAY_NO: () => (
+  JUST_SAY_NO: (noText: string = 'NO!') => (
     <svg viewBox="0 0 36 36" width="38" height="38" fill="none">
       <polygon points="18,3 32,8 32,22 18,33 4,22 4,8" fill="#8B0000" stroke="var(--color-gold)" strokeWidth="2" />
-      <text x="18" y="22" textAnchor="middle" fill="#FFFFFF" fontSize="11" fontWeight="900" fontFamily="sans-serif">НI!</text>
+      <text x="18" y="22" textAnchor="middle" fill="#FFFFFF" fontSize="11" fontWeight="900" fontFamily="sans-serif">{noText}</text>
     </svg>
   ),
   SLY_DEAL: () => (
@@ -95,8 +96,22 @@ const getColorVar = (color?: CardColor): string => {
   return `var(--color-prop-${color.toLowerCase().replace('_', '-')})`;
 };
 
+const getBaseId = (id: string): string => {
+  const lastUnderscore = id.lastIndexOf('_');
+  return lastUnderscore !== -1 ? id.substring(0, lastUnderscore) : id;
+};
+
 export const Card: React.FC<CardProps> = ({ card, onClick, isHighlighted }) => {
+  const { t } = useTranslation();
   const { type, value, colors, name, description, actionType, isBuilding, rentValues, fullSetSize } = card;
+
+  // Localized card name and description with fallbacks
+  const cardName = t(`cards.${card.id}.name`, {
+    defaultValue: t(`cards.${getBaseId(card.id)}.name`, { defaultValue: name })
+  });
+  const cardDesc = t(`cards.${card.id}.description`, {
+    defaultValue: t(`cards.${getBaseId(card.id)}.description`, { defaultValue: description || '' })
+  });
 
   // Render corner value badge - ONLY for MONEY, PROPERTY, and PROPERTY_WILDCARD
   const renderValueBadge = () => {
@@ -143,12 +158,12 @@ export const Card: React.FC<CardProps> = ({ card, onClick, isHighlighted }) => {
             <div className={styles.propertyContent}>
               {/* Top Colored Banner with Name */}
               <div className={styles.propBanner} style={{ background: getColorVar(colors[0]) }}>
-                <span className={styles.propName}>{name}</span>
+                <span className={styles.propName}>{cardName}</span>
               </div>
 
               {/* Middle Rent Progression Table */}
               <div className={styles.rentTable}>
-                <div className={styles.rentHeader}>РЕНТА</div>
+                <div className={styles.rentHeader}>{t('card.rent')}</div>
                 {rentValues && rentValues.map((val, idx) => (
                   <div key={idx} className={styles.rentRow}>
                     <span className={styles.rentHouses}>
@@ -161,7 +176,7 @@ export const Card: React.FC<CardProps> = ({ card, onClick, isHighlighted }) => {
                 ))}
                 {fullSetSize && (
                   <div className={styles.setInfo}>
-                    Комплект: {fullSetSize} шт.
+                    {t('card.setInfo', { count: fullSetSize })}
                   </div>
                 )}
               </div>
@@ -186,11 +201,11 @@ export const Card: React.FC<CardProps> = ({ card, onClick, isHighlighted }) => {
                 )}
               </div>
 
-              <div className={styles.wildcardName}>{name}</div>
+              <div className={styles.wildcardName}>{cardName}</div>
               
               <div className={styles.wildcardBody}>
-                <div className={styles.wildcardBadge}>УНІВЕРСАЛЬНА КАРТА</div>
-                <div className={styles.wildcardDesc}>{description}</div>
+                <div className={styles.wildcardBadge}>{t('card.wildcardBadge')}</div>
+                <div className={styles.wildcardDesc}>{cardDesc}</div>
               </div>
 
               {/* Bottom split bar */}
@@ -214,7 +229,7 @@ export const Card: React.FC<CardProps> = ({ card, onClick, isHighlighted }) => {
               {actionType === ActionCardType.RENT && colors && (
                 <div className={styles.rentColorsBar}>
                   {colors[0] === CardColor.ALL_COLOR ? (
-                    <div className={styles.rentAllColorBar}>БУДЬ-ЯКИЙ КОЛIР</div>
+                    <div className={styles.rentAllColorBar}>{t('card.anyColor')}</div>
                   ) : (
                     <div className={styles.rentDualBar}>
                       <span className={styles.rentDot} style={{ background: getColorVar(colors[0]) }} />
@@ -232,6 +247,8 @@ export const Card: React.FC<CardProps> = ({ card, onClick, isHighlighted }) => {
                   ActionIcons.HOUSE()
                 ) : isBuilding === BuildingType.HOTEL ? (
                   ActionIcons.HOTEL()
+                ) : actionType === ActionCardType.JUST_SAY_NO ? (
+                  ActionIcons.JUST_SAY_NO(t('card.no'))
                 ) : actionType && ActionIcons[actionType] ? (
                   ActionIcons[actionType]()
                 ) : (
@@ -240,8 +257,8 @@ export const Card: React.FC<CardProps> = ({ card, onClick, isHighlighted }) => {
               </div>
 
               {/* Title and Description */}
-              <div className={styles.actionTitle}>{name}</div>
-              <div className={styles.actionDesc}>{description}</div>
+              <div className={styles.actionTitle}>{cardName}</div>
+              <div className={styles.actionDesc}>{cardDesc}</div>
             </div>
           )}
 

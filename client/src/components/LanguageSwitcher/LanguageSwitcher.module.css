@@ -1,0 +1,41 @@
+.switcherContainer {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(26, 11, 46, 0.7);
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  border-radius: var(--radius-full);
+  padding: 3px;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.switcherContainer:hover {
+  border-color: var(--color-gold);
+  box-shadow: 0 0 10px rgba(212, 175, 55, 0.25);
+}
+
+.langButton {
+  background: transparent;
+  color: var(--color-text-muted);
+  border: none;
+  border-radius: var(--radius-full);
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  outline: none;
+  font-family: inherit;
+}
+
+.langButton:hover {
+  color: var(--color-gold-light);
+}
+
+.langButtonActive {
+  background: var(--color-gold);
+  color: #0a0410;
+  box-shadow: 0 2px 8px rgba(212, 175, 55, 0.4);
+}

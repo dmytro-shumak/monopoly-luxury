@@ -29,7 +29,7 @@ interface GameStore {
   playCard: (cardId: string, actionType: string, targetId?: string) => void;
 }
 
-export const useGameStore = create<GameStore>((set, get) => {
+export const useGameStore = create<GameStore>((set) => {
   // Socket listeners setup
   socket.on('connect', () => {
     set({ isConnected: true, playerId: socket.id });
