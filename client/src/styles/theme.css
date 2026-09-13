@@ -1,0 +1,100 @@
+:root {
+  /* =========================================
+     Base Theme (Dark Mystical Luxury)
+     ========================================= */
+  --color-bg-dark: #0a0410; /* Deepest space/purple */
+  --color-bg-surface: #1a0b2e; /* Card backgrounds, panels */
+  --color-bg-highlight: #2a1b3e; /* Hover states */
+  
+  --color-gold: #D4AF37;
+  --color-gold-light: #F9E596;
+  --color-gold-dark: #aa8620;
+  
+  --color-text-main: #f5f5f5;
+  --color-text-muted: #a098b0;
+  --color-text-dark: #121212;
+
+  /* =========================================
+     Monopoly Property Colors
+     ========================================= */
+  --color-prop-pink: #e03c8c;
+  --color-prop-orange: #f47f20;
+  --color-prop-brown: #8e583c;
+  --color-prop-light-green: #90d346;
+  --color-prop-purple: #7f3d8a;
+  --color-prop-dark-blue: #0b3780;
+  --color-prop-light-blue: #64b5f6;
+  --color-prop-green: #238b45;
+  --color-prop-red: #d32f2f;
+  --color-prop-maroon: #800000;
+  --color-prop-dark-green: #004d00;
+  --color-prop-dark-maroon: #4a0000;
+  --color-prop-all-color: linear-gradient(135deg, #e03c8c, #64b5f6, #f47f20, #90d346);
+
+  /* =========================================
+     Typography
+     ========================================= */
+  --font-family-heading: 'Playfair Display', serif;
+  --font-family-body: 'Inter', sans-serif;
+  
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-md: 1rem;
+  --font-size-lg: 1.25rem;
+  --font-size-xl: 1.5rem;
+  --font-size-2xl: 2rem;
+
+  /* =========================================
+     Layout & Spacing
+     ========================================= */
+  --spacing-1: 4px;
+  --spacing-2: 8px;
+  --spacing-3: 12px;
+  --spacing-4: 16px;
+  --spacing-6: 24px;
+  --spacing-8: 32px;
+
+  /* =========================================
+     Card Dimensions
+     ========================================= */
+  --card-width: 140px;
+  --card-height: 200px;
+  --card-radius: 12px;
+  --card-border-width: 2px;
+  --card-padding: 8px;
+
+  /* =========================================
+     Effects (Glassmorphism & Shadows)
+     ========================================= */
+  --shadow-glass: 0 4px 20px rgba(0, 0, 0, 0.6);
+  --shadow-glow-gold: 0 0 15px rgba(212, 175, 55, 0.5);
+  --shadow-glow-target: 0 0 20px rgba(100, 181, 246, 0.8); /* When targetable */
+  
+  --border-glass: 1px solid rgba(255, 255, 255, 0.1);
+  --border-gold: 1px solid var(--color-gold);
+  
+  --transition-fast: 150ms ease;
+  --transition-normal: 300ms ease;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--color-bg-dark);
+  color: var(--color-text-main);
+  font-family: var(--font-family-body);
+  /* Optional: Background texture could be added here later */
+  background-image: radial-gradient(circle at 50% 50%, var(--color-bg-surface) 0%, var(--color-bg-dark) 100%);
+  min-height: 100vh;
+  overflow-y: auto;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-family-heading);
+  margin: 0;
+  color: var(--color-gold);
+}
+
+* {
+  box-sizing: border-box;
+}

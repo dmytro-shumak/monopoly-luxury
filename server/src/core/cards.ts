@@ -58,7 +58,7 @@ const cardsConfig: ConfigItem[] = [
   createWild('wild_pink_orange', [CardColor.PINK, CardColor.ORANGE], [2]),
   createWild('wild_green_pink', [CardColor.GREEN, CardColor.PINK], [3]),
   createWild('wild_red_pink', [CardColor.RED, CardColor.PINK], [2]),
-  createWild('wild_all', [CardColor.ALL_COLOR], [0, 0]),
+  createWild('wild_all', [CardColor.ALL_COLOR], [3, 3]),
 
   // Actions
   createAction('action_pass_go', 9, { actionType: ActionCardType.PASS_GO }),
