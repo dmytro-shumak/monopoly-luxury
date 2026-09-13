@@ -167,11 +167,11 @@ export const Card: React.FC<CardProps> = ({ card, onClick, isHighlighted }) => {
               </div>
 
               {/* Bottom Colored Accent Bar */}
-              <div className={styles.propBottomBar} style={{ background: getColorVar(colors[0]) }}></div>
+              <div className={styles.propBottomBar} style={{ background: getColorVar(colors[0]) }} />
             </div>
           )}
 
-          {/* 3. PROPERTY WILDCARD (УНІВЕРСАЛЬНА КАРТА) */}
+          {/* 3. PROPERTY WILDCARD (UNIVERSAL CARD) */}
           {type === CardType.PROPERTY_WILDCARD && colors && (
             <div className={styles.wildcardContent}>
               {/* Dual Color or Rainbow Banner */}
@@ -180,8 +180,8 @@ export const Card: React.FC<CardProps> = ({ card, onClick, isHighlighted }) => {
                   <div className={styles.wildBannerAllColor} />
                 ) : (
                   <div className={styles.wildBannerSplit}>
-                    <div className={styles.wildHalf} style={{ background: getColorVar(colors[0]) }}></div>
-                    <div className={styles.wildHalf} style={{ background: getColorVar(colors[1] || colors[0]) }}></div>
+                    <div className={styles.wildHalf} style={{ background: getColorVar(colors[0]) }} />
+                    <div className={styles.wildHalf} style={{ background: getColorVar(colors[1] || colors[0]) }} />
                   </div>
                 )}
               </div>
@@ -199,8 +199,8 @@ export const Card: React.FC<CardProps> = ({ card, onClick, isHighlighted }) => {
                   <div className={styles.wildBannerAllColorBottom} />
                 ) : (
                   <div className={styles.wildBannerSplit}>
-                    <div className={styles.wildHalf} style={{ background: getColorVar(colors[0]) }}></div>
-                    <div className={styles.wildHalf} style={{ background: getColorVar(colors[1] || colors[0]) }}></div>
+                    <div className={styles.wildHalf} style={{ background: getColorVar(colors[0]) }} />
+                    <div className={styles.wildHalf} style={{ background: getColorVar(colors[1] || colors[0]) }} />
                   </div>
                 )}
               </div>

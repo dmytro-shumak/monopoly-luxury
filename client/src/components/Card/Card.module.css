@@ -60,7 +60,7 @@
   font-family: var(--font-family-heading);
   font-weight: 700;
   color: var(--color-gold-light);
-  font-size: 0.8rem;
+  font-size: 13px;
   background: rgba(10, 4, 16, 0.85);
   border: 1px solid var(--color-gold);
   border-radius: 50%;
@@ -96,7 +96,7 @@
 .vintageFiligreeTop,
 .vintageFiligreeBottom {
   color: var(--color-gold);
-  font-size: 0.65rem;
+  font-size: 10px;
   letter-spacing: 3px;
   opacity: 0.7;
 }
@@ -110,7 +110,7 @@
 
 .moneyAmount {
   font-family: var(--font-family-heading);
-  font-size: 2.8rem;
+  font-size: 44px;
   font-weight: 700;
   color: var(--color-gold-light);
   text-shadow: 0 0 12px rgba(212, 175, 55, 0.6), 0 2px 5px #000;
@@ -143,7 +143,7 @@
 
 .propName {
   font-family: var(--font-family-body);
-  font-size: 0.65rem;
+  font-size: 11px;
   font-weight: 700;
   color: #ffffff;
   text-transform: uppercase;
@@ -163,7 +163,7 @@
 
 .rentHeader {
   font-family: var(--font-family-body);
-  font-size: 0.6rem;
+  font-size: 10px;
   font-weight: 700;
   color: var(--color-gold);
   text-align: center;
@@ -177,13 +177,13 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 0.65rem;
+  font-size: 11px;
   color: var(--color-text-main);
   line-height: 1.2;
 }
 
 .miniHouseIcon {
-  font-size: 0.6rem;
+  font-size: 10px;
   margin-right: 1px;
 }
 
@@ -195,7 +195,7 @@
 
 .setInfo {
   margin-top: 4px;
-  font-size: 0.58rem;
+  font-size: 9px;
   text-align: center;
   color: var(--color-text-muted);
   font-style: italic;
@@ -246,7 +246,7 @@
 
 .wildcardName {
   font-family: var(--font-family-heading);
-  font-size: 0.72rem;
+  font-size: 12px;
   font-weight: 700;
   color: var(--color-gold-light);
   text-align: center;
@@ -265,7 +265,7 @@
 }
 
 .wildcardBadge {
-  font-size: 0.55rem;
+  font-size: 9px;
   font-weight: 700;
   color: var(--color-gold);
   border: 1px solid var(--color-gold);
@@ -276,7 +276,7 @@
 }
 
 .wildcardDesc {
-  font-size: 0.58rem;
+  font-size: 10px;
   color: var(--color-text-muted);
   line-height: 1.25;
 }
@@ -326,7 +326,7 @@
 }
 
 .rentAllColorBar {
-  font-size: 0.55rem;
+  font-size: 9px;
   font-weight: 700;
   color: #fff;
   background: var(--color-prop-all-color);
@@ -344,7 +344,7 @@
 
 .actionTitle {
   font-family: var(--font-family-heading);
-  font-size: 0.8rem;
+  font-size: 13px;
   font-weight: 700;
   color: var(--color-gold-light);
   line-height: 1.15;
@@ -353,7 +353,7 @@
 }
 
 .actionDesc {
-  font-size: 0.58rem;
+  font-size: 10px;
   color: var(--color-text-main);
   line-height: 1.25;
   padding: 0 4px;
