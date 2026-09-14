@@ -4,7 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { useMockGameStore } from '../../mocks/useMockGame';
 import { OpponentsArea } from '../../components/Table/OpponentsArea/OpponentsArea';
 import { CenterTable } from '../../components/Table/CenterTable/CenterTable';
-import { PlayerField } from '../../components/Table/PlayerField/PlayerField';
+import { PlayerBank } from '../../components/Table/PlayerBank/PlayerBank';
+import { PlayerProperties } from '../../components/Table/PlayerProperties/PlayerProperties';
 import { PlayerHand } from '../../components/Table/PlayerHand/PlayerHand';
 import { TurnHUD } from '../../components/Table/TurnHUD/TurnHUD';
 import { LanguageSwitcher } from '../../components/LanguageSwitcher/LanguageSwitcher';
@@ -60,37 +61,53 @@ export const GameBoardPage: React.FC = () => {
           />
         </section>
 
-        {/* Center: Deck, Action Arena, Discard Pile */}
-        <section className={styles.centerWrapper}>
-          <CenterTable
-            deckCount={tableState.deckCount}
-            discardPile={tableState.discardPile}
-            activeActionCard={tableState.activeActionCard}
-            validDropTarget={validDropTarget}
-            onDrawCards={drawTwoCards}
-            onPlayAction={playSelectedAction}
-          />
-        </section>
+        {/* Main Arena: Left Column (Bank + Hand) & Right Column (CenterTable + Properties) */}
+        <div className={styles.arenaGrid}>
+          {/* Left Column: Bank (Top) & Hand (Bottom) */}
+          <section className={styles.leftColumn}>
+            {/* 🟡 Yellow Zone: Player Bank */}
+            <div className={styles.bankWrapper}>
+              <PlayerBank
+                bankCards={tableState.currentPlayer.bankCards}
+                validDropTarget={validDropTarget}
+                onPlayToBank={playSelectedToBank}
+              />
+            </div>
 
-        {/* Bottom Field: Bank & Properties */}
-        <section className={styles.playerFieldWrapper}>
-          <PlayerField
-            bankCards={tableState.currentPlayer.bankCards}
-            propertySets={tableState.currentPlayer.propertySets}
-            validDropTarget={validDropTarget}
-            onPlayToBank={playSelectedToBank}
-            onPlayToProperty={playSelectedToProperty}
-          />
-        </section>
+            {/* 🔴 Red Zone: Player Hand (Fixed width holding 9 cards max, overflow-x scroll) */}
+            <div className={styles.handWrapper}>
+              <PlayerHand
+                cards={tableState.currentPlayer.handCards || []}
+                selectedCardId={selectedCardId}
+                onSelectCard={selectCard}
+              />
+            </div>
+          </section>
 
-        {/* Bottom Center: Player Hand */}
-        <section className={styles.playerHandWrapper}>
-          <PlayerHand
-            cards={tableState.currentPlayer.handCards || []}
-            selectedCardId={selectedCardId}
-            onSelectCard={selectCard}
-          />
-        </section>
+          {/* Right Column: Center Table (Top) & Properties (Bottom) */}
+          <section className={styles.rightColumn}>
+            {/* Center Table: Deck, Action Arena, Discard Pile */}
+            <div className={styles.centerWrapper}>
+              <CenterTable
+                deckCount={tableState.deckCount}
+                discardPile={tableState.discardPile}
+                activeActionCard={tableState.activeActionCard}
+                validDropTarget={validDropTarget}
+                onDrawCards={drawTwoCards}
+                onPlayAction={playSelectedAction}
+              />
+            </div>
+
+            {/* 🟢 Green Zone: Player Properties (Extends below Action Arena) */}
+            <div className={styles.propertiesWrapper}>
+              <PlayerProperties
+                propertySets={tableState.currentPlayer.propertySets}
+                validDropTarget={validDropTarget}
+                onPlayToProperty={playSelectedToProperty}
+              />
+            </div>
+          </section>
+        </div>
       </main>
 
       {/* 3. Bottom HUD / Controls */}

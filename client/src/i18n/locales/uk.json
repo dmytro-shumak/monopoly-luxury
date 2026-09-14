@@ -43,7 +43,8 @@
     "cardsCount": "{{count}} карт",
     "you": "Ви",
     "cards": "карт",
-    "turn": "Хід"
+    "turn": "Хід",
+    "hand": "Рука"
   },
   "deckPreview": {
     "title": "Monopoly Deal — Повна колода ({{count}} карт)",

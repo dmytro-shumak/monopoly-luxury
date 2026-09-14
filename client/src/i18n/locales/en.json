@@ -43,7 +43,8 @@
     "cardsCount": "{{count}} cards",
     "you": "You",
     "cards": "cards",
-    "turn": "Turn"
+    "turn": "Turn",
+    "hand": "Hand"
   },
   "deckPreview": {
     "title": "Monopoly Deal — Full Deck ({{count}} cards)",

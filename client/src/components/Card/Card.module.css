@@ -1,6 +1,7 @@
 .card {
   width: var(--card-width);
   height: var(--card-height);
+  box-sizing: border-box;
   border-radius: var(--card-radius);
   background: radial-gradient(circle at 50% 30%, #200f35 0%, #0d0417 100%);
   position: relative;

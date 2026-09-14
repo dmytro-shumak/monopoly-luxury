@@ -15,7 +15,38 @@ html, body {
   flex-direction: column;
 }
 
-/* Hide scrollbars for the game board */
+/* =========================================
+   Global Luxury Gold Scrollbar
+   ========================================= */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #f1c40f rgba(14, 6, 24, 0.92);
+}
+
 ::-webkit-scrollbar {
-  display: none;
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(14, 6, 24, 0.92);
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #d4af37 0%, #f9e596 50%, #d4af37 100%);
+  border: 1px solid #ffe082;
+  border-radius: 6px;
+  box-shadow: 0 0 8px rgba(241, 196, 15, 0.65), inset 0 1px 2px rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #f1c40f 0%, #ffffff 50%, #f1c40f 100%);
+  box-shadow: 0 0 12px rgba(255, 215, 0, 0.9), inset 0 1px 3px rgba(255, 255, 255, 0.9);
+}
+
+::-webkit-scrollbar-corner {
+  background: rgba(14, 6, 24, 0.92);
 }

@@ -1,0 +1,232 @@
+.bankContainer {
+  display: flex;
+  flex-direction: column;
+  background: rgba(24, 10, 38, 0.75);
+  border: 1.5px solid rgba(226, 183, 64, 0.45);
+  border-radius: 14px;
+  padding: 8px 10px 4px 10px;
+  box-sizing: border-box;
+  width: 100%;
+  height: fit-content;
+  flex-shrink: 0;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45), inset 0 0 15px rgba(226, 183, 64, 0.04);
+  transition: all var(--transition-fast);
+  overflow: hidden;
+}
+
+.bankContainerHighlight {
+  border-color: var(--color-gold);
+  background: rgba(212, 175, 55, 0.16);
+  box-shadow: 0 0 24px rgba(212, 175, 55, 0.5), inset 0 0 20px rgba(212, 175, 55, 0.15);
+  cursor: pointer;
+  transform: translateY(-2px);
+}
+
+.bankHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+  padding-bottom: 6px;
+  margin-bottom: 6px;
+  flex-shrink: 0;
+}
+
+.titleWrapper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.bankIcon {
+  font-size: 14px;
+}
+
+.bankTitle {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text-main);
+  letter-spacing: 0.5px;
+}
+
+.bankSumBadge {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--color-gold-light);
+  background: rgba(212, 175, 55, 0.15);
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.dropPrompt {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-gold);
+  text-align: center;
+  padding: 2px 0 6px 0;
+  animation: pulseGold 1.3s infinite;
+  flex-shrink: 0;
+}
+
+@keyframes pulseGold {
+  0%, 100% { opacity: 0.8; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.02); }
+}
+
+/* Row of denomination columns - dynamically sized with minimum height of 3 cards */
+.denominationsRow {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+  height: 206px;
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 2px 2px 4px 2px;
+  scrollbar-width: thin;
+  scrollbar-color: #f1c40f rgba(14, 6, 24, 0.92);
+  transition: height var(--transition-normal);
+}
+
+.bankContainer[data-max-stack="3"] .denominationsRow {
+  height: 206px;
+}
+
+.bankContainer[data-max-stack="4"] .denominationsRow {
+  height: 230px;
+}
+
+.bankContainer[data-max-stack="5"] .denominationsRow {
+  height: 254px;
+}
+
+.bankContainer[data-max-stack="6"] .denominationsRow {
+  height: 278px;
+}
+
+.bankContainer[data-max-stack="7"] .denominationsRow {
+  height: 302px;
+}
+
+.bankContainer[data-max-stack="8"] .denominationsRow {
+  height: 326px;
+}
+
+/* Prominent, luxury gold custom scrollbar */
+.denominationsRow::-webkit-scrollbar {
+  display: block;
+  height: 8px;
+}
+
+.denominationsRow::-webkit-scrollbar-track {
+  display: block;
+  background: rgba(14, 6, 24, 0.92);
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  border-radius: 6px;
+  margin: 0 4px;
+}
+
+.denominationsRow::-webkit-scrollbar-thumb {
+  display: block;
+  background: linear-gradient(90deg, #d4af37 0%, #f9e596 50%, #d4af37 100%);
+  border: 1px solid #ffe082;
+  border-radius: 6px;
+  box-shadow: 0 0 8px rgba(241, 196, 15, 0.65), inset 0 1px 2px rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+}
+
+.denominationsRow::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(90deg, #f1c40f 0%, #ffffff 50%, #f1c40f 100%);
+  box-shadow: 0 0 12px rgba(255, 215, 0, 0.9), inset 0 1px 3px rgba(255, 255, 255, 0.9);
+}
+
+.emptyBank {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  font-style: italic;
+}
+
+/* Denomination column holding cards of the same value */
+.denominationColumn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: rgba(12, 5, 20, 0.55);
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  border-radius: 10px;
+  padding: 4px 5px 4px 5px;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.denominationBadge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: rgba(212, 175, 55, 0.12);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  border-radius: 6px;
+  padding: 0 6px;
+  height: 18px;
+  box-sizing: border-box;
+  margin-bottom: 4px;
+}
+
+.badgeValue {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--color-gold-light);
+  line-height: 1;
+}
+
+.badgeCount {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  line-height: 1;
+}
+
+/* Vertical cascading stack for cards of this denomination */
+.cardsStack {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  width: 70px;
+  box-sizing: border-box;
+}
+
+.cardItem {
+  position: relative;
+  width: 70px;
+  height: 100px;
+  margin-top: -76px;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  transition: transform var(--transition-fast);
+}
+
+.cardItem:first-child {
+  margin-top: 0;
+}
+
+.cardItem > div {
+  transform: scale(0.50);
+  transform-origin: top left;
+}
+
+.cardItem:hover {
+  transform: translateY(-6px);
+  z-index: 10;
+}
