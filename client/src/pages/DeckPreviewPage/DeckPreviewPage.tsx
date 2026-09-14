@@ -17,7 +17,8 @@ import { useTranslation } from 'react-i18next';
 import { Card } from '../../components/Card/Card';
 import { LanguageSwitcher } from '../../components/LanguageSwitcher/LanguageSwitcher';
 import { ALL_CARDS } from '../../data/allCards';
-import { type CardModel, CardType, ActionCardType } from '../../types/cards';
+import type { CardModel } from '../../types/cards';
+import { CardType, ActionCardType } from '../../types/cards';
 
 const getBaseId = (id: string): string => {
   const lastUnderscore = id.lastIndexOf('_');

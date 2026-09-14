@@ -1,0 +1,159 @@
+.opponentsContainer {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 24px;
+  width: 100%;
+  padding: 8px 16px;
+  box-sizing: border-box;
+}
+
+.opponentCard {
+  display: flex;
+  flex-direction: column;
+  background: rgba(22, 9, 36, 0.7);
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  border-radius: 12px;
+  padding: 10px 14px;
+  min-width: 300px;
+  max-width: 420px;
+  flex: 1;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  transition: all var(--transition-fast);
+}
+
+.opponentActive {
+  border-color: var(--color-gold);
+  box-shadow: 0 0 16px rgba(212, 175, 55, 0.4), inset 0 0 12px rgba(212, 175, 55, 0.1);
+}
+
+.headerRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.15);
+  padding-bottom: 6px;
+  margin-bottom: 8px;
+}
+
+.playerInfo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.avatar {
+  font-size: 18px;
+}
+
+.playerName {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--color-text-main);
+}
+
+.activeBadge {
+  font-size: 10px;
+  font-weight: 700;
+  color: #0a0410;
+  background: var(--color-gold);
+  border-radius: 10px;
+  padding: 2px 8px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.bankPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(212, 175, 55, 0.12);
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  border-radius: 12px;
+  padding: 2px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-gold-light);
+}
+
+.bodyRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.handZone {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.handStack {
+  display: flex;
+  position: relative;
+  height: 48px;
+  width: 54px;
+}
+
+.miniCardBack {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 34px;
+  height: 48px;
+  border-radius: 4px;
+  background: radial-gradient(circle at 50% 50%, #220d3f 0%, #090312 100%);
+  border: 1px solid var(--color-gold);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+}
+
+.handCountText {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+
+.propertiesZone {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  flex: 1;
+}
+
+.propertyPill {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(0, 0, 0, 0.3);
+  font-size: 11px;
+  font-weight: 600;
+  position: relative;
+}
+
+.propertyPillComplete {
+  border-color: var(--color-gold);
+  background: rgba(212, 175, 55, 0.15);
+  box-shadow: 0 0 8px rgba(212, 175, 55, 0.3);
+}
+
+.colorDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.completeStar {
+  color: var(--color-gold-light);
+  font-size: 10px;
+}
+
+.buildingIcon {
+  font-size: 10px;
+}

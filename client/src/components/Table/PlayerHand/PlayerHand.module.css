@@ -1,0 +1,67 @@
+.handContainer {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  width: 100%;
+  padding: 0 16px 6px 16px;
+  box-sizing: border-box;
+  position: relative;
+  z-index: 20;
+}
+
+.handCardsRow {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  max-width: 100%;
+  overflow-x: auto;
+  padding: 16px 12px 2px 12px;
+}
+
+.cardSlot {
+  transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.22s ease;
+  cursor: pointer;
+  flex-shrink: 0;
+  position: relative;
+  width: 110px;
+  height: 154px;
+  margin: 0 -10px;
+}
+
+.cardSlot > div:last-child {
+  transform: scale(0.78);
+  transform-origin: top left;
+}
+
+.cardSlot:hover {
+  transform: translateY(-22px);
+  z-index: 30;
+}
+
+.cardSelected {
+  transform: translateY(-28px) !important;
+  z-index: 40 !important;
+  filter: drop-shadow(0 0 16px rgba(212, 175, 55, 0.9));
+}
+
+.selectionIndicator {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--color-gold);
+  color: #0a0410;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 8px;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(212, 175, 55, 0.6);
+  animation: bounceDot 1.2s infinite;
+}
+
+@keyframes bounceDot {
+  0%, 100% { transform: translate(-50%, 0); }
+  50% { transform: translate(-50%, -4px); }
+}

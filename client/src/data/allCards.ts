@@ -1,4 +1,5 @@
-import { CardColor, CardType, ActionCardType, BuildingType, type CardModel } from "../types/cards";
+import type { CardModel } from "../types/cards";
+import { CardColor, CardType, ActionCardType, BuildingType } from "../types/cards";
 
 const PROPERTY_CONFIG: Record<CardColor, { names: string[]; values: number[]; setSize: number }> = {
   [CardColor.PINK]: {

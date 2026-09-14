@@ -1,7 +1,8 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import styles from './Card.module.css';
-import { type CardModel, CardType, ActionCardType, CardColor, BuildingType } from '../../types/cards';
+import type { CardModel } from '../../types/cards';
+import { CardType, ActionCardType, CardColor, BuildingType } from '../../types/cards';
 
 export interface CardProps {
   card: CardModel;

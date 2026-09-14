@@ -1,0 +1,77 @@
+.cardBack {
+  width: var(--card-width);
+  height: var(--card-height);
+  border-radius: var(--radius-card);
+  background: radial-gradient(circle at 50% 50%, #200c3b 0%, #0c0417 100%);
+  border: 1.5px solid var(--color-gold);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5), inset 0 0 10px rgba(212, 175, 55, 0.2);
+  padding: 4px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  user-select: none;
+  flex-shrink: 0;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.innerPattern {
+  width: 100%;
+  height: 100%;
+  border: 1px dashed rgba(212, 175, 55, 0.4);
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(212, 175, 55, 0.03),
+    rgba(212, 175, 55, 0.03) 6px,
+    transparent 6px,
+    transparent 12px
+  );
+  position: relative;
+}
+
+.crestWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.monogram {
+  color: var(--color-gold);
+  font-family: var(--font-family-serif);
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-shadow: 0 0 8px rgba(212, 175, 55, 0.6);
+}
+
+.stars {
+  color: var(--color-gold-light);
+  font-size: 8px;
+  letter-spacing: 3px;
+  margin-top: 2px;
+}
+
+/* Compact version for opponents */
+.compact {
+  width: 48px;
+  height: 68px;
+  padding: 2px;
+  border-radius: 4px;
+}
+
+.compact .monogram {
+  font-size: 11px;
+  letter-spacing: 1px;
+}
+
+.compact .stars {
+  font-size: 6px;
+  letter-spacing: 1px;
+}
