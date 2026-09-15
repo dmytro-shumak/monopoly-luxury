@@ -53,6 +53,13 @@ export const GameBoardPage: React.FC = () => {
 
       {/* 2. Main Luxury Table Felt */}
       <main className={styles.tableFelt}>
+        {/* Top-Right Deck Counter (Purely Static Information) */}
+        <div className={styles.deckCounterWidget}>
+          <span className={styles.deckIcon}>🎴</span>
+          <span className={styles.deckLabel}>{t('board.deck')}:</span>
+          <span className={styles.deckCountValue}>{tableState.deckCount}</span>
+        </div>
+
         {/* Top: Opponents Area */}
         <section className={styles.opponentsWrapper}>
           <OpponentsArea
@@ -86,14 +93,12 @@ export const GameBoardPage: React.FC = () => {
 
           {/* Right Column: Center Table (Top) & Properties (Bottom) */}
           <section className={styles.rightColumn}>
-            {/* Center Table: Deck, Action Arena, Discard Pile */}
+            {/* Center Table: Action Arena & Discard Pile */}
             <div className={styles.centerWrapper}>
               <CenterTable
-                deckCount={tableState.deckCount}
                 discardPile={tableState.discardPile}
                 activeActionCard={tableState.activeActionCard}
                 validDropTarget={validDropTarget}
-                onDrawCards={drawTwoCards}
                 onPlayAction={playSelectedAction}
               />
             </div>

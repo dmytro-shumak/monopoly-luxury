@@ -108,6 +108,46 @@
   padding: 6px 16px 0 16px;
 }
 
+.deckCounterWidget {
+  position: absolute;
+  top: 16px;
+  right: 24px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(22, 9, 36, 0.75);
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  border-radius: 12px;
+  padding: 6px 14px;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  cursor: default;
+  user-select: none;
+}
+
+.deckIcon {
+  font-size: 15px;
+}
+
+.deckLabel {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text-main);
+  letter-spacing: 0.5px;
+}
+
+.deckCountValue {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--color-gold-light);
+  background: rgba(212, 175, 55, 0.15);
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
 /* Main Arena: Two-column layout */
 .arenaGrid {
   flex: 1;

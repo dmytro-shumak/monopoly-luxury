@@ -16,52 +16,6 @@
   gap: 6px;
 }
 
-.deckStack {
-  position: relative;
-  width: var(--card-width);
-  height: var(--card-height);
-  transform: scale(0.78);
-  transform-origin: center center;
-  margin: -16px -12px;
-  cursor: pointer;
-  transition: transform var(--transition-fast);
-}
-
-.deckStack:hover {
-  transform: scale(0.82) translateY(-4px);
-}
-
-.deckLayer2 {
-  position: absolute;
-  top: -4px;
-  left: -3px;
-  width: 100%;
-  height: 100%;
-  border-radius: var(--radius-card);
-  background: #110521;
-  border: 1px solid rgba(212, 175, 55, 0.4);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-}
-
-.deckLayer1 {
-  position: absolute;
-  top: -2px;
-  left: -1.5px;
-  width: 100%;
-  height: 100%;
-  border-radius: var(--radius-card);
-  background: #18092f;
-  border: 1px solid rgba(212, 175, 55, 0.6);
-}
-
-.deckTop {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-}
-
 .countPill {
   background: rgba(22, 9, 36, 0.85);
   border: 1px solid rgba(212, 175, 55, 0.4);

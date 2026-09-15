@@ -1,25 +1,20 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card } from '../../Card/Card';
-import { CardBack } from '../../Card/CardBack';
 import { type CardModel } from '../../../types/cards';
 import styles from './CenterTable.module.css';
 
 export interface CenterTableProps {
-  deckCount: number;
   discardPile: CardModel[];
   activeActionCard: CardModel | null;
   validDropTarget: 'bank' | 'property' | 'action' | null;
-  onDrawCards: () => void;
   onPlayAction: () => void;
 }
 
 export const CenterTable: React.FC<CenterTableProps> = ({
-  deckCount,
   discardPile,
   activeActionCard,
   validDropTarget,
-  onDrawCards,
   onPlayAction,
 }) => {
   const { t } = useTranslation();
@@ -28,21 +23,7 @@ export const CenterTable: React.FC<CenterTableProps> = ({
 
   return (
     <div className={styles.centerContainer}>
-      {/* 1. Draw Deck */}
-      <div className={styles.pileWrapper}>
-        <div className={styles.deckStack} onClick={onDrawCards} title={t('board.drawCards')}>
-          <div className={styles.deckLayer2} />
-          <div className={styles.deckLayer1} />
-          <div className={styles.deckTop}>
-            <CardBack />
-          </div>
-        </div>
-        <span className={styles.countPill}>
-          {t('board.deck')}: {deckCount}
-        </span>
-      </div>
-
-      {/* 2. Central Action Arena / Play Plinth */}
+      {/* 1. Central Action Arena / Play Plinth */}
       <div
         className={`${styles.actionArena} ${isActionTarget ? styles.actionArenaHighlight : ''}`}
         onClick={() => {
@@ -66,7 +47,7 @@ export const CenterTable: React.FC<CenterTableProps> = ({
         )}
       </div>
 
-      {/* 3. Discard Pile */}
+      {/* 2. Discard Pile */}
       <div className={styles.pileWrapper}>
         <div className={styles.discardStack}>
           {topDiscard ? (
@@ -86,3 +67,4 @@ export const CenterTable: React.FC<CenterTableProps> = ({
     </div>
   );
 };
+
