@@ -28,6 +28,7 @@
     "drawCards": "Draw 2 Cards",
     "resetMock": "Reset Table",
     "bank": "Bank",
+    "opponentBankTitle": "{{name}}'s Bank",
     "bankTotal": "Total in Bank:",
     "properties": "Properties",
     "completeSet": "★ Complete!",

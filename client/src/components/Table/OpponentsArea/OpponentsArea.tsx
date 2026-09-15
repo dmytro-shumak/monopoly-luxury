@@ -2,6 +2,8 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { CardColor } from '../../../types/cards';
 import { type MockPlayer } from '../../../mocks/mockGameData';
+import { Tooltip } from '../../Tooltip/Tooltip';
+import { PlayerBank } from '../PlayerBank/PlayerBank';
 import styles from './OpponentsArea.module.css';
 
 export interface OpponentsAreaProps {
@@ -37,9 +39,21 @@ export const OpponentsArea: React.FC<OpponentsAreaProps> = ({ opponents, activeP
                 )}
               </div>
 
-              <div className={styles.bankPill}>
-                <span>💰 ${totalBank}</span>
-              </div>
+              <Tooltip
+                content={
+                  <PlayerBank
+                    bankCards={opponent.bankCards}
+                    variant="tooltip"
+                    title={t('board.opponentBankTitle', { name: opponent.name })}
+                  />
+                }
+                placement="bottom"
+                offset={8}
+              >
+                <div className={styles.bankPill}>
+                  <span>💰 ${totalBank}</span>
+                </div>
+              </Tooltip>
             </div>
 
             {/* Body: Hand Cards Count & Property Sets */}

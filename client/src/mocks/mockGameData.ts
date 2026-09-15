@@ -177,7 +177,12 @@ export const createInitialMockState = (): MockTableState => {
     name: 'Elena',
     avatar: '💎',
     handCount: 4,
-    bankCards: [],
+    bankCards: [
+      getCard('money_5_1'),
+      getCard('money_2_1'),
+      getCard('money_1_1'),
+      getCard('money_1_2'),
+    ],
     propertySets: [
       {
         color: CardColor.LIGHT_GREEN,
@@ -236,7 +241,15 @@ export const createInitialMockState = (): MockTableState => {
     name: 'Marcus',
     avatar: '🎩',
     handCount: 6,
-    bankCards: [],
+    bankCards: [
+      getCard('money_10_1'),
+      getCard('money_4_1'),
+      getCard('money_3_1'),
+      getCard('money_2_2'),
+      getCard('money_1_3'),
+      getCard('money_1_6'),
+      getCard('money_1_7'),
+    ],
     propertySets: [
       {
         color: CardColor.RED,

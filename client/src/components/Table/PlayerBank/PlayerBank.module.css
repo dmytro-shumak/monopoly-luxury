@@ -237,3 +237,31 @@
   transform-origin: top left;
 }
 
+/* Tooltip Popover Variant */
+.tooltipVariant {
+  width: fit-content !important;
+  min-width: auto !important;
+  max-width: 560px;
+  background: #140722 !important;
+  backdrop-filter: none !important;
+  border: 1.5px solid rgba(212, 175, 55, 0.75) !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.95), 0 0 24px rgba(212, 175, 55, 0.25) !important;
+  padding: 8px 10px 8px 10px !important;
+  overflow: visible !important;
+  border-radius: 12px;
+}
+
+.tooltipVariant .denominationsRow {
+  width: fit-content !important;
+  height: auto !important;
+  min-height: auto !important;
+  overflow: visible !important;
+  scrollbar-width: none !important;
+  padding: 4px 2px 4px 2px;
+}
+
+.tooltipVariant .denominationsRow::-webkit-scrollbar {
+  display: none !important;
+}
+
+

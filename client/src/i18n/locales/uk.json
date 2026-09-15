@@ -28,6 +28,7 @@
     "drawCards": "Взяти 2 карти",
     "resetMock": "Скинути стіл",
     "bank": "Банк",
+    "opponentBankTitle": "Банк: {{name}}",
     "bankTotal": "Сума в банку:",
     "properties": "Нерухомість",
     "completeSet": "★ Зібрано!",

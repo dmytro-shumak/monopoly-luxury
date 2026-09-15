@@ -75,6 +75,14 @@
   font-size: 12px;
   font-weight: 700;
   color: var(--color-gold-light);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.bankPill:hover {
+  background: rgba(212, 175, 55, 0.22);
+  border-color: var(--color-gold);
+  box-shadow: 0 0 10px rgba(212, 175, 55, 0.35);
 }
 
 .bodyRow {

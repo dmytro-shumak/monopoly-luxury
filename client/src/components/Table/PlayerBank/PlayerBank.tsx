@@ -8,17 +8,23 @@ import styles from './PlayerBank.module.css';
 
 export interface PlayerBankProps {
   bankCards: CardModel[];
-  validDropTarget: 'bank' | 'property' | 'action' | null;
-  onPlayToBank: () => void;
+  validDropTarget?: 'bank' | 'property' | 'action' | null;
+  onPlayToBank?: () => void;
+  variant?: 'board' | 'tooltip';
+  title?: string;
 }
 
 export const PlayerBank: React.FC<PlayerBankProps> = ({
   bankCards,
   validDropTarget,
   onPlayToBank,
+  variant = 'board',
+  title,
 }) => {
   const { t } = useTranslation();
-  const isBankTarget = validDropTarget === 'bank';
+  const isTooltip = variant === 'tooltip';
+  const isBankTarget = !isTooltip && validDropTarget === 'bank';
+  const displayTitle = title || t('board.bank');
 
   // Group bank cards strictly by denomination/value
   const denominationGroups = useMemo(() => {
@@ -53,10 +59,10 @@ export const PlayerBank: React.FC<PlayerBankProps> = ({
 
   return (
     <div
-      className={`${styles.bankContainer} ${isBankTarget ? styles.bankContainerHighlight : ''}`}
+      className={`${styles.bankContainer} ${isTooltip ? styles.tooltipVariant : ''} ${isBankTarget ? styles.bankContainerHighlight : ''}`}
       data-max-stack={maxStackCount}
       onClick={() => {
-        if (isBankTarget) {
+        if (isBankTarget && onPlayToBank) {
           onPlayToBank();
         }
       }}
@@ -65,7 +71,7 @@ export const PlayerBank: React.FC<PlayerBankProps> = ({
       <div className={styles.bankHeader}>
         <div className={styles.titleWrapper}>
           <span className={styles.bankIcon}>💰</span>
-          <span className={styles.bankTitle}>{t('board.bank')}</span>
+          <span className={styles.bankTitle}>{displayTitle}</span>
         </div>
         <div className={styles.bankSumBadge}>${totalBank}</div>
       </div>
