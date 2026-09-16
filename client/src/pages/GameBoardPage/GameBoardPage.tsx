@@ -20,10 +20,12 @@ export const GameBoardPage: React.FC = () => {
     validDropTarget,
     validPropertyTargets,
     tableMovingCard,
+    activeMoneyDemand,
     selectCard,
     playSelectedToBank,
     playSelectedToProperty,
     playSelectedAction,
+    executeOpponentPayment,
     startTableCardMove,
     cancelTableCardMove,
     executeTableCardMove,
@@ -71,6 +73,9 @@ export const GameBoardPage: React.FC = () => {
           <OpponentsArea
             opponents={tableState.opponents}
             activePlayerId={tableState.turn.activePlayerId}
+            isSelectingTarget={Boolean(activeMoneyDemand && activeMoneyDemand.targetType === 'single_player')}
+            targetDemandAmount={activeMoneyDemand?.amount}
+            onSelectTargetOpponent={executeOpponentPayment}
           />
         </section>
 

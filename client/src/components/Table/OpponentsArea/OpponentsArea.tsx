@@ -10,13 +10,22 @@ import styles from './OpponentsArea.module.css';
 export interface OpponentsAreaProps {
   opponents: MockPlayer[];
   activePlayerId: string;
+  isSelectingTarget?: boolean;
+  targetDemandAmount?: number;
+  onSelectTargetOpponent?: (opponentId: string) => void;
 }
 
 const getColorVar = (color: CardColor): string => {
   return `var(--color-prop-${color.toLowerCase().replace('_', '-')})`;
 };
 
-export const OpponentsArea: React.FC<OpponentsAreaProps> = ({ opponents, activePlayerId }) => {
+export const OpponentsArea: React.FC<OpponentsAreaProps> = ({
+  opponents,
+  activePlayerId,
+  isSelectingTarget = false,
+  targetDemandAmount = 0,
+  onSelectTargetOpponent,
+}) => {
   const { t } = useTranslation();
 
   return (
@@ -29,7 +38,12 @@ export const OpponentsArea: React.FC<OpponentsAreaProps> = ({ opponents, activeP
         return (
           <div
             key={opponent.id}
-            className={`${styles.opponentCard} ${isActive ? styles.opponentActive : ''}`}
+            className={`${styles.opponentCard} ${isActive ? styles.opponentActive : ''} ${isSelectingTarget ? styles.opponentSelectableTarget : ''}`}
+            onClick={() => {
+              if (isSelectingTarget && onSelectTargetOpponent) {
+                onSelectTargetOpponent(opponent.id);
+              }
+            }}
           >
             {/* Header: Name, Avatar, Turn Badge, Properties & Bank Badges */}
             <div className={styles.headerRow}>
@@ -38,6 +52,11 @@ export const OpponentsArea: React.FC<OpponentsAreaProps> = ({ opponents, activeP
                 <span className={styles.playerName}>{opponent.name}</span>
                 {isActive && (
                   <span className={styles.activeBadge}>{t('board.turn')}</span>
+                )}
+                {isSelectingTarget && (
+                  <span className={styles.opponentTargetBadge}>
+                    🎯 {t('board.demandRent', { amount: targetDemandAmount })}
+                  </span>
                 )}
               </div>
 

@@ -44,6 +44,7 @@
     "addToSet": "Додати сюди",
     "addHouse": "Додати будинок",
     "addHotel": "Додати готель",
+    "demandRent": "Стягнути ${{amount}}",
     "moveHere": "Перемістити сюди",
     "swapColor": "Змінити на {{color}}",
     "swapColorHint": "Клікніть, щоб змінити на {{color}} (1 дія)",

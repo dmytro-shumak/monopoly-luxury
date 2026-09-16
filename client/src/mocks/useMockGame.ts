@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { CardType, CardColor, BuildingType, ActionCardType, type CardModel } from '../types/cards';
 import { PROPERTY_CONFIG, ALL_CARDS } from '../data/allCards';
-import { createInitialMockState, type MockTableState, type MockPropertySet } from './mockGameData';
+import { createInitialMockState, type MockTableState, type MockPropertySet, type MockPlayer } from './mockGameData';
 
 export type PropertyTarget =
   | { type: 'existing'; setIndex: number; color: CardColor }
@@ -195,18 +195,113 @@ export const drawCardsFromDeck = (
   return { drawnCards, newDeckCount };
 };
 
+export interface BestRentChoice {
+  color: CardColor;
+  amount: number;
+}
+
+export interface ActiveMoneyDemand {
+  card: CardModel;
+  amount: number;
+  color?: CardColor;
+  targetType: 'single_player' | 'all_players';
+}
+
+export const computeRentForColor = (
+  color: CardColor,
+  propertySets: MockPropertySet[]
+): number => {
+  const setsOfColor = propertySets.filter((s) => s.color === color);
+  if (setsOfColor.length === 0) return 0;
+
+  let maxRent = 0;
+  setsOfColor.forEach((set) => {
+    let rent = set.cards.length;
+    if (set.hasHouse) rent += 3;
+    if (set.hasHotel) rent += 4;
+    if (rent > maxRent) {
+      maxRent = rent;
+    }
+  });
+  return maxRent;
+};
+
+export const computeBestRentForCard = (
+  card: CardModel,
+  propertySets: MockPropertySet[]
+): BestRentChoice | null => {
+  if (card.actionType !== ActionCardType.RENT) return null;
+
+  const colors = card.colors || [];
+
+  // Wild Rent (ALL_COLOR) -> evaluate all colors the player currently owns
+  if (colors.includes(CardColor.ALL_COLOR)) {
+    let best: BestRentChoice | null = null;
+    propertySets.forEach((set) => {
+      const rent = computeRentForColor(set.color, propertySets);
+      if (!best || rent > best.amount) {
+        best = { color: set.color, amount: rent };
+      }
+    });
+    return best;
+  }
+
+  // Dual-color Rent -> evaluate both colors and pick the highest rent
+  let best: BestRentChoice | null = null;
+  colors.forEach((color) => {
+    const rent = computeRentForColor(color, propertySets);
+    if (!best || rent > best.amount) {
+      best = { color, amount: rent };
+    }
+  });
+
+  return best;
+};
+
+export const settlePaymentFromPlayer = (
+  payer: MockPlayer,
+  amount: number
+): { paidCards: CardModel[]; updatedPayer: MockPlayer; totalPaid: number } => {
+  let remainingDue = amount;
+  const paidCards: CardModel[] = [];
+  const remainingBank: CardModel[] = [];
+
+  // Sort bank cards ascending so smaller bills are used first
+  const bankCards = [...payer.bankCards].sort((a, b) => (a.value || 0) - (b.value || 0));
+
+  for (const card of bankCards) {
+    if (remainingDue > 0) {
+      paidCards.push(card);
+      remainingDue -= card.value || 0;
+    } else {
+      remainingBank.push(card);
+    }
+  }
+
+  const totalPaid = paidCards.reduce((acc, c) => acc + (c.value || 0), 0);
+
+  const updatedPayer: MockPlayer = {
+    ...payer,
+    bankCards: remainingBank,
+  };
+
+  return { paidCards, updatedPayer, totalPaid };
+};
+
 interface MockGameStore {
   tableState: MockTableState;
   selectedCardId: string | null;
   validDropTarget: 'bank' | 'property' | 'action' | null;
   validPropertyTargets: PropertyTarget[];
   tableMovingCard: TableMovingCard | null;
+  activeMoneyDemand: ActiveMoneyDemand | null;
 
   // Actions
   selectCard: (cardId: string | null) => void;
   playSelectedToBank: () => void;
   playSelectedToProperty: (target?: PropertyTarget) => void;
   playSelectedAction: () => void;
+  executeOpponentPayment: (targetOpponentId: string) => void;
   startTableCardMove: (sourceSetIndex: number, card: CardModel) => void;
   cancelTableCardMove: () => void;
   executeTableCardMove: (target?: PropertyTarget) => void;
@@ -221,6 +316,7 @@ export const useMockGameStore = create<MockGameStore>((set, get) => ({
   validDropTarget: null,
   validPropertyTargets: [],
   tableMovingCard: null,
+  activeMoneyDemand: null,
 
   selectCard: (cardId: string | null) => {
     const { selectedCardId, tableState } = get();
@@ -251,7 +347,12 @@ export const useMockGameStore = create<MockGameStore>((set, get) => ({
       target = 'property';
       propTargets = computeValidPropertyTargets(card, tableState.currentPlayer.propertySets);
     } else if (card.type === CardType.ACTION) {
-      target = 'action';
+      if (card.actionType === ActionCardType.RENT) {
+        const best = computeBestRentForCard(card, tableState.currentPlayer.propertySets);
+        target = best && best.amount > 0 ? 'action' : null;
+      } else {
+        target = 'action';
+      }
     }
 
     set({ selectedCardId: cardId, validDropTarget: target, validPropertyTargets: propTargets, tableMovingCard: null });
@@ -379,6 +480,9 @@ export const useMockGameStore = create<MockGameStore>((set, get) => ({
     let finalHand = newHand;
     let finalDeckCount = tableState.deckCount;
     let actionMessage = `${card.name} played!`;
+    let newMoneyDemand: ActiveMoneyDemand | null = null;
+    let updatedOpponents = tableState.opponents;
+    let newBank = tableState.currentPlayer.bankCards;
 
     // Special logic for PASS_GO: draw 2 cards from deck to hand
     if (card.actionType === ActionCardType.PASS_GO) {
@@ -396,25 +500,96 @@ export const useMockGameStore = create<MockGameStore>((set, get) => ({
       finalHand = [...newHand, ...drawnCards];
       finalDeckCount = newDeckCount;
       actionMessage = `${card.name}: +2 карт у руці!`;
+    } else if (card.actionType === ActionCardType.RENT) {
+      const bestRent = computeBestRentForCard(card, tableState.currentPlayer.propertySets);
+      const rentAmount = bestRent ? bestRent.amount : 0;
+
+      if (rentAmount > 0 && bestRent) {
+        newMoneyDemand = {
+          card,
+          amount: rentAmount,
+          color: bestRent.color,
+          targetType: 'single_player',
+        };
+        actionMessage = `${card.name}: вимагаємо $${rentAmount} (колір: ${bestRent.color.replace('_', ' ')}). Оберіть гравця!`;
+      } else {
+        actionMessage = `${card.name}: немає нерухомості цього кольору ($0).`;
+      }
+    } else if (card.actionType === ActionCardType.DEBT_COLLECTOR) {
+      newMoneyDemand = {
+        card,
+        amount: 5,
+        targetType: 'single_player',
+      };
+      actionMessage = `${card.name}: вимагаємо $5! Оберіть гравця!`;
+    } else if (card.actionType === ActionCardType.BIRTHDAY) {
+      // Birthday: all other players pay $2 immediately without player selection
+      let totalCollectedCards: CardModel[] = [];
+      updatedOpponents = tableState.opponents.map((opp) => {
+        const { paidCards, updatedPayer } = settlePaymentFromPlayer(opp, 2);
+        totalCollectedCards = [...totalCollectedCards, ...paidCards];
+        return updatedPayer;
+      });
+
+      const totalCollectedAmount = totalCollectedCards.reduce((acc, c) => acc + (c.value || 0), 0);
+      newBank = [...totalCollectedCards, ...newBank];
+      actionMessage = `День народження: усі гравці сплатили по $2 (всього +$${totalCollectedAmount})!`;
     }
 
     set({
       selectedCardId: null,
       validDropTarget: null,
+      activeMoneyDemand: newMoneyDemand,
       tableState: {
         ...tableState,
         deckCount: finalDeckCount,
         activeActionCard: card,
         activeActionMessage: actionMessage,
         discardPile: newDiscard,
+        opponents: updatedOpponents,
         currentPlayer: {
           ...tableState.currentPlayer,
           handCards: finalHand,
           handCount: finalHand.length,
+          bankCards: newBank,
         },
         turn: {
           ...tableState.turn,
           actionsRemaining: newActions,
+        },
+      },
+    });
+  },
+
+  executeOpponentPayment: (targetOpponentId: string) => {
+    const { activeMoneyDemand, tableState } = get();
+    if (!activeMoneyDemand) return;
+
+    const targetOpponent = tableState.opponents.find((o) => o.id === targetOpponentId);
+    if (!targetOpponent) return;
+
+    const { paidCards, updatedPayer, totalPaid } = settlePaymentFromPlayer(
+      targetOpponent,
+      activeMoneyDemand.amount
+    );
+
+    const updatedOpponents = tableState.opponents.map((o) =>
+      o.id === targetOpponentId ? updatedPayer : o
+    );
+
+    const colorInfo = activeMoneyDemand.color
+      ? ` (${activeMoneyDemand.color.replace('_', ' ')})`
+      : '';
+
+    set({
+      activeMoneyDemand: null,
+      tableState: {
+        ...tableState,
+        activeActionMessage: `${targetOpponent.name} заплатив(ла) $${totalPaid}${colorInfo} за карткою ${activeMoneyDemand.card.name}!`,
+        opponents: updatedOpponents,
+        currentPlayer: {
+          ...tableState.currentPlayer,
+          bankCards: [...paidCards, ...tableState.currentPlayer.bankCards],
         },
       },
     });
@@ -559,6 +734,7 @@ export const useMockGameStore = create<MockGameStore>((set, get) => ({
       selectedCardId: null,
       validDropTarget: null,
       tableMovingCard: null,
+      activeMoneyDemand: null,
       tableState: {
         ...tableState,
         activeActionCard: null,
@@ -578,6 +754,7 @@ export const useMockGameStore = create<MockGameStore>((set, get) => ({
       selectedCardId: null,
       validDropTarget: null,
       tableMovingCard: null,
+      activeMoneyDemand: null,
     });
   },
 }));

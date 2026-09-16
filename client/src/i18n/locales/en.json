@@ -44,6 +44,7 @@
     "addToSet": "Add here",
     "addHouse": "Add House",
     "addHotel": "Add Hotel",
+    "demandRent": "Demand ${{amount}}",
     "moveHere": "Move here",
     "swapColor": "Swap to {{color}}",
     "swapColorHint": "Click to swap to {{color}} (costs 1 action)",

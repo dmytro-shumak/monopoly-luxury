@@ -57,8 +57,12 @@ export const createInitialMockState = (): MockTableState => {
     name: 'Alex',
     avatar: '👑',
     isCurrentPlayer: true,
-    handCount: 8,
+    handCount: 12,
     handCards: [
+      getCard('rent_darkblue_purple_1'), // Dual-color rent (Dark Blue / Purple) -> picks Dark Blue ($3)
+      getCard('rent_wild_1'), // Wild rent -> picks Brown ($6, has house)
+      getCard('action_debt_collector_1'), // Debt Collector -> $5 from 1 player
+      getCard('action_birthday_1'), // Birthday -> $2 from ALL players (no selection)
       getCard('action_house_1'), // House card (adds +$3 rent to complete set)
       getCard('action_hotel_1'), // Hotel card (adds +$4 rent to set with house)
       getCard('prop_orange_3'), // Single property: existing incomplete set (Orange)

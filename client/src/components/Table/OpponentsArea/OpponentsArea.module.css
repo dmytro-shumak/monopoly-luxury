@@ -28,6 +28,53 @@
   box-shadow: 0 0 16px rgba(212, 175, 55, 0.4), inset 0 0 12px rgba(212, 175, 55, 0.1);
 }
 
+.opponentSelectableTarget {
+  border: 2px solid #2ecc71 !important;
+  background: rgba(46, 204, 113, 0.1) !important;
+  box-shadow: 0 0 24px rgba(46, 204, 113, 0.7), inset 0 0 16px rgba(46, 204, 113, 0.25) !important;
+  cursor: pointer !important;
+  transform: translateY(-4px);
+  animation: pulseOpponentTarget 1.5s infinite alternate;
+}
+
+.opponentSelectableTarget:hover {
+  border-color: #58d68d !important;
+  box-shadow: 0 0 32px rgba(46, 204, 113, 0.95), inset 0 0 20px rgba(46, 204, 113, 0.35) !important;
+  transform: translateY(-6px) scale(1.02);
+}
+
+@keyframes pulseOpponentTarget {
+  0% {
+    box-shadow: 0 0 16px rgba(46, 204, 113, 0.5), inset 0 0 10px rgba(46, 204, 113, 0.2);
+    border-color: rgba(46, 204, 113, 0.7);
+  }
+  100% {
+    box-shadow: 0 0 30px rgba(46, 204, 113, 0.9), inset 0 0 20px rgba(46, 204, 113, 0.35);
+    border-color: #2ecc71;
+  }
+}
+
+.opponentTargetBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #2ecc71;
+  color: #081a0f;
+  font-size: 10px;
+  font-weight: 800;
+  border-radius: 6px;
+  padding: 3px 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  animation: pulseTargetBadge 1.2s infinite;
+  box-shadow: 0 0 10px rgba(46, 204, 113, 0.6);
+}
+
+@keyframes pulseTargetBadge {
+  0%, 100% { transform: scale(1); opacity: 0.95; }
+  50% { transform: scale(1.05); opacity: 1; }
+}
+
 .headerRow {
   display: flex;
   justify-content: space-between;
