@@ -14,7 +14,7 @@ export interface PlayerPropertiesProps {
   validPropertyTargets?: PropertyTarget[];
   onPlayToTarget?: (target: PropertyTarget) => void;
   onPlayToProperty?: () => void;
-  variant?: 'board' | 'tooltip';
+  variant?: 'board' | 'tooltip' | 'modal';
   title?: string;
   selectedCard?: CardModel | null;
   tableMovingCard?: TableMovingCard | null;
@@ -23,6 +23,10 @@ export interface PlayerPropertiesProps {
   onExecuteTableCardMove?: (target: PropertyTarget) => void;
   isMyTurn?: boolean;
   actionsRemaining?: number;
+  isStealMode?: boolean;
+  selectedStealCardId?: string | null;
+  onSelectStealCard?: (card: CardModel) => void;
+  onDoubleClickStealCard?: (card: CardModel) => void;
 }
 
 const getColorVar = (color: CardColor): string => {
@@ -44,9 +48,14 @@ export const PlayerProperties: React.FC<PlayerPropertiesProps> = ({
   onExecuteTableCardMove,
   isMyTurn = false,
   actionsRemaining = 0,
+  isStealMode = false,
+  selectedStealCardId = null,
+  onSelectStealCard,
+  onDoubleClickStealCard,
 }) => {
   const { t } = useTranslation();
   const isTooltip = variant === 'tooltip';
+  const isModal = variant === 'modal';
   const totalCardsCount = propertySets.reduce((sum, set) => sum + set.cards.length, 0);
   const displayTitle = title || `${t('board.properties')} (${propertySets.length})`;
   const isTableMoveActive = Boolean(tableMovingCard);
@@ -54,7 +63,7 @@ export const PlayerProperties: React.FC<PlayerPropertiesProps> = ({
   // Map of setIndex -> PropertyTarget for existing sets
   const existingTargetMap = useMemo(() => {
     const map = new Map<number, PropertyTarget>();
-    if (isTooltip) return map;
+    if (isTooltip || isModal || isStealMode) return map;
 
     if (tableMovingCard && tableMovingCard.target.type === 'existing') {
       map.set(tableMovingCard.target.setIndex, tableMovingCard.target);
@@ -69,11 +78,11 @@ export const PlayerProperties: React.FC<PlayerPropertiesProps> = ({
       }
     }
     return map;
-  }, [isTooltip, validPropertyTargets, tableMovingCard]);
+  }, [isTooltip, isModal, isStealMode, validPropertyTargets, tableMovingCard]);
 
   // List of new set targets
   const newSetTargets = useMemo(() => {
-    if (isTooltip) return [];
+    if (isTooltip || isModal || isStealMode) return [];
 
     if (tableMovingCard && tableMovingCard.target.type === 'new_set') {
       return [tableMovingCard.target];
@@ -83,7 +92,7 @@ export const PlayerProperties: React.FC<PlayerPropertiesProps> = ({
     return validPropertyTargets.filter(
       (t): t is Extract<PropertyTarget, { type: 'new_set' }> => t.type === 'new_set'
     );
-  }, [isTooltip, validPropertyTargets, tableMovingCard]);
+  }, [isTooltip, isModal, isStealMode, validPropertyTargets, tableMovingCard]);
 
   const setsGridRef = useRef<HTMLDivElement>(null);
 
@@ -96,7 +105,7 @@ export const PlayerProperties: React.FC<PlayerPropertiesProps> = ({
 
   return (
     <div
-      className={`${styles.propertiesContainer} ${isTooltip ? styles.tooltipVariant : ''}`}
+      className={`${styles.propertiesContainer} ${isTooltip ? styles.tooltipVariant : ''} ${isModal ? styles.modalVariant : ''}`}
       onClick={(e) => {
         if (e.target === e.currentTarget && isTableMoveActive) {
           onCancelTableCardMove?.();
@@ -162,10 +171,12 @@ export const PlayerProperties: React.FC<PlayerPropertiesProps> = ({
                 (set.color && PROPERTY_CONFIG[set.color]?.setSize) ||
                 3;
 
+              const isSetDimmed = isStealMode && set.isComplete;
+
               return (
                 <div
                   key={setIdx}
-                  className={`${styles.propertySetColumn} ${set.isComplete ? styles.setComplete : ''} ${isSetTarget ? styles.targetSetHighlight : ''}`}
+                  className={`${styles.propertySetColumn} ${set.isComplete ? styles.setComplete : ''} ${isSetTarget ? styles.targetSetHighlight : ''} ${isSetDimmed ? styles.monopolyDimmed : ''}`}
                   onClick={() => {
                     if (isSetTarget && target) {
                       if (isTableMoveActive && onExecuteTableCardMove) {
@@ -221,6 +232,8 @@ export const PlayerProperties: React.FC<PlayerPropertiesProps> = ({
                       const isThisCardMoving = tableMovingCard?.cardId === card.id;
                       const isTwoColorWild =
                         !isTooltip &&
+                        !isModal &&
+                        !isStealMode &&
                         card.type === CardType.PROPERTY_WILDCARD &&
                         card.colors &&
                         card.colors.length === 2 &&
@@ -236,25 +249,54 @@ export const PlayerProperties: React.FC<PlayerPropertiesProps> = ({
                         ? card.colors?.find((c) => c !== set.color)
                         : undefined;
 
-                      const cardClass = isThisCardMoving
-                        ? cardStyles.flippableCardMoving
-                        : canFlip
-                        ? cardStyles.flippableCard
-                        : undefined;
+                      const isStealable = isStealMode && !set.isComplete;
+                      const isSelectedSteal = isStealMode && selectedStealCardId === card.id;
+
+                      let cardClass: string | undefined = undefined;
+                      if (isStealMode) {
+                        if (isSelectedSteal) {
+                          cardClass = cardStyles.selectedStealCard;
+                        } else if (isStealable) {
+                          cardClass = cardStyles.stealableCard;
+                        }
+                      } else if (isThisCardMoving) {
+                        cardClass = cardStyles.flippableCardMoving;
+                      } else if (canFlip) {
+                        cardClass = cardStyles.flippableCard;
+                      }
+
+                      const itemClass = [
+                        styles.cardItem,
+                        canFlip ? styles.cardFlipEligible : '',
+                        isThisCardMoving ? styles.cardMovingActive : '',
+                        isStealable ? styles.stealableCardItem : '',
+                        isSelectedSteal ? styles.selectedStealCardItem : '',
+                      ].filter(Boolean).join(' ');
 
                       return (
                         <div
                           key={`${card.id}_${cardIdx}`}
-                          className={`${styles.cardItem} ${canFlip ? styles.cardFlipEligible : ''} ${isThisCardMoving ? styles.cardMovingActive : ''}`}
+                          className={itemClass}
                           title={
                             canFlip && altColor
                               ? t('board.swapColorHint', { color: altColor.replace('_', ' ') })
                               : undefined
                           }
                           onClick={(e) => {
-                            if (canFlip) {
+                            if (isStealMode) {
+                              e.stopPropagation();
+                              if (isStealable && onSelectStealCard) {
+                                onSelectStealCard(card);
+                              }
+                            } else if (canFlip) {
                               e.stopPropagation();
                               onStartTableCardMove?.(setIdx, card);
+                            }
+                          }}
+                          onDoubleClick={(e) => {
+                            if (isStealMode && isStealable && onDoubleClickStealCard) {
+                              e.stopPropagation();
+                              onDoubleClickStealCard(card);
                             }
                           }}
                         >

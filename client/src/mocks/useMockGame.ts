@@ -214,6 +214,15 @@ export interface PendingDoubleRentPrompt {
   color?: CardColor;
 }
 
+export interface ActiveSlyDeal {
+  card: CardModel;
+}
+
+export interface PendingStolenCardPlacement {
+  card: CardModel;
+  fromOpponentName: string;
+}
+
 export const computeRentForColor = (
   color: CardColor,
   propertySets: MockPropertySet[]
@@ -303,6 +312,9 @@ interface MockGameStore {
   tableMovingCard: TableMovingCard | null;
   activeMoneyDemand: ActiveMoneyDemand | null;
   pendingDoubleRent: PendingDoubleRentPrompt | null;
+  activeSlyDeal: ActiveSlyDeal | null;
+  slyDealTargetOpponentId: string | null;
+  pendingStolenCardPlacement: PendingStolenCardPlacement | null;
 
   // Actions
   selectCard: (cardId: string | null) => void;
@@ -312,6 +324,10 @@ interface MockGameStore {
   confirmDoubleRent: () => void;
   declineDoubleRent: () => void;
   executeOpponentPayment: (targetOpponentId: string) => void;
+  selectSlyDealOpponent: (opponentId: string) => void;
+  executeSlyDeal: (targetOpponentId: string, stolenCard: CardModel) => void;
+  placeStolenWildcardToProperty: (target: PropertyTarget) => void;
+  cancelSlyDeal: () => void;
   startTableCardMove: (sourceSetIndex: number, card: CardModel) => void;
   cancelTableCardMove: () => void;
   executeTableCardMove: (target?: PropertyTarget) => void;
@@ -328,6 +344,9 @@ export const useMockGameStore = create<MockGameStore>((set, get) => ({
   tableMovingCard: null,
   activeMoneyDemand: null,
   pendingDoubleRent: null,
+  activeSlyDeal: null,
+  slyDealTargetOpponentId: null,
+  pendingStolenCardPlacement: null,
 
   selectCard: (cardId: string | null) => {
     const { selectedCardId, tableState } = get();
@@ -402,6 +421,16 @@ export const useMockGameStore = create<MockGameStore>((set, get) => ({
   },
 
   playSelectedToProperty: (chosenTarget?: PropertyTarget) => {
+    const { pendingStolenCardPlacement, placeStolenWildcardToProperty } = get();
+    if (pendingStolenCardPlacement) {
+      const { validPropertyTargets } = get();
+      const target = chosenTarget || validPropertyTargets[0];
+      if (target) {
+        placeStolenWildcardToProperty(target);
+      }
+      return;
+    }
+
     const { selectedCardId, validPropertyTargets, tableState } = get();
     if (!selectedCardId) return;
 
@@ -579,6 +608,31 @@ export const useMockGameStore = create<MockGameStore>((set, get) => ({
       const totalCollectedAmount = totalCollectedCards.reduce((acc, c) => acc + (c.value || 0), 0);
       newBank = [...totalCollectedCards, ...newBank];
       actionMessage = `День народження: усі гравці сплатили по $2 (всього +$${totalCollectedAmount})!`;
+    } else if (card.actionType === ActionCardType.SLY_DEAL) {
+      actionMessage = `${card.name}: оберіть суперника, у якого хочете викрасти нерухомість!`;
+      set({
+        selectedCardId: null,
+        validDropTarget: null,
+        activeSlyDeal: { card },
+        slyDealTargetOpponentId: null,
+        pendingStolenCardPlacement: null,
+        tableState: {
+          ...tableState,
+          activeActionCard: card,
+          activeActionMessage: actionMessage,
+          discardPile: newDiscard,
+          currentPlayer: {
+            ...tableState.currentPlayer,
+            handCards: newHand,
+            handCount: newHand.length,
+          },
+          turn: {
+            ...tableState.turn,
+            actionsRemaining: newActions,
+          },
+        },
+      });
+      return;
     }
 
     set({
@@ -660,6 +714,136 @@ export const useMockGameStore = create<MockGameStore>((set, get) => ({
       tableState: {
         ...tableState,
         activeActionMessage: `${rentCard.name}: вимагаємо $${baseAmount}! Оберіть гравця!`,
+      },
+    });
+  },
+
+  selectSlyDealOpponent: (opponentId: string) => {
+    set({ slyDealTargetOpponentId: opponentId });
+  },
+
+  cancelSlyDeal: () => {
+    set({ slyDealTargetOpponentId: null });
+  },
+
+  executeSlyDeal: (targetOpponentId: string, stolenCard: CardModel) => {
+    const { tableState } = get();
+    const targetOpponent = tableState.opponents.find((o) => o.id === targetOpponentId);
+    if (!targetOpponent) return;
+
+    // 1. Remove stolen card from the opponent's property sets
+    const updatedOpponents = tableState.opponents.map((opp) => {
+      if (opp.id !== targetOpponentId) return opp;
+      const newSets = opp.propertySets
+        .map((set) => ({
+          ...set,
+          cards: set.cards.filter((c) => c.id !== stolenCard.id),
+        }))
+        .filter((set) => set.cards.length > 0);
+      return {
+        ...opp,
+        propertySets: newSets,
+      };
+    });
+
+    const isWildcard =
+      stolenCard.type === CardType.PROPERTY_WILDCARD ||
+      (stolenCard.colors && stolenCard.colors.length > 1);
+
+    if (isWildcard) {
+      // Wildcard: Player must choose color and set on their table
+      const targets = computeValidPropertyTargets(stolenCard, tableState.currentPlayer.propertySets);
+      set({
+        slyDealTargetOpponentId: null, // close modal
+        pendingStolenCardPlacement: { card: stolenCard, fromOpponentName: targetOpponent.name },
+        validPropertyTargets: targets,
+        tableState: {
+          ...tableState,
+          opponents: updatedOpponents,
+          activeActionMessage: `🥷 «${stolenCard.name}» викрадено у ${targetOpponent.name}! Оберіть набір або новий слот на своєму столі для її розміщення.`,
+        },
+      });
+    } else {
+      // Single-color card: automatically place onto player's table
+      const targets = computeValidPropertyTargets(stolenCard, tableState.currentPlayer.propertySets);
+      const existingSets = [...tableState.currentPlayer.propertySets];
+      const existingTarget = targets.find((t) => t.type === 'existing');
+
+      if (existingTarget && existingTarget.type === 'existing') {
+        const targetSet = existingSets[existingTarget.setIndex];
+        const updatedCards = [...targetSet.cards, stolenCard];
+        const fullSetSize = stolenCard.fullSetSize || PROPERTY_CONFIG[targetSet.color]?.setSize || 3;
+        existingSets[existingTarget.setIndex] = {
+          ...targetSet,
+          cards: updatedCards,
+          isComplete: updatedCards.length >= fullSetSize,
+        };
+      } else {
+        const targetColor = stolenCard.colors?.[0] || CardColor.ORANGE;
+        const fullSetSize = stolenCard.fullSetSize || PROPERTY_CONFIG[targetColor]?.setSize || 3;
+        existingSets.push({
+          color: targetColor,
+          cards: [stolenCard],
+          isComplete: 1 >= fullSetSize,
+        });
+      }
+
+      set({
+        activeSlyDeal: null,
+        slyDealTargetOpponentId: null,
+        pendingStolenCardPlacement: null,
+        tableState: {
+          ...tableState,
+          opponents: updatedOpponents,
+          currentPlayer: {
+            ...tableState.currentPlayer,
+            propertySets: existingSets,
+          },
+          activeActionMessage: `🥷 Спритна угода: ви успішно викрали «${stolenCard.name}» у ${targetOpponent.name}!`,
+        },
+      });
+    }
+  },
+
+  placeStolenWildcardToProperty: (chosenTarget: PropertyTarget) => {
+    const { pendingStolenCardPlacement, tableState } = get();
+    if (!pendingStolenCardPlacement) return;
+
+    const { card } = pendingStolenCardPlacement;
+    const existingSets = [...tableState.currentPlayer.propertySets];
+
+    if (chosenTarget.type === 'existing') {
+      const targetSet = existingSets[chosenTarget.setIndex];
+      if (targetSet) {
+        const updatedCards = [...targetSet.cards, card];
+        const fullSetSize = card.fullSetSize || PROPERTY_CONFIG[chosenTarget.color]?.setSize || 3;
+        existingSets[chosenTarget.setIndex] = {
+          ...targetSet,
+          cards: updatedCards,
+          isComplete: updatedCards.length >= fullSetSize,
+        };
+      }
+    } else if (chosenTarget.type === 'new_set') {
+      const fullSetSize = card.fullSetSize || PROPERTY_CONFIG[chosenTarget.color]?.setSize || 3;
+      existingSets.push({
+        color: chosenTarget.color,
+        cards: [card],
+        isComplete: 1 >= fullSetSize,
+      });
+    }
+
+    set({
+      activeSlyDeal: null,
+      slyDealTargetOpponentId: null,
+      pendingStolenCardPlacement: null,
+      validPropertyTargets: [],
+      tableState: {
+        ...tableState,
+        currentPlayer: {
+          ...tableState.currentPlayer,
+          propertySets: existingSets,
+        },
+        activeActionMessage: `🥷 «${card.name}» успішно додано у ваш набір (${chosenTarget.color.replace('_', ' ')})!`,
       },
     });
   },
@@ -839,6 +1023,9 @@ export const useMockGameStore = create<MockGameStore>((set, get) => ({
       tableMovingCard: null,
       activeMoneyDemand: null,
       pendingDoubleRent: null,
+      activeSlyDeal: null,
+      slyDealTargetOpponentId: null,
+      pendingStolenCardPlacement: null,
       tableState: {
         ...tableState,
         activeActionCard: null,
@@ -857,9 +1044,13 @@ export const useMockGameStore = create<MockGameStore>((set, get) => ({
       tableState: createInitialMockState(),
       selectedCardId: null,
       validDropTarget: null,
+      validPropertyTargets: [],
       tableMovingCard: null,
       activeMoneyDemand: null,
       pendingDoubleRent: null,
+      activeSlyDeal: null,
+      slyDealTargetOpponentId: null,
+      pendingStolenCardPlacement: null,
     });
   },
 }));

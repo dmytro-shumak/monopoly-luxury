@@ -64,7 +64,18 @@
     "doubleRentCostHint": "Витрачає 1 додаткову дію ходу (залишиться: {{remaining}})",
     "baseRent": "Базова рента",
     "multiplier": "Множник",
-    "doubledRent": "Підсумкова рента"
+    "doubledRent": "Підсумкова рента",
+    "slyDealTitle": "Спритна угода",
+    "slyDealSubtitle": "Оберіть нерухомість для викрадення у {{name}}",
+    "slyDealSelectVictim": "Оберіть жертву",
+    "slyDealDemandBadge": "🎯 ВКРАСТИ КАРТУ",
+    "slyDealStealBtn": "🥷 Вкрасти нерухомість",
+    "slyDealStealCardBtn": "🥷 Вкрасти «{{card}}»",
+    "slyDealCancelBtn": "Назад до вибору гравця",
+    "slyDealProtectedSet": "🔒 Монополія (Захищено)",
+    "slyDealStealable": "🟢 Можна вкрасти",
+    "slyDealWildHint": "Універсальна карта: після викрадення ви оберете потрібний колір на своєму столі",
+    "slyDealPlaceWildPrompt": "🥷 Картку «{{card}}» викрадено! Оберіть набір або новий слот на своєму столі для її розміщення"
   },
   "deckPreview": {
     "title": "Monopoly Deal — Повна колода ({{count}} карт)",

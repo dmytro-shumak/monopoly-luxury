@@ -12,7 +12,9 @@ export interface OpponentsAreaProps {
   activePlayerId: string;
   isSelectingTarget?: boolean;
   targetDemandAmount?: number;
+  isSelectingSlyDealTarget?: boolean;
   onSelectTargetOpponent?: (opponentId: string) => void;
+  onSelectSlyDealOpponent?: (opponentId: string) => void;
 }
 
 const getColorVar = (color: CardColor): string => {
@@ -24,7 +26,9 @@ export const OpponentsArea: React.FC<OpponentsAreaProps> = ({
   activePlayerId,
   isSelectingTarget = false,
   targetDemandAmount = 0,
+  isSelectingSlyDealTarget = false,
   onSelectTargetOpponent,
+  onSelectSlyDealOpponent,
 }) => {
   const { t } = useTranslation();
 
@@ -34,14 +38,19 @@ export const OpponentsArea: React.FC<OpponentsAreaProps> = ({
         const isActive = activePlayerId === opponent.id;
         const totalBank = opponent.bankCards.reduce((acc, card) => acc + (card.value || 0), 0);
         const totalProperties = opponent.propertySets.reduce((acc, set) => acc + set.cards.length, 0);
+        const hasStealableProperty = opponent.propertySets.some((s) => !s.isComplete && s.cards.length > 0);
+        const isSlyDealSelectable = isSelectingSlyDealTarget && hasStealableProperty;
+        const isTargetActive = isSelectingTarget || isSlyDealSelectable;
 
         return (
           <div
             key={opponent.id}
-            className={`${styles.opponentCard} ${isActive ? styles.opponentActive : ''} ${isSelectingTarget ? styles.opponentSelectableTarget : ''}`}
+            className={`${styles.opponentCard} ${isActive ? styles.opponentActive : ''} ${isTargetActive ? styles.opponentSelectableTarget : ''}`}
             onClick={() => {
               if (isSelectingTarget && onSelectTargetOpponent) {
                 onSelectTargetOpponent(opponent.id);
+              } else if (isSlyDealSelectable && onSelectSlyDealOpponent) {
+                onSelectSlyDealOpponent(opponent.id);
               }
             }}
           >
@@ -56,6 +65,11 @@ export const OpponentsArea: React.FC<OpponentsAreaProps> = ({
                 {isSelectingTarget && (
                   <span className={styles.opponentTargetBadge}>
                     🎯 {t('board.demandRent', { amount: targetDemandAmount })}
+                  </span>
+                )}
+                {isSlyDealSelectable && (
+                  <span className={styles.opponentTargetBadge}>
+                    {t('board.slyDealDemandBadge')}
                   </span>
                 )}
               </div>

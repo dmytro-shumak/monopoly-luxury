@@ -64,7 +64,18 @@
     "doubleRentCostHint": "Costs 1 extra turn action ({{remaining}} action left)",
     "baseRent": "Base rent",
     "multiplier": "Multiplier",
-    "doubledRent": "Final rent"
+    "doubledRent": "Final rent",
+    "slyDealTitle": "Sly Deal",
+    "slyDealSubtitle": "Choose a property to steal from {{name}}",
+    "slyDealSelectVictim": "Select victim",
+    "slyDealDemandBadge": "🎯 STEAL CARD",
+    "slyDealStealBtn": "🥷 Steal Property",
+    "slyDealStealCardBtn": "🥷 Steal \"{{card}}\"",
+    "slyDealCancelBtn": "Back to player selection",
+    "slyDealProtectedSet": "🔒 Monopoly (Protected)",
+    "slyDealStealable": "🟢 Stealable",
+    "slyDealWildHint": "Wildcard: after stealing, you will choose the desired color on your table",
+    "slyDealPlaceWildPrompt": "🥷 \"{{card}}\" stolen! Select a set or new slot on your table to place it"
   },
   "deckPreview": {
     "title": "Monopoly Deal — Full Deck ({{count}} cards)",

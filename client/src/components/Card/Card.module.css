@@ -41,6 +41,37 @@
   animation: pulseGoldGlow 1.4s infinite alternate;
 }
 
+/* Stealable card green glow (Sly Deal) */
+.card.stealableCard {
+  outline: 2.5px solid #2ecc71 !important;
+  outline-offset: 1px !important;
+  box-shadow: 0 0 16px rgba(46, 204, 113, 0.9), 0 0 30px rgba(46, 204, 113, 0.5) !important;
+  cursor: pointer !important;
+  animation: pulseGreenGlow 1.6s infinite alternate ease-in-out;
+}
+
+@keyframes pulseGreenGlow {
+  0% {
+    box-shadow: 0 0 12px rgba(46, 204, 113, 0.75), 0 0 22px rgba(46, 204, 113, 0.4);
+  }
+  100% {
+    box-shadow: 0 0 20px rgba(46, 204, 113, 1), 0 0 36px rgba(46, 204, 113, 0.7);
+  }
+}
+
+.card.stealableCard:hover {
+  outline: 3px solid #2ecc71 !important;
+  box-shadow: 0 0 24px rgba(46, 204, 113, 1), 0 0 44px rgba(46, 204, 113, 0.85) !important;
+}
+
+/* Selected steal card gold glow (Sly Deal) */
+.card.selectedStealCard {
+  outline: 3.5px solid var(--color-gold) !important;
+  outline-offset: 1px !important;
+  box-shadow: 0 0 24px var(--color-gold), 0 0 48px rgba(212, 175, 55, 0.9) !important;
+  cursor: pointer !important;
+}
+
 @keyframes pulseGoldGlow {
   0% {
     box-shadow: 0 0 16px var(--color-gold), 0 0 25px rgba(212, 175, 55, 0.6);

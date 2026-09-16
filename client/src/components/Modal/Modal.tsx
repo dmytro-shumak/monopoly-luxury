@@ -10,6 +10,8 @@ export interface ModalProps {
   icon?: React.ReactNode;
   children: React.ReactNode;
   footer?: React.ReactNode;
+  width?: string | number;
+  minWidth?: string | number;
   maxWidth?: string | number;
   showCloseButton?: boolean;
   closeOnOverlayClick?: boolean;
@@ -30,7 +32,9 @@ export const Modal: React.FC<ModalProps> = ({
   icon,
   children,
   footer,
-  maxWidth = '500px',
+  width = 'fit-content',
+  minWidth,
+  maxWidth = '80vw',
   showCloseButton = false,
   closeOnOverlayClick = true,
   closeOnEscape = true,
@@ -85,7 +89,7 @@ export const Modal: React.FC<ModalProps> = ({
     >
       <div
         className={`${styles.modalWindow} ${className}`}
-        style={{ maxWidth }}
+        style={{ width, minWidth, maxWidth }}
         role="dialog"
         aria-modal="true"
         aria-label={ariaLabel || (typeof title === 'string' ? title : undefined)}

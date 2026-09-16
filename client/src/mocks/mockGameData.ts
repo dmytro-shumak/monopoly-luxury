@@ -57,8 +57,9 @@ export const createInitialMockState = (): MockTableState => {
     name: 'Alex',
     avatar: '👑',
     isCurrentPlayer: true,
-    handCount: 13,
+    handCount: 14,
     handCards: [
+      getCard('action_sly_deal_1'), // Sly Deal (Steal 1 property from opponent)
       getCard('rent_double_1'), // Double Rent card (x2 multiplier)
       getCard('rent_darkblue_purple_1'), // Dual-color rent (Dark Blue / Purple) -> picks Dark Blue ($3)
       getCard('rent_wild_1'), // Wild rent -> picks Brown ($6, has house)
@@ -210,7 +211,7 @@ export const createInitialMockState = (): MockTableState => {
         cards: [
           getCard('prop_pink_1'),
           getCard('prop_pink_2'),
-          getCard('prop_pink_3'),
+          getCard('wild_green_pink_1'), // Stealable Dual-color wildcard (Green / Pink)
         ],
         isComplete: false,
       },
@@ -267,7 +268,10 @@ export const createInitialMockState = (): MockTableState => {
       },
       {
         color: CardColor.MAROON,
-        cards: [getCard('prop_maroon_2')],
+        cards: [
+          getCard('prop_maroon_2'),
+          getCard('wild_all_2'), // Stealable Universal 10-Color Wildcard
+        ],
         isComplete: false,
       },
     ],
