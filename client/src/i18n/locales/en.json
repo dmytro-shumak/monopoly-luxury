@@ -85,7 +85,16 @@
     "forcedDealCancelBtn": "Back to player selection",
     "forcedDealDemandBadge": "🔄 TRADE",
     "forcedDealNoCards": "You have no eligible property cards to trade (completed monopolies are protected)!",
-    "forcedDealPlaceWildPrompt": "🔄 \"{{card}}\" received in trade! Select a set or new slot on your table to place it"
+    "forcedDealPlaceWildPrompt": "🔄 \"{{card}}\" received in trade! Select a set or new slot on your table to place it",
+    "dealBreakerTitle": "Deal Breaker",
+    "dealBreakerSubtitle": "Choose a completed property set from {{name}} to steal",
+    "dealBreakerDemandBadge": "⚡ STEAL SET",
+    "dealBreakerStealBtn": "⚡ Steal Set",
+    "dealBreakerStealSetBtn": "⚡ Steal {{color}} Set ({{count}} cards)",
+    "dealBreakerCancelBtn": "Back to player selection",
+    "dealBreakerNoSets": "Opponents have no completed property sets to steal!",
+    "dealBreakerSelectPrompt": "Choose an opponent with a completed property set!",
+    "dealBreakerStealBadge": "⚡ MONOPOLY"
   },
   "deckPreview": {
     "title": "Monopoly Deal — Full Deck ({{count}} cards)",

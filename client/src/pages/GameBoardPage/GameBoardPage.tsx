@@ -11,6 +11,7 @@ import { TurnHUD } from '../../components/Table/TurnHUD/TurnHUD';
 import { DoubleRentModal } from '../../components/Table/DoubleRentModal/DoubleRentModal';
 import { SlyDealModal } from '../../components/Table/SlyDealModal/SlyDealModal';
 import { ForcedDealModal } from '../../components/Table/ForcedDealModal/ForcedDealModal';
+import { DealBreakerModal } from '../../components/Table/DealBreakerModal/DealBreakerModal';
 import { LanguageSwitcher } from '../../components/LanguageSwitcher/LanguageSwitcher';
 import styles from './GameBoardPage.module.css';
 
@@ -30,6 +31,8 @@ export const GameBoardPage: React.FC = () => {
     activeForcedDeal,
     forcedDealMyCard,
     forcedDealTargetOpponentId,
+    activeDealBreaker,
+    dealBreakerTargetOpponentId,
     pendingStolenCardPlacement,
     selectCard,
     playSelectedToBank,
@@ -45,6 +48,9 @@ export const GameBoardPage: React.FC = () => {
     selectForcedDealOpponent,
     cancelForcedDealOpponent,
     executeForcedDeal,
+    selectDealBreakerOpponent,
+    cancelDealBreakerOpponent,
+    executeDealBreaker,
     startTableCardMove,
     cancelTableCardMove,
     executeTableCardMove,
@@ -59,6 +65,7 @@ export const GameBoardPage: React.FC = () => {
   const selectedCard = tableState.currentPlayer.handCards?.find((c) => c.id === selectedCardId);
   const slyDealTargetOpponent = tableState.opponents.find((o) => o.id === slyDealTargetOpponentId);
   const forcedDealTargetOpponent = tableState.opponents.find((o) => o.id === forcedDealTargetOpponentId);
+  const dealBreakerTargetOpponent = tableState.opponents.find((o) => o.id === dealBreakerTargetOpponentId);
 
   return (
     <div className={styles.pageContainer}>
@@ -98,9 +105,11 @@ export const GameBoardPage: React.FC = () => {
             targetDemandAmount={activeMoneyDemand?.amount}
             isSelectingSlyDealTarget={Boolean(activeSlyDeal && !slyDealTargetOpponentId && !pendingStolenCardPlacement)}
             isSelectingForcedDealTarget={Boolean(activeForcedDeal && forcedDealMyCard && !forcedDealTargetOpponentId && !pendingStolenCardPlacement)}
+            isSelectingDealBreakerTarget={Boolean(activeDealBreaker && !dealBreakerTargetOpponentId)}
             onSelectTargetOpponent={executeOpponentPayment}
             onSelectSlyDealOpponent={selectSlyDealOpponent}
             onSelectForcedDealOpponent={selectForcedDealOpponent}
+            onSelectDealBreakerOpponent={selectDealBreakerOpponent}
           />
         </section>
 
@@ -204,6 +213,16 @@ export const GameBoardPage: React.FC = () => {
           myCard={forcedDealMyCard}
           onSwapCard={(opponentCard) => executeForcedDeal(forcedDealTargetOpponent.id, opponentCard)}
           onClose={cancelForcedDealOpponent}
+        />
+      )}
+
+      {/* 7. Deal Breaker Modal */}
+      {dealBreakerTargetOpponent && (
+        <DealBreakerModal
+          isOpen={Boolean(dealBreakerTargetOpponentId && dealBreakerTargetOpponent)}
+          opponent={dealBreakerTargetOpponent}
+          onStealSet={(setIndex) => executeDealBreaker(dealBreakerTargetOpponent.id, setIndex)}
+          onClose={cancelDealBreakerOpponent}
         />
       )}
     </div>

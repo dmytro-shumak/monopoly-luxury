@@ -469,3 +469,59 @@
   transform: translateY(-14px) !important;
   z-index: 30 !important;
 }
+
+/* Stealable entire completed set (Deal Breaker) - Initial color is Yellow/Gold, NO hover transform */
+.stealableDealBreakerSet {
+  cursor: pointer !important;
+  border: 2px solid #f1c40f !important;
+  box-shadow: 0 0 16px rgba(241, 196, 15, 0.45), inset 0 0 10px rgba(241, 196, 15, 0.12) !important;
+  background: rgba(241, 196, 15, 0.1) !important;
+  position: relative;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast) !important;
+}
+
+/* Selected Deal Breaker Set Column - Turns Green when selected, NO hover transform */
+.selectedDealBreakerSet {
+  cursor: pointer !important;
+  border: 2px solid #2ecc71 !important;
+  box-shadow: 0 0 28px rgba(46, 204, 113, 0.9), inset 0 0 16px rgba(46, 204, 113, 0.25) !important;
+  background: rgba(46, 204, 113, 0.2) !important;
+  z-index: 10;
+}
+
+/* Completely disable card hover lift/transform in Deal Breaker sets */
+.stealableDealBreakerSet .cardItem,
+.stealableDealBreakerSet .cardItem:hover,
+.selectedDealBreakerSet .cardItem,
+.selectedDealBreakerSet .cardItem:hover {
+  transform: none !important;
+}
+
+/* In dealBreakerVariant: completely disable ANY card hover effects or pointer events */
+.dealBreakerVariant .cardsStack {
+  pointer-events: none !important;
+}
+
+.dealBreakerVariant .cardItem,
+.dealBreakerVariant .cardItem:hover {
+  transform: none !important;
+  transition: none !important;
+}
+
+.dealBreakerVariant .cardItem > div,
+.dealBreakerVariant .cardItem > div:hover {
+  transform: scale(0.78) !important;
+  box-shadow: var(--shadow-glass) !important;
+  transition: none !important;
+}
+
+.dealBreakerVariant [class*="card"],
+.dealBreakerVariant [class*="card"]:hover {
+  transform: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  transition: none !important;
+}
+
+
+

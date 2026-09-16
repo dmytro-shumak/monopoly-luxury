@@ -14,9 +14,11 @@ export interface OpponentsAreaProps {
   targetDemandAmount?: number;
   isSelectingSlyDealTarget?: boolean;
   isSelectingForcedDealTarget?: boolean;
+  isSelectingDealBreakerTarget?: boolean;
   onSelectTargetOpponent?: (opponentId: string) => void;
   onSelectSlyDealOpponent?: (opponentId: string) => void;
   onSelectForcedDealOpponent?: (opponentId: string) => void;
+  onSelectDealBreakerOpponent?: (opponentId: string) => void;
 }
 
 const getColorVar = (color: CardColor): string => {
@@ -30,9 +32,11 @@ export const OpponentsArea: React.FC<OpponentsAreaProps> = ({
   targetDemandAmount = 0,
   isSelectingSlyDealTarget = false,
   isSelectingForcedDealTarget = false,
+  isSelectingDealBreakerTarget = false,
   onSelectTargetOpponent,
   onSelectSlyDealOpponent,
   onSelectForcedDealOpponent,
+  onSelectDealBreakerOpponent,
 }) => {
   const { t } = useTranslation();
 
@@ -43,9 +47,11 @@ export const OpponentsArea: React.FC<OpponentsAreaProps> = ({
         const totalBank = opponent.bankCards.reduce((acc, card) => acc + (card.value || 0), 0);
         const totalProperties = opponent.propertySets.reduce((acc, set) => acc + set.cards.length, 0);
         const hasStealableProperty = opponent.propertySets.some((s) => !s.isComplete && s.cards.length > 0);
+        const hasCompleteSet = opponent.propertySets.some((s) => s.isComplete && s.cards.length > 0);
         const isSlyDealSelectable = isSelectingSlyDealTarget && hasStealableProperty;
         const isForcedDealSelectable = isSelectingForcedDealTarget && hasStealableProperty;
-        const isTargetActive = isSelectingTarget || isSlyDealSelectable || isForcedDealSelectable;
+        const isDealBreakerSelectable = isSelectingDealBreakerTarget && hasCompleteSet;
+        const isTargetActive = isSelectingTarget || isSlyDealSelectable || isForcedDealSelectable || isDealBreakerSelectable;
 
         return (
           <div
@@ -58,6 +64,8 @@ export const OpponentsArea: React.FC<OpponentsAreaProps> = ({
                 onSelectSlyDealOpponent(opponent.id);
               } else if (isForcedDealSelectable && onSelectForcedDealOpponent) {
                 onSelectForcedDealOpponent(opponent.id);
+              } else if (isDealBreakerSelectable && onSelectDealBreakerOpponent) {
+                onSelectDealBreakerOpponent(opponent.id);
               }
             }}
           >
@@ -82,6 +90,11 @@ export const OpponentsArea: React.FC<OpponentsAreaProps> = ({
                 {isForcedDealSelectable && (
                   <span className={styles.opponentTargetBadge}>
                     {t('board.forcedDealDemandBadge')}
+                  </span>
+                )}
+                {isDealBreakerSelectable && (
+                  <span className={styles.opponentTargetBadge}>
+                    {t('board.dealBreakerDemandBadge')}
                   </span>
                 )}
               </div>

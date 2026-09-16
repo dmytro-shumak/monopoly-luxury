@@ -30,6 +30,10 @@ export interface PlayerPropertiesProps {
   isTradeGiveMode?: boolean;
   selectedTradeGiveCardId?: string | null;
   onSelectTradeGiveCard?: (card: CardModel) => void;
+  isDealBreakerMode?: boolean;
+  selectedDealBreakerSetIndex?: number | null;
+  onSelectDealBreakerSet?: (setIndex: number, set: MockPropertySet) => void;
+  onDoubleClickDealBreakerSet?: (setIndex: number, set: MockPropertySet) => void;
 }
 
 const getColorVar = (color: CardColor): string => {
@@ -58,6 +62,10 @@ export const PlayerProperties: React.FC<PlayerPropertiesProps> = ({
   isTradeGiveMode = false,
   selectedTradeGiveCardId = null,
   onSelectTradeGiveCard,
+  isDealBreakerMode = false,
+  selectedDealBreakerSetIndex = null,
+  onSelectDealBreakerSet,
+  onDoubleClickDealBreakerSet,
 }) => {
   const { t } = useTranslation();
   const isTooltip = variant === 'tooltip';
@@ -71,7 +79,7 @@ export const PlayerProperties: React.FC<PlayerPropertiesProps> = ({
   // Map of setIndex -> PropertyTarget for existing sets
   const existingTargetMap = useMemo(() => {
     const map = new Map<number, PropertyTarget>();
-    if (isTooltip || isModal || isStealMode || isTradeGiveMode) return map;
+    if (isTooltip || isModal || isStealMode || isTradeGiveMode || isDealBreakerMode) return map;
 
     if (tableMovingCard && tableMovingCard.target.type === 'existing') {
       map.set(tableMovingCard.target.setIndex, tableMovingCard.target);
@@ -86,11 +94,11 @@ export const PlayerProperties: React.FC<PlayerPropertiesProps> = ({
       }
     }
     return map;
-  }, [isTooltip, isModal, isStealMode, isTradeGiveMode, validPropertyTargets, tableMovingCard]);
+  }, [isTooltip, isModal, isStealMode, isTradeGiveMode, isDealBreakerMode, validPropertyTargets, tableMovingCard]);
 
   // List of new set targets
   const newSetTargets = useMemo(() => {
-    if (isTooltip || isModal || isStealMode || isTradeGiveMode) return [];
+    if (isTooltip || isModal || isStealMode || isTradeGiveMode || isDealBreakerMode) return [];
 
     if (tableMovingCard && tableMovingCard.target.type === 'new_set') {
       return [tableMovingCard.target];
@@ -100,7 +108,7 @@ export const PlayerProperties: React.FC<PlayerPropertiesProps> = ({
     return validPropertyTargets.filter(
       (t): t is Extract<PropertyTarget, { type: 'new_set' }> => t.type === 'new_set'
     );
-  }, [isTooltip, isModal, isStealMode, isTradeGiveMode, validPropertyTargets, tableMovingCard]);
+  }, [isTooltip, isModal, isStealMode, isTradeGiveMode, isDealBreakerMode, validPropertyTargets, tableMovingCard]);
 
   const setsGridRef = useRef<HTMLDivElement>(null);
 
@@ -113,7 +121,7 @@ export const PlayerProperties: React.FC<PlayerPropertiesProps> = ({
 
   return (
     <div
-      className={`${styles.propertiesContainer} ${isTooltip ? styles.tooltipVariant : ''} ${isModal ? styles.modalVariant : ''}`}
+      className={`${styles.propertiesContainer} ${isTooltip ? styles.tooltipVariant : ''} ${isModal ? styles.modalVariant : ''} ${isDealBreakerMode ? styles.dealBreakerVariant : ''}`}
       onClick={(e) => {
         if (e.target === e.currentTarget && isTableMoveActive) {
           onCancelTableCardMove?.();
@@ -179,14 +187,32 @@ export const PlayerProperties: React.FC<PlayerPropertiesProps> = ({
                 (set.color && PROPERTY_CONFIG[set.color]?.setSize) ||
                 3;
 
-              const isSetDimmed = (isStealMode || isTradeGiveMode) && set.isComplete;
+              const isSetDimmed =
+                ((isStealMode || isTradeGiveMode) && set.isComplete) ||
+                (isDealBreakerMode && !set.isComplete);
+
+              const isStealableDealBreaker = isDealBreakerMode && set.isComplete;
+              const isSelectedDealBreaker = isDealBreakerMode && selectedDealBreakerSetIndex === setIdx;
+
+              const columnClass = [
+                styles.propertySetColumn,
+                set.isComplete ? styles.setComplete : '',
+                isSetTarget ? styles.targetSetHighlight : '',
+                isSetDimmed ? styles.monopolyDimmed : '',
+                isStealableDealBreaker ? styles.stealableDealBreakerSet : '',
+                isSelectedDealBreaker ? styles.selectedDealBreakerSet : '',
+              ].filter(Boolean).join(' ');
 
               return (
                 <div
                   key={setIdx}
-                  className={`${styles.propertySetColumn} ${set.isComplete ? styles.setComplete : ''} ${isSetTarget ? styles.targetSetHighlight : ''} ${isSetDimmed ? styles.monopolyDimmed : ''}`}
+                  className={columnClass}
                   onClick={() => {
-                    if (isSetTarget && target) {
+                    if (isDealBreakerMode) {
+                      if (isStealableDealBreaker && onSelectDealBreakerSet) {
+                        onSelectDealBreakerSet(setIdx, set);
+                      }
+                    } else if (isSetTarget && target) {
                       if (isTableMoveActive && onExecuteTableCardMove) {
                         onExecuteTableCardMove(target);
                       } else if (onPlayToTarget) {
@@ -194,6 +220,11 @@ export const PlayerProperties: React.FC<PlayerPropertiesProps> = ({
                       } else if (onPlayToProperty) {
                         onPlayToProperty();
                       }
+                    }
+                  }}
+                  onDoubleClick={() => {
+                    if (isDealBreakerMode && isStealableDealBreaker && onDoubleClickDealBreakerSet) {
+                      onDoubleClickDealBreakerSet(setIdx, set);
                     }
                   }}
                 >
@@ -224,7 +255,7 @@ export const PlayerProperties: React.FC<PlayerPropertiesProps> = ({
                             : `⚡ ${isTableMoveActive ? t('board.moveHere') : t('board.addToSet')}`}
                         </span>
                       )}
-                      {set.isComplete && !isSetTarget && (
+                      {set.isComplete && !isSetTarget && !isStealMode && !isTradeGiveMode && !isDealBreakerMode && (
                         <span className={styles.completeBadge}>
                           {t('board.completeSet')}
                         </span>
@@ -294,7 +325,12 @@ export const PlayerProperties: React.FC<PlayerPropertiesProps> = ({
                               : undefined
                           }
                           onClick={(e) => {
-                            if (isTradeGiveMode) {
+                            if (isDealBreakerMode) {
+                              e.stopPropagation();
+                              if (isStealableDealBreaker && onSelectDealBreakerSet) {
+                                onSelectDealBreakerSet(setIdx, set);
+                              }
+                            } else if (isTradeGiveMode) {
                               e.stopPropagation();
                               if (isStealable && onSelectTradeGiveCard) {
                                 onSelectTradeGiveCard(card);
@@ -310,7 +346,12 @@ export const PlayerProperties: React.FC<PlayerPropertiesProps> = ({
                             }
                           }}
                           onDoubleClick={(e) => {
-                            if (isStealMode && isStealable && onDoubleClickStealCard) {
+                            if (isDealBreakerMode) {
+                              e.stopPropagation();
+                              if (isStealableDealBreaker && onDoubleClickDealBreakerSet) {
+                                onDoubleClickDealBreakerSet(setIdx, set);
+                              }
+                            } else if (isStealMode && isStealable && onDoubleClickStealCard) {
                               e.stopPropagation();
                               onDoubleClickStealCard(card);
                             }

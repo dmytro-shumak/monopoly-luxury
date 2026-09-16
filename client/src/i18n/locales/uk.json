@@ -85,7 +85,16 @@
     "forcedDealCancelBtn": "Назад до вибору гравця",
     "forcedDealDemandBadge": "🔄 ОБМІНЯТИ",
     "forcedDealNoCards": "У вас немає доступних карток нерухомості для обміну (повні монополії захищені)!",
-    "forcedDealPlaceWildPrompt": "🔄 Картку «{{card}}» отримано в обміні! Оберіть набір або новий слот на своєму столі для її розміщення"
+    "forcedDealPlaceWildPrompt": "🔄 Картку «{{card}}» отримано в обміні! Оберіть набір або новий слот на своєму столі для її розміщення",
+    "dealBreakerTitle": "Зривник угод",
+    "dealBreakerSubtitle": "Оберіть повний комплект нерухомості у {{name}} для захоплення",
+    "dealBreakerDemandBadge": "⚡ ЗАХОПИТИ",
+    "dealBreakerStealBtn": "⚡ Захопити комплект",
+    "dealBreakerStealSetBtn": "⚡ Захопити комплект «{{color}}» ({{count}} карт)",
+    "dealBreakerCancelBtn": "Назад до вибору гравця",
+    "dealBreakerNoSets": "У суперників немає жодного повного комплекту нерухомості для захоплення!",
+    "dealBreakerSelectPrompt": "Оберіть суперника з повним комплектом нерухомості!",
+    "dealBreakerStealBadge": "⚡ МОНОПОЛІЯ"
   },
   "deckPreview": {
     "title": "Monopoly Deal — Повна колода ({{count}} карт)",

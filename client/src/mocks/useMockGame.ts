@@ -222,6 +222,10 @@ export interface ActiveForcedDeal {
   card: CardModel;
 }
 
+export interface ActiveDealBreaker {
+  card: CardModel;
+}
+
 export interface PendingStolenCardPlacement {
   card: CardModel;
   fromOpponentName: string;
@@ -322,6 +326,8 @@ interface MockGameStore {
   activeForcedDeal: ActiveForcedDeal | null;
   forcedDealMyCard: CardModel | null;
   forcedDealTargetOpponentId: string | null;
+  activeDealBreaker: ActiveDealBreaker | null;
+  dealBreakerTargetOpponentId: string | null;
 
   // Actions
   selectCard: (cardId: string | null) => void;
@@ -340,6 +346,10 @@ interface MockGameStore {
   cancelForcedDealOpponent: () => void;
   cancelForcedDeal: () => void;
   executeForcedDeal: (targetOpponentId: string, opponentCard: CardModel) => void;
+  selectDealBreakerOpponent: (opponentId: string) => void;
+  cancelDealBreakerOpponent: () => void;
+  cancelDealBreaker: () => void;
+  executeDealBreaker: (targetOpponentId: string, setIndex: number) => void;
   startTableCardMove: (sourceSetIndex: number, card: CardModel) => void;
   cancelTableCardMove: () => void;
   executeTableCardMove: (target?: PropertyTarget) => void;
@@ -362,6 +372,8 @@ export const useMockGameStore = create<MockGameStore>((set, get) => ({
   activeForcedDeal: null,
   forcedDealMyCard: null,
   forcedDealTargetOpponentId: null,
+  activeDealBreaker: null,
+  dealBreakerTargetOpponentId: null,
 
   selectCard: (cardId: string | null) => {
     const { selectedCardId, tableState } = get();
@@ -670,6 +682,45 @@ export const useMockGameStore = create<MockGameStore>((set, get) => ({
         activeForcedDeal: { card },
         forcedDealMyCard: null,
         forcedDealTargetOpponentId: null,
+        pendingStolenCardPlacement: null,
+        tableState: {
+          ...tableState,
+          activeActionCard: card,
+          activeActionMessage: actionMessage,
+          discardPile: newDiscard,
+          currentPlayer: {
+            ...tableState.currentPlayer,
+            handCards: newHand,
+            handCount: newHand.length,
+          },
+          turn: {
+            ...tableState.turn,
+            actionsRemaining: newActions,
+          },
+        },
+      });
+      return;
+    } else if (card.actionType === ActionCardType.DEAL_BREAKER) {
+      const hasStealableMonopoly = tableState.opponents.some((opp) =>
+        opp.propertySets.some((s) => s.isComplete && s.cards.length > 0)
+      );
+      if (!hasStealableMonopoly) {
+        set({
+          tableState: {
+            ...tableState,
+            activeActionMessage:
+              'У суперників немає жодного повного комплекту нерухомості для захоплення!',
+          },
+        });
+        return;
+      }
+
+      actionMessage = `${card.name}: оберіть суперника, у якого хочете захопити повний комплект!`;
+      set({
+        selectedCardId: null,
+        validDropTarget: null,
+        activeDealBreaker: { card },
+        dealBreakerTargetOpponentId: null,
         pendingStolenCardPlacement: null,
         tableState: {
           ...tableState,
@@ -1060,6 +1111,57 @@ export const useMockGameStore = create<MockGameStore>((set, get) => ({
     }
   },
 
+  selectDealBreakerOpponent: (opponentId: string) => {
+    set({ dealBreakerTargetOpponentId: opponentId });
+  },
+
+  cancelDealBreakerOpponent: () => {
+    set({ dealBreakerTargetOpponentId: null });
+  },
+
+  cancelDealBreaker: () => {
+    set({
+      activeDealBreaker: null,
+      dealBreakerTargetOpponentId: null,
+    });
+  },
+
+  executeDealBreaker: (targetOpponentId: string, setIndex: number) => {
+    const { tableState } = get();
+    const opponent = tableState.opponents.find((o) => o.id === targetOpponentId);
+    if (!opponent || !opponent.propertySets[setIndex]) return;
+
+    const stolenSet = opponent.propertySets[setIndex];
+    if (!stolenSet.isComplete) return;
+
+    // Remove the entire completed set from the opponent
+    const updatedOpponents = tableState.opponents.map((opp) => {
+      if (opp.id !== targetOpponentId) return opp;
+      const updatedSets = opp.propertySets.filter((_, idx) => idx !== setIndex);
+      return {
+        ...opp,
+        propertySets: updatedSets,
+      };
+    });
+
+    // Add the entire completed set to current player
+    const updatedMySets = [...tableState.currentPlayer.propertySets, stolenSet];
+
+    set({
+      activeDealBreaker: null,
+      dealBreakerTargetOpponentId: null,
+      tableState: {
+        ...tableState,
+        opponents: updatedOpponents,
+        currentPlayer: {
+          ...tableState.currentPlayer,
+          propertySets: updatedMySets,
+        },
+        activeActionMessage: `⚡ «Зривник угод»: ви захопили повний комплект (${stolenSet.color.replace('_', ' ')}) у ${opponent.name}!`,
+      },
+    });
+  },
+
   executeOpponentPayment: (targetOpponentId: string) => {
     const { activeMoneyDemand, tableState } = get();
     if (!activeMoneyDemand) return;
@@ -1240,6 +1342,8 @@ export const useMockGameStore = create<MockGameStore>((set, get) => ({
       activeForcedDeal: null,
       forcedDealMyCard: null,
       forcedDealTargetOpponentId: null,
+      activeDealBreaker: null,
+      dealBreakerTargetOpponentId: null,
       pendingStolenCardPlacement: null,
       tableState: {
         ...tableState,
@@ -1268,6 +1372,8 @@ export const useMockGameStore = create<MockGameStore>((set, get) => ({
       activeForcedDeal: null,
       forcedDealMyCard: null,
       forcedDealTargetOpponentId: null,
+      activeDealBreaker: null,
+      dealBreakerTargetOpponentId: null,
       pendingStolenCardPlacement: null,
     });
   },
