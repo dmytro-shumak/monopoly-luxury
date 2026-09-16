@@ -55,7 +55,16 @@
     "you": "Ви",
     "cards": "карт",
     "turn": "Хід",
-    "hand": "Рука"
+    "hand": "Рука",
+    "doubleRentTitle": "Застосувати подвійну ренту?",
+    "doubleRentSubtitle": "Збільште збір ренти удвічі за допомогою картки «Подвійна рента» x2",
+    "doubleRentDescription": "У вашій руці є картка «Подвійна рента». Бажаєте зіграти її разом із цією рентою?",
+    "doubleRentConfirm": "⚡ Подвоїти до ${{amount}}",
+    "doubleRentDecline": "Залишити звичайну (${{amount}})",
+    "doubleRentCostHint": "Витрачає 1 додаткову дію ходу (залишиться: {{remaining}})",
+    "baseRent": "Базова рента",
+    "multiplier": "Множник",
+    "doubledRent": "Підсумкова рента"
   },
   "deckPreview": {
     "title": "Monopoly Deal — Повна колода ({{count}} карт)",

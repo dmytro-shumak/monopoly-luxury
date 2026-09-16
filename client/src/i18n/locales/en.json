@@ -55,7 +55,16 @@
     "you": "You",
     "cards": "cards",
     "turn": "Turn",
-    "hand": "Hand"
+    "hand": "Hand",
+    "doubleRentTitle": "Apply Double Rent?",
+    "doubleRentSubtitle": "Double your rent collection with Double Rent x2",
+    "doubleRentDescription": "You have a Double Rent card in your hand. Do you want to play it alongside this rent card?",
+    "doubleRentConfirm": "⚡ Double to ${{amount}}",
+    "doubleRentDecline": "Keep single (${{amount}})",
+    "doubleRentCostHint": "Costs 1 extra turn action ({{remaining}} action left)",
+    "baseRent": "Base rent",
+    "multiplier": "Multiplier",
+    "doubledRent": "Final rent"
   },
   "deckPreview": {
     "title": "Monopoly Deal — Full Deck ({{count}} cards)",

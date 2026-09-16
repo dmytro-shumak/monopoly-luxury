@@ -207,6 +207,13 @@ export interface ActiveMoneyDemand {
   targetType: 'single_player' | 'all_players';
 }
 
+export interface PendingDoubleRentPrompt {
+  rentCard: CardModel;
+  doubleRentCard: CardModel;
+  baseAmount: number;
+  color?: CardColor;
+}
+
 export const computeRentForColor = (
   color: CardColor,
   propertySets: MockPropertySet[]
@@ -295,12 +302,15 @@ interface MockGameStore {
   validPropertyTargets: PropertyTarget[];
   tableMovingCard: TableMovingCard | null;
   activeMoneyDemand: ActiveMoneyDemand | null;
+  pendingDoubleRent: PendingDoubleRentPrompt | null;
 
   // Actions
   selectCard: (cardId: string | null) => void;
   playSelectedToBank: () => void;
   playSelectedToProperty: (target?: PropertyTarget) => void;
   playSelectedAction: () => void;
+  confirmDoubleRent: () => void;
+  declineDoubleRent: () => void;
   executeOpponentPayment: (targetOpponentId: string) => void;
   startTableCardMove: (sourceSetIndex: number, card: CardModel) => void;
   cancelTableCardMove: () => void;
@@ -317,6 +327,7 @@ export const useMockGameStore = create<MockGameStore>((set, get) => ({
   validPropertyTargets: [],
   tableMovingCard: null,
   activeMoneyDemand: null,
+  pendingDoubleRent: null,
 
   selectCard: (cardId: string | null) => {
     const { selectedCardId, tableState } = get();
@@ -505,6 +516,40 @@ export const useMockGameStore = create<MockGameStore>((set, get) => ({
       const rentAmount = bestRent ? bestRent.amount : 0;
 
       if (rentAmount > 0 && bestRent) {
+        // Check if player has Double Rent in hand AND has at least 1 action remaining to pay for it
+        const doubleRentCard = newHand.find((c) => c.actionType === ActionCardType.DOUBLE_RENT);
+
+        if (doubleRentCard && newActions >= 1) {
+          set({
+            selectedCardId: null,
+            validDropTarget: null,
+            pendingDoubleRent: {
+              rentCard: card,
+              doubleRentCard,
+              baseAmount: rentAmount,
+              color: bestRent.color,
+            },
+            activeMoneyDemand: null,
+            tableState: {
+              ...tableState,
+              deckCount: finalDeckCount,
+              activeActionCard: card,
+              activeActionMessage: `${card.name}: чи бажаєте подвоїти ренту?`,
+              discardPile: newDiscard,
+              currentPlayer: {
+                ...tableState.currentPlayer,
+                handCards: newHand,
+                handCount: newHand.length,
+              },
+              turn: {
+                ...tableState.turn,
+                actionsRemaining: newActions,
+              },
+            },
+          });
+          return;
+        }
+
         newMoneyDemand = {
           card,
           amount: rentAmount,
@@ -557,6 +602,64 @@ export const useMockGameStore = create<MockGameStore>((set, get) => ({
           ...tableState.turn,
           actionsRemaining: newActions,
         },
+      },
+    });
+  },
+
+  confirmDoubleRent: () => {
+    const { pendingDoubleRent, tableState } = get();
+    if (!pendingDoubleRent) return;
+
+    const { rentCard, doubleRentCard, baseAmount, color } = pendingDoubleRent;
+    const doubledAmount = baseAmount * 2;
+    const hand = tableState.currentPlayer.handCards || [];
+    const newHand = hand.filter((c) => c.id !== doubleRentCard.id);
+    const newActions = Math.max(0, tableState.turn.actionsRemaining - 1);
+    const newDiscard = [doubleRentCard, ...tableState.discardPile];
+
+    set({
+      pendingDoubleRent: null,
+      activeMoneyDemand: {
+        card: rentCard,
+        amount: doubledAmount,
+        color,
+        targetType: 'single_player',
+      },
+      tableState: {
+        ...tableState,
+        activeActionCard: doubleRentCard,
+        activeActionMessage: `⚡ ${doubleRentCard.name}: рента подвоєна до $${doubledAmount}! Оберіть гравця!`,
+        discardPile: newDiscard,
+        currentPlayer: {
+          ...tableState.currentPlayer,
+          handCards: newHand,
+          handCount: newHand.length,
+        },
+        turn: {
+          ...tableState.turn,
+          actionsRemaining: newActions,
+        },
+      },
+    });
+  },
+
+  declineDoubleRent: () => {
+    const { pendingDoubleRent, tableState } = get();
+    if (!pendingDoubleRent) return;
+
+    const { rentCard, baseAmount, color } = pendingDoubleRent;
+
+    set({
+      pendingDoubleRent: null,
+      activeMoneyDemand: {
+        card: rentCard,
+        amount: baseAmount,
+        color,
+        targetType: 'single_player',
+      },
+      tableState: {
+        ...tableState,
+        activeActionMessage: `${rentCard.name}: вимагаємо $${baseAmount}! Оберіть гравця!`,
       },
     });
   },
@@ -735,6 +838,7 @@ export const useMockGameStore = create<MockGameStore>((set, get) => ({
       validDropTarget: null,
       tableMovingCard: null,
       activeMoneyDemand: null,
+      pendingDoubleRent: null,
       tableState: {
         ...tableState,
         activeActionCard: null,
@@ -755,6 +859,7 @@ export const useMockGameStore = create<MockGameStore>((set, get) => ({
       validDropTarget: null,
       tableMovingCard: null,
       activeMoneyDemand: null,
+      pendingDoubleRent: null,
     });
   },
 }));

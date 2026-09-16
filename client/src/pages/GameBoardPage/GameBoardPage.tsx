@@ -8,6 +8,7 @@ import { PlayerBank } from '../../components/Table/PlayerBank/PlayerBank';
 import { PlayerProperties } from '../../components/Table/PlayerProperties/PlayerProperties';
 import { PlayerHand } from '../../components/Table/PlayerHand/PlayerHand';
 import { TurnHUD } from '../../components/Table/TurnHUD/TurnHUD';
+import { DoubleRentModal } from '../../components/Table/DoubleRentModal/DoubleRentModal';
 import { LanguageSwitcher } from '../../components/LanguageSwitcher/LanguageSwitcher';
 import styles from './GameBoardPage.module.css';
 
@@ -21,10 +22,13 @@ export const GameBoardPage: React.FC = () => {
     validPropertyTargets,
     tableMovingCard,
     activeMoneyDemand,
+    pendingDoubleRent,
     selectCard,
     playSelectedToBank,
     playSelectedToProperty,
     playSelectedAction,
+    confirmDoubleRent,
+    declineDoubleRent,
     executeOpponentPayment,
     startTableCardMove,
     cancelTableCardMove,
@@ -144,6 +148,19 @@ export const GameBoardPage: React.FC = () => {
         onEndTurn={endTurn}
         onResetMock={resetMockState}
       />
+
+      {/* 4. Double Rent Confirm Modal */}
+      {pendingDoubleRent && (
+        <DoubleRentModal
+          isOpen={Boolean(pendingDoubleRent)}
+          baseAmount={pendingDoubleRent.baseAmount}
+          colorName={pendingDoubleRent.color}
+          doubleRentCard={pendingDoubleRent.doubleRentCard}
+          actionsRemaining={tableState.turn.actionsRemaining}
+          onConfirm={confirmDoubleRent}
+          onDecline={declineDoubleRent}
+        />
+      )}
     </div>
   );
 };
