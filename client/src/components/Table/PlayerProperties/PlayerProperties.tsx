@@ -1,7 +1,7 @@
 import React, { useMemo, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card } from '../../Card/Card';
-import { CardType, CardColor, type CardModel } from '../../../types/cards';
+import { CardType, CardColor, BuildingType, ActionCardType, type CardModel } from '../../../types/cards';
 import { PROPERTY_CONFIG } from '../../../data/allCards';
 import { type MockPropertySet } from '../../../mocks/mockGameData';
 import { type PropertyTarget, type TableMovingCard } from '../../../mocks/useMockGame';
@@ -16,6 +16,7 @@ export interface PlayerPropertiesProps {
   onPlayToProperty?: () => void;
   variant?: 'board' | 'tooltip';
   title?: string;
+  selectedCard?: CardModel | null;
   tableMovingCard?: TableMovingCard | null;
   onStartTableCardMove?: (sourceSetIndex: number, card: CardModel) => void;
   onCancelTableCardMove?: () => void;
@@ -36,6 +37,7 @@ export const PlayerProperties: React.FC<PlayerPropertiesProps> = ({
   onPlayToProperty,
   variant = 'board',
   title,
+  selectedCard,
   tableMovingCard,
   onStartTableCardMove,
   onCancelTableCardMove,
@@ -196,7 +198,11 @@ export const PlayerProperties: React.FC<PlayerPropertiesProps> = ({
                     <div className={styles.setBadgesGroup}>
                       {isSetTarget && (
                         <span className={styles.targetSetBadge}>
-                          ⚡ {isTableMoveActive ? t('board.moveHere') : t('board.addToSet')}
+                          {selectedCard?.isBuilding === BuildingType.HOUSE || selectedCard?.actionType === ActionCardType.HOUSE
+                            ? `🏠 ${t('board.addHouse')}`
+                            : selectedCard?.isBuilding === BuildingType.HOTEL || selectedCard?.actionType === ActionCardType.HOTEL
+                            ? `🏨 ${t('board.addHotel')}`
+                            : `⚡ ${isTableMoveActive ? t('board.moveHere') : t('board.addToSet')}`}
                         </span>
                       )}
                       {set.isComplete && !isSetTarget && (

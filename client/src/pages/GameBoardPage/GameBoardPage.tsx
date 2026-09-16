@@ -35,6 +35,7 @@ export const GameBoardPage: React.FC = () => {
   const isMyTurn = tableState.turn.activePlayerId === 'player_you';
   const activePlayer = tableState.opponents.find((o) => o.id === tableState.turn.activePlayerId);
   const activePlayerName = isMyTurn ? t('board.you') : activePlayer?.name || 'Opponent';
+  const selectedCard = tableState.currentPlayer.handCards?.find((c) => c.id === selectedCardId);
 
   return (
     <div className={styles.pageContainer}>
@@ -75,9 +76,9 @@ export const GameBoardPage: React.FC = () => {
 
         {/* Main Arena: Left Column (Bank + Hand) & Right Column (CenterTable + Properties) */}
         <div className={styles.arenaGrid}>
-          {/* Left Column: Bank (Top) & Hand (Bottom) */}
+          {/* Left Column: Bank + Player Hand */}
           <section className={styles.leftColumn}>
-            {/* 🟡 Yellow Zone: Player Bank */}
+            {/* 🟡 Gold Zone: Bank */}
             <div className={styles.bankWrapper}>
               <PlayerBank
                 bankCards={tableState.currentPlayer.bankCards}
@@ -86,7 +87,7 @@ export const GameBoardPage: React.FC = () => {
               />
             </div>
 
-            {/* 🔴 Red Zone: Player Hand (Fixed width holding 9 cards max, overflow-x scroll) */}
+            {/* Hand Cards */}
             <div className={styles.handWrapper}>
               <PlayerHand
                 cards={tableState.currentPlayer.handCards || []}
@@ -96,7 +97,7 @@ export const GameBoardPage: React.FC = () => {
             </div>
           </section>
 
-          {/* Right Column: Center Table (Top) & Properties (Bottom) */}
+          {/* Right Column: Center Action Arena & Discard Pile (Top) + Player Properties (Bottom) */}
           <section className={styles.rightColumn}>
             {/* Center Table: Action Arena & Discard Pile */}
             <div className={styles.centerWrapper}>
@@ -115,6 +116,7 @@ export const GameBoardPage: React.FC = () => {
                 validDropTarget={validDropTarget}
                 validPropertyTargets={validPropertyTargets}
                 onPlayToTarget={playSelectedToProperty}
+                selectedCard={selectedCard}
                 tableMovingCard={tableMovingCard}
                 onStartTableCardMove={startTableCardMove}
                 onCancelTableCardMove={cancelTableCardMove}

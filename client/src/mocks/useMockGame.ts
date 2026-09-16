@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { CardType, CardColor, type CardModel } from '../types/cards';
+import { CardType, CardColor, BuildingType, ActionCardType, type CardModel } from '../types/cards';
 import { PROPERTY_CONFIG, ALL_CARDS } from '../data/allCards';
 import { createInitialMockState, type MockTableState, type MockPropertySet } from './mockGameData';
 
@@ -11,6 +11,29 @@ export const computeValidPropertyTargets = (
   card: CardModel,
   propertySets: MockPropertySet[]
 ): PropertyTarget[] => {
+  const isHouse = card.isBuilding === BuildingType.HOUSE || card.actionType === ActionCardType.HOUSE;
+  const isHotel = card.isBuilding === BuildingType.HOTEL || card.actionType === ActionCardType.HOTEL;
+
+  if (isHouse) {
+    const targets: PropertyTarget[] = [];
+    propertySets.forEach((set, idx) => {
+      if (set.isComplete && !set.hasHouse) {
+        targets.push({ type: 'existing', setIndex: idx, color: set.color });
+      }
+    });
+    return targets;
+  }
+
+  if (isHotel) {
+    const targets: PropertyTarget[] = [];
+    propertySets.forEach((set, idx) => {
+      if (set.isComplete && set.hasHouse && !set.hasHotel) {
+        targets.push({ type: 'existing', setIndex: idx, color: set.color });
+      }
+    });
+    return targets;
+  }
+
   if (card.type !== CardType.PROPERTY && card.type !== CardType.PROPERTY_WILDCARD) {
     return [];
   }
@@ -134,6 +157,44 @@ export const computeFlipTargetForTableCard = (
   return { targetColor, target };
 };
 
+export const drawCardsFromDeck = (
+  tableState: MockTableState,
+  count: number = 2
+): { drawnCards: CardModel[]; newDeckCount: number } => {
+  const usedCardIds = new Set<string>([
+    ...(tableState.currentPlayer.handCards || []).map((c) => c.id),
+    ...tableState.currentPlayer.bankCards.map((c) => c.id),
+    ...tableState.currentPlayer.propertySets.flatMap((s) => s.cards.map((c) => c.id)),
+    ...tableState.discardPile.map((c) => c.id),
+  ]);
+
+  let availableCards = ALL_CARDS.filter((c) => !usedCardIds.has(c.id));
+
+  if (availableCards.length < count) {
+    availableCards = ALL_CARDS;
+  }
+
+  const shuffled = [...availableCards].sort(() => Math.random() - 0.5);
+  const drawnCards: CardModel[] = [];
+
+  for (let i = 0; i < count && i < shuffled.length; i++) {
+    const original = shuffled[i];
+    const isIdUsed = usedCardIds.has(original.id) || drawnCards.some((c) => c.id === original.id);
+    if (isIdUsed) {
+      drawnCards.push({
+        ...original,
+        id: `${original.id}_drawn_${Date.now()}_${i}`,
+      });
+    } else {
+      drawnCards.push(original);
+      usedCardIds.add(original.id);
+    }
+  }
+
+  const newDeckCount = Math.max(0, tableState.deckCount - drawnCards.length);
+  return { drawnCards, newDeckCount };
+};
+
 interface MockGameStore {
   tableState: MockTableState;
   selectedCardId: string | null;
@@ -178,7 +239,13 @@ export const useMockGameStore = create<MockGameStore>((set, get) => ({
     let target: 'bank' | 'property' | 'action' | null = null;
     let propTargets: PropertyTarget[] = [];
 
-    if (card.type === CardType.MONEY) {
+    const isHouse = card.isBuilding === BuildingType.HOUSE || card.actionType === ActionCardType.HOUSE;
+    const isHotel = card.isBuilding === BuildingType.HOTEL || card.actionType === ActionCardType.HOTEL;
+
+    if (isHouse || isHotel) {
+      propTargets = computeValidPropertyTargets(card, tableState.currentPlayer.propertySets);
+      target = propTargets.length > 0 ? 'property' : null;
+    } else if (card.type === CardType.MONEY) {
       target = 'bank';
     } else if (card.type === CardType.PROPERTY || card.type === CardType.PROPERTY_WILDCARD) {
       target = 'property';
@@ -237,7 +304,24 @@ export const useMockGameStore = create<MockGameStore>((set, get) => ({
     const newHand = hand.filter((c) => c.id !== selectedCardId);
     const existingSets = [...tableState.currentPlayer.propertySets];
 
-    if (target.type === 'existing') {
+    const isHouse = card.isBuilding === BuildingType.HOUSE || card.actionType === ActionCardType.HOUSE;
+    const isHotel = card.isBuilding === BuildingType.HOTEL || card.actionType === ActionCardType.HOTEL;
+
+    if (isHouse) {
+      if (target.type === 'existing' && existingSets[target.setIndex]) {
+        existingSets[target.setIndex] = {
+          ...existingSets[target.setIndex],
+          hasHouse: true,
+        };
+      }
+    } else if (isHotel) {
+      if (target.type === 'existing' && existingSets[target.setIndex]) {
+        existingSets[target.setIndex] = {
+          ...existingSets[target.setIndex],
+          hasHotel: true,
+        };
+      }
+    } else if (target.type === 'existing') {
       const targetSet = existingSets[target.setIndex];
       if (targetSet) {
         const updatedCards = [...targetSet.cards, card];
@@ -290,19 +374,43 @@ export const useMockGameStore = create<MockGameStore>((set, get) => ({
 
     const newHand = hand.filter((c) => c.id !== selectedCardId);
     const newActions = Math.max(0, tableState.turn.actionsRemaining - 1);
+    const newDiscard = [card, ...tableState.discardPile];
+
+    let finalHand = newHand;
+    let finalDeckCount = tableState.deckCount;
+    let actionMessage = `${card.name} played!`;
+
+    // Special logic for PASS_GO: draw 2 cards from deck to hand
+    if (card.actionType === ActionCardType.PASS_GO) {
+      const { drawnCards, newDeckCount } = drawCardsFromDeck(
+        {
+          ...tableState,
+          currentPlayer: {
+            ...tableState.currentPlayer,
+            handCards: newHand,
+          },
+          discardPile: newDiscard,
+        },
+        2
+      );
+      finalHand = [...newHand, ...drawnCards];
+      finalDeckCount = newDeckCount;
+      actionMessage = `${card.name}: +2 карт у руці!`;
+    }
 
     set({
       selectedCardId: null,
       validDropTarget: null,
       tableState: {
         ...tableState,
+        deckCount: finalDeckCount,
         activeActionCard: card,
-        activeActionMessage: `${card.name} played!`,
-        discardPile: [card, ...tableState.discardPile],
+        activeActionMessage: actionMessage,
+        discardPile: newDiscard,
         currentPlayer: {
           ...tableState.currentPlayer,
-          handCards: newHand,
-          handCount: newHand.length,
+          handCards: finalHand,
+          handCount: finalHand.length,
         },
         turn: {
           ...tableState.turn,
@@ -425,14 +533,9 @@ export const useMockGameStore = create<MockGameStore>((set, get) => ({
 
   drawTwoCards: () => {
     const { tableState } = get();
-    // Pick 2 random cards from full deck
-    const available = ALL_CARDS.slice(10, 20);
-    const card1 = available[Math.floor(Math.random() * available.length)];
-    const card2 = available[(Math.floor(Math.random() * available.length) + 1) % available.length];
-
+    const { drawnCards, newDeckCount } = drawCardsFromDeck(tableState, 2);
     const currentHand = tableState.currentPlayer.handCards || [];
-    const newHand = [...currentHand, card1, card2];
-    const newDeckCount = Math.max(0, tableState.deckCount - 2);
+    const newHand = [...currentHand, ...drawnCards];
 
     set({
       tableState: {

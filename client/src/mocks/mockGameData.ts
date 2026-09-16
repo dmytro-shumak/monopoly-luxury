@@ -57,15 +57,16 @@ export const createInitialMockState = (): MockTableState => {
     name: 'Alex',
     avatar: '👑',
     isCurrentPlayer: true,
-    handCount: 7,
+    handCount: 8,
     handCards: [
+      getCard('action_house_1'), // House card (adds +$3 rent to complete set)
+      getCard('action_hotel_1'), // Hotel card (adds +$4 rent to set with house)
       getCard('prop_orange_3'), // Single property: existing incomplete set (Orange)
       getCard('prop_dark_blue_1'), // Single property: existing complete set (Dark Blue) -> starts new set
       getCard('wild_purple_lightblue_1'), // Dual-color wild: BOTH sets incomplete (Purple & Light Blue) -> highlights both
       getCard('wild_darkblue_brown_1'), // Dual-color wild: BOTH sets complete (Dark Blue & Brown) -> new set for either
-      getCard('wild_all_1'), // All-color wild: highlights all incomplete sets, no new set
-      getCard('money_3_3'),
       getCard('action_pass_go_1'),
+      getCard('money_3_3'),
     ],
     // Maximally populated Bank: ALL 22 official Money cards in the deck
     bankCards: [
@@ -98,7 +99,7 @@ export const createInitialMockState = (): MockTableState => {
       // $10 (1 card)
       getCard('money_10_1'),
     ],
-    // Maximally populated Properties: 2 full monopolies (with house and hotel) + 6 partial sets
+    // Maximally populated Properties: 2 full monopolies + 6 partial sets
     propertySets: [
       {
         color: CardColor.DARK_BLUE,
@@ -108,8 +109,7 @@ export const createInitialMockState = (): MockTableState => {
           getCard('prop_dark_blue_3'),
         ],
         isComplete: true,
-        hasHouse: true,
-        hasHotel: true,
+        // No house yet - ready for House action card!
       },
       {
         color: CardColor.BROWN,
@@ -120,6 +120,7 @@ export const createInitialMockState = (): MockTableState => {
         ],
         isComplete: true,
         hasHouse: true,
+        // Has house, but no hotel yet - ready for Hotel action card!
       },
       {
         color: CardColor.PINK,

@@ -32,13 +32,13 @@ export const CenterTable: React.FC<CenterTableProps> = ({
           }
         }}
       >
-        {activeActionCard ? (
-          <div className={styles.activeCardWrapper}>
-            <Card card={activeActionCard} />
-          </div>
-        ) : isActionTarget ? (
+        {isActionTarget ? (
           <div className={styles.actionPromptText}>
             ⚡ {t('board.dropToAction')}
+          </div>
+        ) : activeActionCard ? (
+          <div className={styles.activeCardWrapper}>
+            <Card card={activeActionCard} />
           </div>
         ) : (
           <div className={styles.actionArenaText}>

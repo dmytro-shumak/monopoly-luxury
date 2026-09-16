@@ -42,6 +42,8 @@
     "dropToBank": "Click to deposit in bank",
     "dropToProperty": "Click to play property",
     "addToSet": "Add here",
+    "addHouse": "Add House",
+    "addHotel": "Add Hotel",
     "moveHere": "Move here",
     "swapColor": "Swap to {{color}}",
     "swapColorHint": "Click to swap to {{color}} (costs 1 action)",
