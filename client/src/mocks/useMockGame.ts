@@ -1,17 +1,108 @@
 import { create } from 'zustand';
-import { CardType } from '../types/cards';
-import { ALL_CARDS } from '../data/allCards';
-import { createInitialMockState, type MockTableState } from './mockGameData';
+import { CardType, CardColor, type CardModel } from '../types/cards';
+import { PROPERTY_CONFIG } from '../data/allCards';
+import { createInitialMockState, type MockTableState, type MockPropertySet } from './mockGameData';
+
+export type PropertyTarget =
+  | { type: 'existing'; setIndex: number; color: CardColor }
+  | { type: 'new_set'; color: CardColor };
+
+export const computeValidPropertyTargets = (
+  card: CardModel,
+  propertySets: MockPropertySet[]
+): PropertyTarget[] => {
+  if (card.type !== CardType.PROPERTY && card.type !== CardType.PROPERTY_WILDCARD) {
+    return [];
+  }
+
+  const colors = card.colors || [];
+  const targets: PropertyTarget[] = [];
+
+  // Case 3: Universal All-Color Wildcard (e.g. wild_all or CardColor.ALL_COLOR)
+  if (colors.includes(CardColor.ALL_COLOR) || colors.length === 0) {
+    // Only existing INCOMPLETE sets can be targeted; cannot start a new set!
+    propertySets.forEach((set, idx) => {
+      if (!set.isComplete) {
+        targets.push({ type: 'existing', setIndex: idx, color: set.color });
+      }
+    });
+    return targets;
+  }
+
+  // Case 1: Single Color Property Card (colors.length === 1)
+  if (colors.length === 1) {
+    const targetColor = colors[0];
+    const incompleteSetIndex = propertySets.findIndex(
+      (s) => s.color === targetColor && !s.isComplete
+    );
+
+    if (incompleteSetIndex !== -1) {
+      // There is an incomplete set of this color: can only add to this incomplete set!
+      targets.push({ type: 'existing', setIndex: incompleteSetIndex, color: targetColor });
+    } else {
+      // Either no set of this color exists, OR all existing sets of this color are complete!
+      // Must start a new set!
+      targets.push({ type: 'new_set', color: targetColor });
+    }
+    return targets;
+  }
+
+  // Case 2: Dual-Color Property Wildcard (colors.length === 2)
+  if (colors.length === 2) {
+    const [colorA, colorB] = colors;
+    const incompleteAIndex = propertySets.findIndex(
+      (s) => s.color === colorA && !s.isComplete
+    );
+    const incompleteBIndex = propertySets.findIndex(
+      (s) => s.color === colorB && !s.isComplete
+    );
+
+    const hasIncompleteA = incompleteAIndex !== -1;
+    const hasIncompleteB = incompleteBIndex !== -1;
+
+    // Subcase 2A: Both colors have incomplete sets!
+    // Rule: Can ONLY put on one of these existing incomplete sets. CANNOT create a new set.
+    if (hasIncompleteA && hasIncompleteB) {
+      targets.push({ type: 'existing', setIndex: incompleteAIndex, color: colorA });
+      targets.push({ type: 'existing', setIndex: incompleteBIndex, color: colorB });
+      return targets;
+    }
+
+    // Subcase 2B: Exactly one color has an incomplete set, the other is empty or complete!
+    if (hasIncompleteA && !hasIncompleteB) {
+      targets.push({ type: 'existing', setIndex: incompleteAIndex, color: colorA });
+      targets.push({ type: 'new_set', color: colorB });
+      return targets;
+    }
+
+    if (!hasIncompleteA && hasIncompleteB) {
+      targets.push({ type: 'existing', setIndex: incompleteBIndex, color: colorB });
+      targets.push({ type: 'new_set', color: colorA });
+      return targets;
+    }
+
+    // Subcase 2C: Neither color has an incomplete set (both are either non-existent or complete monopolies)!
+    // Rule: Can start a new set as either color A or color B!
+    if (!hasIncompleteA && !hasIncompleteB) {
+      targets.push({ type: 'new_set', color: colorA });
+      targets.push({ type: 'new_set', color: colorB });
+      return targets;
+    }
+  }
+
+  return targets;
+};
 
 interface MockGameStore {
   tableState: MockTableState;
   selectedCardId: string | null;
   validDropTarget: 'bank' | 'property' | 'action' | null;
+  validPropertyTargets: PropertyTarget[];
 
   // Actions
   selectCard: (cardId: string | null) => void;
   playSelectedToBank: () => void;
-  playSelectedToProperty: () => void;
+  playSelectedToProperty: (target?: PropertyTarget) => void;
   playSelectedAction: () => void;
   drawTwoCards: () => void;
   endTurn: () => void;
@@ -22,31 +113,35 @@ export const useMockGameStore = create<MockGameStore>((set, get) => ({
   tableState: createInitialMockState(),
   selectedCardId: null,
   validDropTarget: null,
+  validPropertyTargets: [],
 
   selectCard: (cardId: string | null) => {
     const { selectedCardId, tableState } = get();
     if (selectedCardId === cardId || !cardId) {
-      set({ selectedCardId: null, validDropTarget: null });
+      set({ selectedCardId: null, validDropTarget: null, validPropertyTargets: [] });
       return;
     }
 
     const card = tableState.currentPlayer.handCards?.find((c) => c.id === cardId);
     if (!card) {
-      set({ selectedCardId: null, validDropTarget: null });
+      set({ selectedCardId: null, validDropTarget: null, validPropertyTargets: [] });
       return;
     }
 
     // Determine valid drop target based on card type
     let target: 'bank' | 'property' | 'action' | null = null;
+    let propTargets: PropertyTarget[] = [];
+
     if (card.type === CardType.MONEY) {
       target = 'bank';
     } else if (card.type === CardType.PROPERTY || card.type === CardType.PROPERTY_WILDCARD) {
       target = 'property';
+      propTargets = computeValidPropertyTargets(card, tableState.currentPlayer.propertySets);
     } else if (card.type === CardType.ACTION) {
       target = 'action';
     }
 
-    set({ selectedCardId: cardId, validDropTarget: target });
+    set({ selectedCardId: cardId, validDropTarget: target, validPropertyTargets: propTargets });
   },
 
   playSelectedToBank: () => {
@@ -64,6 +159,7 @@ export const useMockGameStore = create<MockGameStore>((set, get) => ({
     set({
       selectedCardId: null,
       validDropTarget: null,
+      validPropertyTargets: [],
       tableState: {
         ...tableState,
         currentPlayer: {
@@ -80,35 +176,39 @@ export const useMockGameStore = create<MockGameStore>((set, get) => ({
     });
   },
 
-  playSelectedToProperty: () => {
-    const { selectedCardId, tableState } = get();
+  playSelectedToProperty: (chosenTarget?: PropertyTarget) => {
+    const { selectedCardId, validPropertyTargets, tableState } = get();
     if (!selectedCardId) return;
 
     const hand = tableState.currentPlayer.handCards || [];
     const card = hand.find((c) => c.id === selectedCardId);
-    if (!card || !card.colors || card.colors.length === 0) return;
+    if (!card) return;
 
-    const primaryColor = card.colors[0];
+    // Use chosen target or first valid target
+    const target = chosenTarget || validPropertyTargets[0];
+    if (!target) return;
+
     const newHand = hand.filter((c) => c.id !== selectedCardId);
-
-    // Find existing set with this color or create a new set
     const existingSets = [...tableState.currentPlayer.propertySets];
-    const setIndex = existingSets.findIndex((s) => s.color === primaryColor);
 
-    if (setIndex !== -1) {
-      const targetSet = existingSets[setIndex];
-      const updatedCards = [...targetSet.cards, card];
-      const isComplete = card.fullSetSize ? updatedCards.length >= card.fullSetSize : false;
-      existingSets[setIndex] = {
-        ...targetSet,
-        cards: updatedCards,
-        isComplete,
-      };
-    } else {
+    if (target.type === 'existing') {
+      const targetSet = existingSets[target.setIndex];
+      if (targetSet) {
+        const updatedCards = [...targetSet.cards, card];
+        const fullSetSize = card.fullSetSize || PROPERTY_CONFIG[target.color]?.setSize || 3;
+        const isComplete = updatedCards.length >= fullSetSize;
+        existingSets[target.setIndex] = {
+          ...targetSet,
+          cards: updatedCards,
+          isComplete,
+        };
+      }
+    } else if (target.type === 'new_set') {
+      const fullSetSize = card.fullSetSize || PROPERTY_CONFIG[target.color]?.setSize || 3;
       existingSets.push({
-        color: primaryColor,
+        color: target.color,
         cards: [card],
-        isComplete: false,
+        isComplete: 1 >= fullSetSize,
       });
     }
 
@@ -117,6 +217,7 @@ export const useMockGameStore = create<MockGameStore>((set, get) => ({
     set({
       selectedCardId: null,
       validDropTarget: null,
+      validPropertyTargets: [],
       tableState: {
         ...tableState,
         currentPlayer: {

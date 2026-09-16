@@ -59,13 +59,13 @@ export const createInitialMockState = (): MockTableState => {
     isCurrentPlayer: true,
     handCount: 7,
     handCards: [
-      getCard('prop_pink_4'),
-      getCard('prop_orange_3'),
+      getCard('prop_orange_3'), // Single property: existing incomplete set (Orange)
+      getCard('prop_dark_blue_1'), // Single property: existing complete set (Dark Blue) -> starts new set
+      getCard('wild_pink_orange_1'), // Dual-color wild: BOTH sets incomplete (Pink & Orange) -> highlights both
+      getCard('wild_darkblue_brown_1'), // Dual-color wild: BOTH sets complete (Dark Blue & Brown) -> new set for either
+      getCard('wild_all_1'), // All-color wild: highlights all incomplete sets, no new set
       getCard('money_3_3'),
       getCard('action_pass_go_1'),
-      getCard('action_sly_deal_1'),
-      getCard('action_deal_breaker_1'),
-      getCard('wild_all_1'),
     ],
     // Maximally populated Bank: ALL 22 official Money cards in the deck
     bankCards: [

@@ -1,85 +1,164 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card } from '../../Card/Card';
+import { CardColor } from '../../../types/cards';
 import { type MockPropertySet } from '../../../mocks/mockGameData';
+import { type PropertyTarget } from '../../../mocks/useMockGame';
 import styles from './PlayerProperties.module.css';
 
 export interface PlayerPropertiesProps {
   propertySets: MockPropertySet[];
-  validDropTarget: 'bank' | 'property' | 'action' | null;
-  onPlayToProperty: () => void;
+  validDropTarget?: 'bank' | 'property' | 'action' | null;
+  validPropertyTargets?: PropertyTarget[];
+  onPlayToTarget?: (target: PropertyTarget) => void;
+  onPlayToProperty?: () => void;
+  variant?: 'board' | 'tooltip';
+  title?: string;
 }
+
+const getColorVar = (color: CardColor): string => {
+  return `var(--color-prop-${color.toLowerCase().replace('_', '-')})`;
+};
 
 export const PlayerProperties: React.FC<PlayerPropertiesProps> = ({
   propertySets,
-  validDropTarget,
+  validDropTarget: _validDropTarget,
+  validPropertyTargets,
+  onPlayToTarget,
   onPlayToProperty,
+  variant = 'board',
+  title,
 }) => {
   const { t } = useTranslation();
-  const isPropertyTarget = validDropTarget === 'property';
+  const isTooltip = variant === 'tooltip';
+  const totalCardsCount = propertySets.reduce((sum, set) => sum + set.cards.length, 0);
+  const displayTitle = title || `${t('board.properties')} (${propertySets.length})`;
+
+  // Map of setIndex -> PropertyTarget for existing sets
+  const existingTargetMap = useMemo(() => {
+    const map = new Map<number, PropertyTarget>();
+    if (!isTooltip && validPropertyTargets) {
+      for (const target of validPropertyTargets) {
+        if (target.type === 'existing') {
+          map.set(target.setIndex, target);
+        }
+      }
+    }
+    return map;
+  }, [isTooltip, validPropertyTargets]);
+
+  // List of new set targets
+  const newSetTargets = useMemo(() => {
+    if (isTooltip || !validPropertyTargets) return [];
+    return validPropertyTargets.filter(
+      (t): t is Extract<PropertyTarget, { type: 'new_set' }> => t.type === 'new_set'
+    );
+  }, [isTooltip, validPropertyTargets]);
 
   return (
     <div
-      className={`${styles.propertiesContainer} ${isPropertyTarget ? styles.propertiesContainerHighlight : ''}`}
-      onClick={() => {
-        if (isPropertyTarget) {
-          onPlayToProperty();
-        }
-      }}
+      className={`${styles.propertiesContainer} ${isTooltip ? styles.tooltipVariant : ''}`}
     >
       {/* Header bar */}
       <div className={styles.propertiesHeader}>
         <div className={styles.titleWrapper}>
           <span className={styles.propertiesIcon}>🏰</span>
-          <span className={styles.propertiesTitle}>
-            {t('board.properties')} ({propertySets.length})
-          </span>
+          <span className={styles.propertiesTitle}>{displayTitle}</span>
         </div>
 
-        {isPropertyTarget && (
-          <span className={styles.dropPrompt}>
-            ⚡ {t('board.dropToProperty')}
-          </span>
-        )}
+        <div className={styles.propertiesCountBadge}>
+          {totalCardsCount} {t('board.cards')}
+        </div>
       </div>
 
       {/* Property Sets Row */}
       <div className={styles.setsGrid}>
-        {propertySets.length === 0 ? (
+        {propertySets.length === 0 && newSetTargets.length === 0 ? (
           <div className={styles.emptyProperties}>{t('board.emptyDiscard')}</div>
         ) : (
-          propertySets.map((set, setIdx) => (
-            <div
-              key={setIdx}
-              className={`${styles.propertySetColumn} ${set.isComplete ? styles.setComplete : ''}`}
-            >
-              {/* Set Status Header */}
-              <div className={styles.setColHeader}>
-                <span className={styles.setCardCount}>
-                  {set.cards.length} {t('board.cards')}
-                </span>
-                {set.isComplete && (
-                  <span className={styles.completeBadge}>
-                    {t('board.completeSet')}
+          <>
+            {/* "+ New Set" Slots for unrepresented or completed colors - rendered at the start for immediate visibility */}
+            {newSetTargets.map((newTarget) => (
+              <div
+                key={`new_set_${newTarget.color}`}
+                className={styles.newSetSlot}
+                onClick={() => {
+                  if (onPlayToTarget) {
+                    onPlayToTarget(newTarget);
+                  } else if (onPlayToProperty) {
+                    onPlayToProperty();
+                  }
+                }}
+              >
+                <div className={styles.newSetSlotInner}>
+                  <span
+                    className={styles.colorDot}
+                    style={{ background: getColorVar(newTarget.color) }}
+                  />
+                  <span className={styles.newSetPlus}>➕</span>
+                  <span className={styles.newSetLabel}>
+                    {t('board.newSet')}
                   </span>
-                )}
-                {set.hasHouse && <span className={styles.buildingIcon}>🏠</span>}
-                {set.hasHotel && <span className={styles.buildingIcon}>🏨</span>}
+                  <span className={styles.newSetColorName}>
+                    {newTarget.color.replace('_', ' ')}
+                  </span>
+                </div>
               </div>
+            ))}
 
-              {/* Stack of Cards for this Property Color */}
-              <div className={styles.cardsStack}>
-                {set.cards.map((card, cardIdx) => (
-                  <div
-                    key={`${card.id}_${cardIdx}`}
-                    className={styles.cardItem}
-                  >
-                    <Card card={card} />
+            {propertySets.map((set, setIdx) => {
+              const target = existingTargetMap.get(setIdx);
+              const isSetTarget = Boolean(target);
+
+              return (
+                <div
+                  key={setIdx}
+                  className={`${styles.propertySetColumn} ${set.isComplete ? styles.setComplete : ''} ${isSetTarget ? styles.targetSetHighlight : ''}`}
+                  onClick={() => {
+                    if (isSetTarget && target) {
+                      if (onPlayToTarget) {
+                        onPlayToTarget(target);
+                      } else if (onPlayToProperty) {
+                        onPlayToProperty();
+                      }
+                    }
+                  }}
+                >
+                  {/* Set Status Header */}
+                  <div className={styles.setColHeader}>
+                    {isSetTarget ? (
+                      <span className={styles.targetSetBadge}>
+                        ⚡ {t('board.addToSet')}
+                      </span>
+                    ) : (
+                      <span className={styles.setCardCount}>
+                        {set.cards.length} {t('board.cards')}
+                      </span>
+                    )}
+                    {set.isComplete && (
+                      <span className={styles.completeBadge}>
+                        {t('board.completeSet')}
+                      </span>
+                    )}
+                    {set.hasHouse && <span className={styles.buildingIcon}>🏠</span>}
+                    {set.hasHotel && <span className={styles.buildingIcon}>🏨</span>}
                   </div>
-                ))}
-              </div>
-            </div>
-          ))
+
+                  {/* Stack of Cards for this Property Color */}
+                  <div className={styles.cardsStack}>
+                    {set.cards.map((card, cardIdx) => (
+                      <div
+                        key={`${card.id}_${cardIdx}`}
+                        className={styles.cardItem}
+                      >
+                        <Card card={card} />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </>
         )}
       </div>
     </div>

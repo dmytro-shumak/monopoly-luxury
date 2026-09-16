@@ -49,6 +49,17 @@
   letter-spacing: 0.5px;
 }
 
+.propertiesCountBadge {
+  font-size: 11px;
+  font-weight: 700;
+  color: #58d68d;
+  background: rgba(46, 204, 113, 0.15);
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(46, 204, 113, 0.4);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
 .dropPrompt {
   font-size: 11px;
   font-weight: 700;
@@ -192,4 +203,141 @@
 .cardItem:hover {
   transform: translateY(-8px);
   z-index: 15;
+}
+
+/* Tooltip Popover Variant */
+.tooltipVariant {
+  width: fit-content !important;
+  min-width: auto !important;
+  max-width: 860px;
+  background: #0e1c15 !important;
+  backdrop-filter: none !important;
+  border: 1.5px solid rgba(46, 204, 113, 0.75) !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.95), 0 0 24px rgba(46, 204, 113, 0.25) !important;
+  padding: 8px 12px 8px 12px !important;
+  overflow: visible !important;
+  border-radius: 12px;
+}
+
+.tooltipVariant .setsGrid {
+  width: fit-content !important;
+  height: auto !important;
+  min-height: auto !important;
+  max-height: 480px;
+  overflow-x: auto;
+  overflow-y: visible;
+  padding: 4px 2px 6px 2px;
+  scrollbar-width: thin;
+}
+
+/* Granular target set highlight */
+.targetSetHighlight {
+  border-color: #2ecc71 !important;
+  background: rgba(46, 204, 113, 0.16) !important;
+  box-shadow: 0 0 20px rgba(46, 204, 113, 0.6), inset 0 0 16px rgba(46, 204, 113, 0.2) !important;
+  transform: translateY(-4px);
+  cursor: pointer !important;
+  animation: pulseTargetColumn 1.5s infinite alternate;
+}
+
+@keyframes pulseTargetColumn {
+  0% {
+    box-shadow: 0 0 16px rgba(46, 204, 113, 0.4), inset 0 0 12px rgba(46, 204, 113, 0.15);
+    border-color: rgba(46, 204, 113, 0.7);
+  }
+  100% {
+    box-shadow: 0 0 26px rgba(46, 204, 113, 0.8), inset 0 0 20px rgba(46, 204, 113, 0.3);
+    border-color: #2ecc71;
+  }
+}
+
+.targetSetBadge {
+  background: #2ecc71;
+  color: #081a0f;
+  font-size: 9px;
+  font-weight: 800;
+  border-radius: 4px;
+  padding: 2px 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  animation: pulseBadge 1.2s infinite;
+}
+
+@keyframes pulseBadge {
+  0%, 100% { transform: scale(1); opacity: 0.9; }
+  50% { transform: scale(1.06); opacity: 1; }
+}
+
+/* Dedicated "+ New Set" slot */
+.newSetSlot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 110px;
+  min-height: 180px;
+  background: rgba(16, 32, 24, 0.5);
+  border: 2px dashed rgba(46, 204, 113, 0.75);
+  border-radius: 10px;
+  padding: 12px 8px;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  animation: pulseNewSet 1.6s infinite alternate;
+}
+
+.newSetSlot:hover {
+  background: rgba(46, 204, 113, 0.22);
+  border-color: #2ecc71;
+  box-shadow: 0 0 24px rgba(46, 204, 113, 0.6), inset 0 0 18px rgba(46, 204, 113, 0.25);
+  transform: translateY(-4px);
+}
+
+@keyframes pulseNewSet {
+  0% {
+    border-color: rgba(46, 204, 113, 0.5);
+    box-shadow: 0 0 12px rgba(46, 204, 113, 0.2);
+  }
+  100% {
+    border-color: #2ecc71;
+    box-shadow: 0 0 22px rgba(46, 204, 113, 0.55), inset 0 0 12px rgba(46, 204, 113, 0.15);
+  }
+}
+
+.newSetSlotInner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.colorDot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.6);
+}
+
+.newSetPlus {
+  font-size: 22px;
+  filter: drop-shadow(0 0 6px rgba(46, 204, 113, 0.6));
+}
+
+.newSetLabel {
+  font-size: 11px;
+  font-weight: 700;
+  color: #58d68d;
+  letter-spacing: 0.5px;
+  line-height: 1.2;
+}
+
+.newSetColorName {
+  font-size: 9px;
+  font-weight: 800;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }

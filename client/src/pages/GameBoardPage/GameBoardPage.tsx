@@ -18,6 +18,7 @@ export const GameBoardPage: React.FC = () => {
     tableState,
     selectedCardId,
     validDropTarget,
+    validPropertyTargets,
     selectCard,
     playSelectedToBank,
     playSelectedToProperty,
@@ -108,7 +109,8 @@ export const GameBoardPage: React.FC = () => {
               <PlayerProperties
                 propertySets={tableState.currentPlayer.propertySets}
                 validDropTarget={validDropTarget}
-                onPlayToProperty={playSelectedToProperty}
+                validPropertyTargets={validPropertyTargets}
+                onPlayToTarget={playSelectedToProperty}
               />
             </div>
           </section>

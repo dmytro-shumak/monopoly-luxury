@@ -4,6 +4,7 @@ import { CardColor } from '../../../types/cards';
 import { type MockPlayer } from '../../../mocks/mockGameData';
 import { Tooltip } from '../../Tooltip/Tooltip';
 import { PlayerBank } from '../PlayerBank/PlayerBank';
+import { PlayerProperties } from '../PlayerProperties/PlayerProperties';
 import styles from './OpponentsArea.module.css';
 
 export interface OpponentsAreaProps {
@@ -23,13 +24,14 @@ export const OpponentsArea: React.FC<OpponentsAreaProps> = ({ opponents, activeP
       {opponents.map((opponent) => {
         const isActive = activePlayerId === opponent.id;
         const totalBank = opponent.bankCards.reduce((acc, card) => acc + (card.value || 0), 0);
+        const totalProperties = opponent.propertySets.reduce((acc, set) => acc + set.cards.length, 0);
 
         return (
           <div
             key={opponent.id}
             className={`${styles.opponentCard} ${isActive ? styles.opponentActive : ''}`}
           >
-            {/* Header: Name, Avatar, Turn Badge, Bank */}
+            {/* Header: Name, Avatar, Turn Badge, Properties & Bank Badges */}
             <div className={styles.headerRow}>
               <div className={styles.playerInfo}>
                 <span className={styles.avatar}>{opponent.avatar}</span>
@@ -39,21 +41,41 @@ export const OpponentsArea: React.FC<OpponentsAreaProps> = ({ opponents, activeP
                 )}
               </div>
 
-              <Tooltip
-                content={
-                  <PlayerBank
-                    bankCards={opponent.bankCards}
-                    variant="tooltip"
-                    title={t('board.opponentBankTitle', { name: opponent.name })}
-                  />
-                }
-                placement="bottom"
-                offset={8}
-              >
-                <div className={styles.bankPill}>
-                  <span>💰 ${totalBank}</span>
-                </div>
-              </Tooltip>
+              <div className={styles.badgesWrapper}>
+                {/* Properties Tooltip */}
+                <Tooltip
+                  content={
+                    <PlayerProperties
+                      propertySets={opponent.propertySets}
+                      variant="tooltip"
+                      title={t('board.opponentPropertiesTitle', { name: opponent.name })}
+                    />
+                  }
+                  placement="bottom"
+                  offset={8}
+                >
+                  <div className={styles.propertiesPill}>
+                    <span>🏠 {totalProperties}</span>
+                  </div>
+                </Tooltip>
+
+                {/* Bank Tooltip */}
+                <Tooltip
+                  content={
+                    <PlayerBank
+                      bankCards={opponent.bankCards}
+                      variant="tooltip"
+                      title={t('board.opponentBankTitle', { name: opponent.name })}
+                    />
+                  }
+                  placement="bottom"
+                  offset={8}
+                >
+                  <div className={styles.bankPill}>
+                    <span>💰 ${totalBank}</span>
+                  </div>
+                </Tooltip>
+              </div>
             </div>
 
             {/* Body: Hand Cards Count & Property Sets */}

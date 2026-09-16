@@ -1,7 +1,7 @@
 import type { CardModel } from "../types/cards";
 import { CardColor, CardType, ActionCardType, BuildingType } from "../types/cards";
 
-const PROPERTY_CONFIG: Record<CardColor, { names: string[]; values: number[]; setSize: number }> = {
+export const PROPERTY_CONFIG: Record<CardColor, { names: string[]; values: number[]; setSize: number }> = {
   [CardColor.PINK]: {
     names: ["вул. Басейна", "вул. Шовковична", "вул. Лютеранська", "вул. Шота Руставелі"],
     values: [1, 2, 3, 4],

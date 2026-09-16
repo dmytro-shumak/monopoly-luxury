@@ -64,6 +64,33 @@
   text-transform: uppercase;
 }
 
+.badgesWrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.propertiesPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(46, 204, 113, 0.12);
+  border: 1px solid rgba(46, 204, 113, 0.35);
+  border-radius: 12px;
+  padding: 2px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #58d68d;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.propertiesPill:hover {
+  background: rgba(46, 204, 113, 0.22);
+  border-color: #2ecc71;
+  box-shadow: 0 0 10px rgba(46, 204, 113, 0.4);
+}
+
 .bankPill {
   display: inline-flex;
   align-items: center;
