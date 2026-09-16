@@ -218,6 +218,10 @@ export interface ActiveSlyDeal {
   card: CardModel;
 }
 
+export interface ActiveForcedDeal {
+  card: CardModel;
+}
+
 export interface PendingStolenCardPlacement {
   card: CardModel;
   fromOpponentName: string;
@@ -315,6 +319,9 @@ interface MockGameStore {
   activeSlyDeal: ActiveSlyDeal | null;
   slyDealTargetOpponentId: string | null;
   pendingStolenCardPlacement: PendingStolenCardPlacement | null;
+  activeForcedDeal: ActiveForcedDeal | null;
+  forcedDealMyCard: CardModel | null;
+  forcedDealTargetOpponentId: string | null;
 
   // Actions
   selectCard: (cardId: string | null) => void;
@@ -328,6 +335,11 @@ interface MockGameStore {
   executeSlyDeal: (targetOpponentId: string, stolenCard: CardModel) => void;
   placeStolenWildcardToProperty: (target: PropertyTarget) => void;
   cancelSlyDeal: () => void;
+  selectForcedDealMyCard: (card: CardModel) => void;
+  selectForcedDealOpponent: (opponentId: string) => void;
+  cancelForcedDealOpponent: () => void;
+  cancelForcedDeal: () => void;
+  executeForcedDeal: (targetOpponentId: string, opponentCard: CardModel) => void;
   startTableCardMove: (sourceSetIndex: number, card: CardModel) => void;
   cancelTableCardMove: () => void;
   executeTableCardMove: (target?: PropertyTarget) => void;
@@ -347,6 +359,9 @@ export const useMockGameStore = create<MockGameStore>((set, get) => ({
   activeSlyDeal: null,
   slyDealTargetOpponentId: null,
   pendingStolenCardPlacement: null,
+  activeForcedDeal: null,
+  forcedDealMyCard: null,
+  forcedDealTargetOpponentId: null,
 
   selectCard: (cardId: string | null) => {
     const { selectedCardId, tableState } = get();
@@ -633,6 +648,46 @@ export const useMockGameStore = create<MockGameStore>((set, get) => ({
         },
       });
       return;
+    } else if (card.actionType === ActionCardType.FORCED_DEAL) {
+      const hasTradableProperty = tableState.currentPlayer.propertySets.some(
+        (s) => !s.isComplete && s.cards.length > 0
+      );
+      if (!hasTradableProperty) {
+        set({
+          tableState: {
+            ...tableState,
+            activeActionMessage:
+              'У вас немає доступних карток нерухомості для обміну (повні монополії захищені)!',
+          },
+        });
+        return;
+      }
+
+      actionMessage = `${card.name}: оберіть вашу картку нерухомості, яку хочете віддати!`;
+      set({
+        selectedCardId: null,
+        validDropTarget: null,
+        activeForcedDeal: { card },
+        forcedDealMyCard: null,
+        forcedDealTargetOpponentId: null,
+        pendingStolenCardPlacement: null,
+        tableState: {
+          ...tableState,
+          activeActionCard: card,
+          activeActionMessage: actionMessage,
+          discardPile: newDiscard,
+          currentPlayer: {
+            ...tableState.currentPlayer,
+            handCards: newHand,
+            handCount: newHand.length,
+          },
+          turn: {
+            ...tableState.turn,
+            actionsRemaining: newActions,
+          },
+        },
+      });
+      return;
     }
 
     set({
@@ -835,6 +890,9 @@ export const useMockGameStore = create<MockGameStore>((set, get) => ({
     set({
       activeSlyDeal: null,
       slyDealTargetOpponentId: null,
+      activeForcedDeal: null,
+      forcedDealMyCard: null,
+      forcedDealTargetOpponentId: null,
       pendingStolenCardPlacement: null,
       validPropertyTargets: [],
       tableState: {
@@ -843,9 +901,163 @@ export const useMockGameStore = create<MockGameStore>((set, get) => ({
           ...tableState.currentPlayer,
           propertySets: existingSets,
         },
-        activeActionMessage: `🥷 «${card.name}» успішно додано у ваш набір (${chosenTarget.color.replace('_', ' ')})!`,
+        activeActionMessage: `«${card.name}» успішно додано у ваш набір (${chosenTarget.color.replace('_', ' ')})!`,
       },
     });
+  },
+
+  selectForcedDealMyCard: (card: CardModel) => {
+    const { tableState, activeForcedDeal } = get();
+    if (!activeForcedDeal) return;
+    set({
+      forcedDealMyCard: card,
+      tableState: {
+        ...tableState,
+        activeActionMessage: `🔄 Ви віддаєте «${card.name}». Тепер оберіть суперника для обміну!`,
+      },
+    });
+  },
+
+  selectForcedDealOpponent: (opponentId: string) => {
+    set({ forcedDealTargetOpponentId: opponentId });
+  },
+
+  cancelForcedDealOpponent: () => {
+    set({ forcedDealTargetOpponentId: null });
+  },
+
+  cancelForcedDeal: () => {
+    set({
+      activeForcedDeal: null,
+      forcedDealMyCard: null,
+      forcedDealTargetOpponentId: null,
+    });
+  },
+
+  executeForcedDeal: (targetOpponentId: string, opponentCard: CardModel) => {
+    const { tableState, forcedDealMyCard } = get();
+    if (!forcedDealMyCard) return;
+
+    const targetOpponent = tableState.opponents.find((o) => o.id === targetOpponentId);
+    if (!targetOpponent) return;
+
+    // 1. Remove forcedDealMyCard from player's propertySets
+    let playerSets = tableState.currentPlayer.propertySets
+      .map((set) => {
+        const remainingCards = set.cards.filter((c) => c.id !== forcedDealMyCard.id);
+        const fullSize = remainingCards.find((c) => c.fullSetSize)?.fullSetSize || PROPERTY_CONFIG[set.color]?.setSize || 3;
+        return {
+          ...set,
+          cards: remainingCards,
+          isComplete: remainingCards.length >= fullSize,
+        };
+      })
+      .filter((set) => set.cards.length > 0);
+
+    // 2. Remove opponentCard from targetOpponent AND add forcedDealMyCard to targetOpponent
+    const updatedOpponents = tableState.opponents.map((opp) => {
+      if (opp.id !== targetOpponentId) return opp;
+
+      let oppSets = opp.propertySets
+        .map((set) => {
+          const remainingCards = set.cards.filter((c) => c.id !== opponentCard.id);
+          const fullSize = remainingCards.find((c) => c.fullSetSize)?.fullSetSize || PROPERTY_CONFIG[set.color]?.setSize || 3;
+          return {
+            ...set,
+            cards: remainingCards,
+            isComplete: remainingCards.length >= fullSize,
+          };
+        })
+        .filter((set) => set.cards.length > 0);
+
+      const myCardColor = forcedDealMyCard.colors?.[0] || CardColor.ORANGE;
+      const existingMatchingSetIndex = oppSets.findIndex((s) => s.color === myCardColor && !s.isComplete);
+      if (existingMatchingSetIndex !== -1) {
+        const targetSet = oppSets[existingMatchingSetIndex];
+        const updatedCards = [...targetSet.cards, forcedDealMyCard];
+        const fullSetSize = forcedDealMyCard.fullSetSize || PROPERTY_CONFIG[targetSet.color]?.setSize || 3;
+        oppSets[existingMatchingSetIndex] = {
+          ...targetSet,
+          cards: updatedCards,
+          isComplete: updatedCards.length >= fullSetSize,
+        };
+      } else {
+        const fullSetSize = forcedDealMyCard.fullSetSize || PROPERTY_CONFIG[myCardColor]?.setSize || 3;
+        oppSets.push({
+          color: myCardColor,
+          cards: [forcedDealMyCard],
+          isComplete: 1 >= fullSetSize,
+        });
+      }
+
+      return {
+        ...opp,
+        propertySets: oppSets,
+      };
+    });
+
+    // 3. Add opponentCard to player
+    const isWildcard =
+      opponentCard.type === CardType.PROPERTY_WILDCARD ||
+      (opponentCard.colors && opponentCard.colors.length > 1);
+
+    if (isWildcard) {
+      const targets = computeValidPropertyTargets(opponentCard, playerSets);
+      set({
+        activeForcedDeal: null,
+        forcedDealMyCard: null,
+        forcedDealTargetOpponentId: null,
+        pendingStolenCardPlacement: { card: opponentCard, fromOpponentName: targetOpponent.name },
+        validPropertyTargets: targets,
+        tableState: {
+          ...tableState,
+          opponents: updatedOpponents,
+          currentPlayer: {
+            ...tableState.currentPlayer,
+            propertySets: playerSets,
+          },
+          activeActionMessage: `🔄 «${forcedDealMyCard.name}» віддано! Картку «${opponentCard.name}» отримано. Оберіть набір або новий слот на своєму столі для її розміщення.`,
+        },
+      });
+    } else {
+      const targets = computeValidPropertyTargets(opponentCard, playerSets);
+      const existingTarget = targets.find((t) => t.type === 'existing');
+
+      if (existingTarget && existingTarget.type === 'existing') {
+        const targetSet = playerSets[existingTarget.setIndex];
+        const updatedCards = [...targetSet.cards, opponentCard];
+        const fullSetSize = opponentCard.fullSetSize || PROPERTY_CONFIG[targetSet.color]?.setSize || 3;
+        playerSets[existingTarget.setIndex] = {
+          ...targetSet,
+          cards: updatedCards,
+          isComplete: updatedCards.length >= fullSetSize,
+        };
+      } else {
+        const targetColor = opponentCard.colors?.[0] || CardColor.ORANGE;
+        const fullSetSize = opponentCard.fullSetSize || PROPERTY_CONFIG[targetColor]?.setSize || 3;
+        playerSets.push({
+          color: targetColor,
+          cards: [opponentCard],
+          isComplete: 1 >= fullSetSize,
+        });
+      }
+
+      set({
+        activeForcedDeal: null,
+        forcedDealMyCard: null,
+        forcedDealTargetOpponentId: null,
+        pendingStolenCardPlacement: null,
+        tableState: {
+          ...tableState,
+          opponents: updatedOpponents,
+          currentPlayer: {
+            ...tableState.currentPlayer,
+            propertySets: playerSets,
+          },
+          activeActionMessage: `🔄 Примусовий обмін завершено: ви віддали «${forcedDealMyCard.name}» та отримали «${opponentCard.name}» від ${targetOpponent.name}!`,
+        },
+      });
+    }
   },
 
   executeOpponentPayment: (targetOpponentId: string) => {
@@ -1025,6 +1237,9 @@ export const useMockGameStore = create<MockGameStore>((set, get) => ({
       pendingDoubleRent: null,
       activeSlyDeal: null,
       slyDealTargetOpponentId: null,
+      activeForcedDeal: null,
+      forcedDealMyCard: null,
+      forcedDealTargetOpponentId: null,
       pendingStolenCardPlacement: null,
       tableState: {
         ...tableState,
@@ -1050,6 +1265,9 @@ export const useMockGameStore = create<MockGameStore>((set, get) => ({
       pendingDoubleRent: null,
       activeSlyDeal: null,
       slyDealTargetOpponentId: null,
+      activeForcedDeal: null,
+      forcedDealMyCard: null,
+      forcedDealTargetOpponentId: null,
       pendingStolenCardPlacement: null,
     });
   },

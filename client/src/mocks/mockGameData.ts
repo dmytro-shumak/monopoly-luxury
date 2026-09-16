@@ -57,8 +57,9 @@ export const createInitialMockState = (): MockTableState => {
     name: 'Alex',
     avatar: '👑',
     isCurrentPlayer: true,
-    handCount: 14,
+    handCount: 15,
     handCards: [
+      getCard('action_forced_deal_1'), // Forced Deal (Swap 1 property with opponent)
       getCard('action_sly_deal_1'), // Sly Deal (Steal 1 property from opponent)
       getCard('rent_double_1'), // Double Rent card (x2 multiplier)
       getCard('rent_darkblue_purple_1'), // Dual-color rent (Dark Blue / Purple) -> picks Dark Blue ($3)

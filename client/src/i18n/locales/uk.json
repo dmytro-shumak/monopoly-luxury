@@ -75,7 +75,17 @@
     "slyDealProtectedSet": "🔒 Монополія (Захищено)",
     "slyDealStealable": "🟢 Можна вкрасти",
     "slyDealWildHint": "Універсальна карта: після викрадення ви оберете потрібний колір на своєму столі",
-    "slyDealPlaceWildPrompt": "🥷 Картку «{{card}}» викрадено! Оберіть набір або новий слот на своєму столі для її розміщення"
+    "slyDealPlaceWildPrompt": "🥷 Картку «{{card}}» викрадено! Оберіть набір або новий слот на своєму столі для її розміщення",
+    "forcedDealTitle": "Примусовий обмін",
+    "forcedDealSubtitle": "Оберіть нерухомість у {{name}} для обміну на вашу «{{myCard}}»",
+    "forcedDealSelectMyCard": "Оберіть вашу картку нерухомості для обміну",
+    "forcedDealSelectOpponent": "Ви віддаєте «{{card}}». Оберіть суперника для обміну!",
+    "forcedDealSwapBtn": "🔄 Обміняти нерухомість",
+    "forcedDealSwapCardsBtn": "🔄 Обміняти «{{myCard}}» на «{{theirCard}}»",
+    "forcedDealCancelBtn": "Назад до вибору гравця",
+    "forcedDealDemandBadge": "🔄 ОБМІНЯТИ",
+    "forcedDealNoCards": "У вас немає доступних карток нерухомості для обміну (повні монополії захищені)!",
+    "forcedDealPlaceWildPrompt": "🔄 Картку «{{card}}» отримано в обміні! Оберіть набір або новий слот на своєму столі для її розміщення"
   },
   "deckPreview": {
     "title": "Monopoly Deal — Повна колода ({{count}} карт)",

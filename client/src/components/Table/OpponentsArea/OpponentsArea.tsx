@@ -13,8 +13,10 @@ export interface OpponentsAreaProps {
   isSelectingTarget?: boolean;
   targetDemandAmount?: number;
   isSelectingSlyDealTarget?: boolean;
+  isSelectingForcedDealTarget?: boolean;
   onSelectTargetOpponent?: (opponentId: string) => void;
   onSelectSlyDealOpponent?: (opponentId: string) => void;
+  onSelectForcedDealOpponent?: (opponentId: string) => void;
 }
 
 const getColorVar = (color: CardColor): string => {
@@ -27,8 +29,10 @@ export const OpponentsArea: React.FC<OpponentsAreaProps> = ({
   isSelectingTarget = false,
   targetDemandAmount = 0,
   isSelectingSlyDealTarget = false,
+  isSelectingForcedDealTarget = false,
   onSelectTargetOpponent,
   onSelectSlyDealOpponent,
+  onSelectForcedDealOpponent,
 }) => {
   const { t } = useTranslation();
 
@@ -40,7 +44,8 @@ export const OpponentsArea: React.FC<OpponentsAreaProps> = ({
         const totalProperties = opponent.propertySets.reduce((acc, set) => acc + set.cards.length, 0);
         const hasStealableProperty = opponent.propertySets.some((s) => !s.isComplete && s.cards.length > 0);
         const isSlyDealSelectable = isSelectingSlyDealTarget && hasStealableProperty;
-        const isTargetActive = isSelectingTarget || isSlyDealSelectable;
+        const isForcedDealSelectable = isSelectingForcedDealTarget && hasStealableProperty;
+        const isTargetActive = isSelectingTarget || isSlyDealSelectable || isForcedDealSelectable;
 
         return (
           <div
@@ -51,6 +56,8 @@ export const OpponentsArea: React.FC<OpponentsAreaProps> = ({
                 onSelectTargetOpponent(opponent.id);
               } else if (isSlyDealSelectable && onSelectSlyDealOpponent) {
                 onSelectSlyDealOpponent(opponent.id);
+              } else if (isForcedDealSelectable && onSelectForcedDealOpponent) {
+                onSelectForcedDealOpponent(opponent.id);
               }
             }}
           >
@@ -70,6 +77,11 @@ export const OpponentsArea: React.FC<OpponentsAreaProps> = ({
                 {isSlyDealSelectable && (
                   <span className={styles.opponentTargetBadge}>
                     {t('board.slyDealDemandBadge')}
+                  </span>
+                )}
+                {isForcedDealSelectable && (
+                  <span className={styles.opponentTargetBadge}>
+                    {t('board.forcedDealDemandBadge')}
                   </span>
                 )}
               </div>

@@ -10,6 +10,7 @@ import { PlayerHand } from '../../components/Table/PlayerHand/PlayerHand';
 import { TurnHUD } from '../../components/Table/TurnHUD/TurnHUD';
 import { DoubleRentModal } from '../../components/Table/DoubleRentModal/DoubleRentModal';
 import { SlyDealModal } from '../../components/Table/SlyDealModal/SlyDealModal';
+import { ForcedDealModal } from '../../components/Table/ForcedDealModal/ForcedDealModal';
 import { LanguageSwitcher } from '../../components/LanguageSwitcher/LanguageSwitcher';
 import styles from './GameBoardPage.module.css';
 
@@ -26,6 +27,9 @@ export const GameBoardPage: React.FC = () => {
     pendingDoubleRent,
     activeSlyDeal,
     slyDealTargetOpponentId,
+    activeForcedDeal,
+    forcedDealMyCard,
+    forcedDealTargetOpponentId,
     pendingStolenCardPlacement,
     selectCard,
     playSelectedToBank,
@@ -37,6 +41,10 @@ export const GameBoardPage: React.FC = () => {
     selectSlyDealOpponent,
     executeSlyDeal,
     cancelSlyDeal,
+    selectForcedDealMyCard,
+    selectForcedDealOpponent,
+    cancelForcedDealOpponent,
+    executeForcedDeal,
     startTableCardMove,
     cancelTableCardMove,
     executeTableCardMove,
@@ -50,6 +58,7 @@ export const GameBoardPage: React.FC = () => {
   const activePlayerName = isMyTurn ? t('board.you') : activePlayer?.name || 'Opponent';
   const selectedCard = tableState.currentPlayer.handCards?.find((c) => c.id === selectedCardId);
   const slyDealTargetOpponent = tableState.opponents.find((o) => o.id === slyDealTargetOpponentId);
+  const forcedDealTargetOpponent = tableState.opponents.find((o) => o.id === forcedDealTargetOpponentId);
 
   return (
     <div className={styles.pageContainer}>
@@ -88,8 +97,10 @@ export const GameBoardPage: React.FC = () => {
             isSelectingTarget={Boolean(activeMoneyDemand && activeMoneyDemand.targetType === 'single_player')}
             targetDemandAmount={activeMoneyDemand?.amount}
             isSelectingSlyDealTarget={Boolean(activeSlyDeal && !slyDealTargetOpponentId && !pendingStolenCardPlacement)}
+            isSelectingForcedDealTarget={Boolean(activeForcedDeal && forcedDealMyCard && !forcedDealTargetOpponentId && !pendingStolenCardPlacement)}
             onSelectTargetOpponent={executeOpponentPayment}
             onSelectSlyDealOpponent={selectSlyDealOpponent}
+            onSelectForcedDealOpponent={selectForcedDealOpponent}
           />
         </section>
 
@@ -142,6 +153,9 @@ export const GameBoardPage: React.FC = () => {
                 onExecuteTableCardMove={executeTableCardMove}
                 isMyTurn={isMyTurn}
                 actionsRemaining={tableState.turn.actionsRemaining}
+                isTradeGiveMode={Boolean(activeForcedDeal && !forcedDealMyCard)}
+                selectedTradeGiveCardId={forcedDealMyCard?.id}
+                onSelectTradeGiveCard={selectForcedDealMyCard}
               />
             </div>
           </section>
@@ -179,6 +193,17 @@ export const GameBoardPage: React.FC = () => {
           opponent={slyDealTargetOpponent}
           onStealCard={(stolenCard) => executeSlyDeal(slyDealTargetOpponent.id, stolenCard)}
           onClose={cancelSlyDeal}
+        />
+      )}
+
+      {/* 6. Forced Deal Modal */}
+      {forcedDealTargetOpponent && forcedDealMyCard && (
+        <ForcedDealModal
+          isOpen={Boolean(forcedDealTargetOpponentId && forcedDealTargetOpponent && forcedDealMyCard)}
+          opponent={forcedDealTargetOpponent}
+          myCard={forcedDealMyCard}
+          onSwapCard={(opponentCard) => executeForcedDeal(forcedDealTargetOpponent.id, opponentCard)}
+          onClose={cancelForcedDealOpponent}
         />
       )}
     </div>

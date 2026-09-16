@@ -75,7 +75,17 @@
     "slyDealProtectedSet": "🔒 Monopoly (Protected)",
     "slyDealStealable": "🟢 Stealable",
     "slyDealWildHint": "Wildcard: after stealing, you will choose the desired color on your table",
-    "slyDealPlaceWildPrompt": "🥷 \"{{card}}\" stolen! Select a set or new slot on your table to place it"
+    "slyDealPlaceWildPrompt": "🥷 \"{{card}}\" stolen! Select a set or new slot on your table to place it",
+    "forcedDealTitle": "Forced Deal",
+    "forcedDealSubtitle": "Choose a property from {{name}} to receive in exchange for your \"{{myCard}}\"",
+    "forcedDealSelectMyCard": "Select one of your property cards to give away",
+    "forcedDealSelectOpponent": "You are trading \"{{card}}\". Select an opponent to trade with!",
+    "forcedDealSwapBtn": "🔄 Swap Property",
+    "forcedDealSwapCardsBtn": "🔄 Swap \"{{myCard}}\" for \"{{theirCard}}\"",
+    "forcedDealCancelBtn": "Back to player selection",
+    "forcedDealDemandBadge": "🔄 TRADE",
+    "forcedDealNoCards": "You have no eligible property cards to trade (completed monopolies are protected)!",
+    "forcedDealPlaceWildPrompt": "🔄 \"{{card}}\" received in trade! Select a set or new slot on your table to place it"
   },
   "deckPreview": {
     "title": "Monopoly Deal — Full Deck ({{count}} cards)",

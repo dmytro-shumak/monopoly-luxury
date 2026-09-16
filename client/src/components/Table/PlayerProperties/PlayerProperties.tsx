@@ -27,6 +27,9 @@ export interface PlayerPropertiesProps {
   selectedStealCardId?: string | null;
   onSelectStealCard?: (card: CardModel) => void;
   onDoubleClickStealCard?: (card: CardModel) => void;
+  isTradeGiveMode?: boolean;
+  selectedTradeGiveCardId?: string | null;
+  onSelectTradeGiveCard?: (card: CardModel) => void;
 }
 
 const getColorVar = (color: CardColor): string => {
@@ -52,18 +55,23 @@ export const PlayerProperties: React.FC<PlayerPropertiesProps> = ({
   selectedStealCardId = null,
   onSelectStealCard,
   onDoubleClickStealCard,
+  isTradeGiveMode = false,
+  selectedTradeGiveCardId = null,
+  onSelectTradeGiveCard,
 }) => {
   const { t } = useTranslation();
   const isTooltip = variant === 'tooltip';
   const isModal = variant === 'modal';
   const totalCardsCount = propertySets.reduce((sum, set) => sum + set.cards.length, 0);
-  const displayTitle = title || `${t('board.properties')} (${propertySets.length})`;
+  const displayTitle = isTradeGiveMode
+    ? t('board.forcedDealSelectMyCard')
+    : title || `${t('board.properties')} (${propertySets.length})`;
   const isTableMoveActive = Boolean(tableMovingCard);
 
   // Map of setIndex -> PropertyTarget for existing sets
   const existingTargetMap = useMemo(() => {
     const map = new Map<number, PropertyTarget>();
-    if (isTooltip || isModal || isStealMode) return map;
+    if (isTooltip || isModal || isStealMode || isTradeGiveMode) return map;
 
     if (tableMovingCard && tableMovingCard.target.type === 'existing') {
       map.set(tableMovingCard.target.setIndex, tableMovingCard.target);
@@ -78,11 +86,11 @@ export const PlayerProperties: React.FC<PlayerPropertiesProps> = ({
       }
     }
     return map;
-  }, [isTooltip, isModal, isStealMode, validPropertyTargets, tableMovingCard]);
+  }, [isTooltip, isModal, isStealMode, isTradeGiveMode, validPropertyTargets, tableMovingCard]);
 
   // List of new set targets
   const newSetTargets = useMemo(() => {
-    if (isTooltip || isModal || isStealMode) return [];
+    if (isTooltip || isModal || isStealMode || isTradeGiveMode) return [];
 
     if (tableMovingCard && tableMovingCard.target.type === 'new_set') {
       return [tableMovingCard.target];
@@ -92,7 +100,7 @@ export const PlayerProperties: React.FC<PlayerPropertiesProps> = ({
     return validPropertyTargets.filter(
       (t): t is Extract<PropertyTarget, { type: 'new_set' }> => t.type === 'new_set'
     );
-  }, [isTooltip, isModal, isStealMode, validPropertyTargets, tableMovingCard]);
+  }, [isTooltip, isModal, isStealMode, isTradeGiveMode, validPropertyTargets, tableMovingCard]);
 
   const setsGridRef = useRef<HTMLDivElement>(null);
 
@@ -171,7 +179,7 @@ export const PlayerProperties: React.FC<PlayerPropertiesProps> = ({
                 (set.color && PROPERTY_CONFIG[set.color]?.setSize) ||
                 3;
 
-              const isSetDimmed = isStealMode && set.isComplete;
+              const isSetDimmed = (isStealMode || isTradeGiveMode) && set.isComplete;
 
               return (
                 <div
@@ -234,6 +242,7 @@ export const PlayerProperties: React.FC<PlayerPropertiesProps> = ({
                         !isTooltip &&
                         !isModal &&
                         !isStealMode &&
+                        !isTradeGiveMode &&
                         card.type === CardType.PROPERTY_WILDCARD &&
                         card.colors &&
                         card.colors.length === 2 &&
@@ -249,12 +258,14 @@ export const PlayerProperties: React.FC<PlayerPropertiesProps> = ({
                         ? card.colors?.find((c) => c !== set.color)
                         : undefined;
 
-                      const isStealable = isStealMode && !set.isComplete;
-                      const isSelectedSteal = isStealMode && selectedStealCardId === card.id;
+                      const isStealable = (isStealMode || isTradeGiveMode) && !set.isComplete;
+                      const isSelectedCard =
+                        (isStealMode && selectedStealCardId === card.id) ||
+                        (isTradeGiveMode && selectedTradeGiveCardId === card.id);
 
                       let cardClass: string | undefined = undefined;
-                      if (isStealMode) {
-                        if (isSelectedSteal) {
+                      if (isStealMode || isTradeGiveMode) {
+                        if (isSelectedCard) {
                           cardClass = cardStyles.selectedStealCard;
                         } else if (isStealable) {
                           cardClass = cardStyles.stealableCard;
@@ -270,7 +281,7 @@ export const PlayerProperties: React.FC<PlayerPropertiesProps> = ({
                         canFlip ? styles.cardFlipEligible : '',
                         isThisCardMoving ? styles.cardMovingActive : '',
                         isStealable ? styles.stealableCardItem : '',
-                        isSelectedSteal ? styles.selectedStealCardItem : '',
+                        isSelectedCard ? styles.selectedStealCardItem : '',
                       ].filter(Boolean).join(' ');
 
                       return (
@@ -283,7 +294,12 @@ export const PlayerProperties: React.FC<PlayerPropertiesProps> = ({
                               : undefined
                           }
                           onClick={(e) => {
-                            if (isStealMode) {
+                            if (isTradeGiveMode) {
+                              e.stopPropagation();
+                              if (isStealable && onSelectTradeGiveCard) {
+                                onSelectTradeGiveCard(card);
+                              }
+                            } else if (isStealMode) {
                               e.stopPropagation();
                               if (isStealable && onSelectStealCard) {
                                 onSelectStealCard(card);
