@@ -235,6 +235,23 @@
   z-index: 15;
 }
 
+/* Card currently chosen to move */
+.cardMovingActive {
+  transform: translateY(-12px) !important;
+  z-index: 25 !important;
+}
+
+/* 2-Color Card eligible to flip */
+.cardFlipEligible {
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cardFlipEligible:hover {
+  transform: translateY(-12px) !important;
+  z-index: 25 !important;
+}
+
 /* Tooltip Popover Variant */
 .tooltipVariant {
   width: fit-content !important;

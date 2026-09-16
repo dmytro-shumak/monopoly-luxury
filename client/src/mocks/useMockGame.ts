@@ -93,17 +93,62 @@ export const computeValidPropertyTargets = (
   return targets;
 };
 
+export interface TableMovingCard {
+  sourceSetIndex: number;
+  cardId: string;
+  targetColor: CardColor;
+  target: PropertyTarget;
+}
+
+export const computeFlipTargetForTableCard = (
+  sourceSetIndex: number,
+  card: CardModel,
+  propertySets: MockPropertySet[]
+): { targetColor: CardColor; target: PropertyTarget } | null => {
+  if (card.type !== CardType.PROPERTY_WILDCARD || !card.colors || card.colors.length !== 2) {
+    return null;
+  }
+  if (card.colors.includes(CardColor.ALL_COLOR)) {
+    return null;
+  }
+  const sourceSet = propertySets[sourceSetIndex];
+  if (!sourceSet || sourceSet.isComplete) {
+    return null; // Color lock in complete monopoly
+  }
+
+  const currentColor = sourceSet.color;
+  const targetColor = card.colors.find((c) => c !== currentColor);
+  if (!targetColor) return null;
+
+  const incompleteTargetIndex = propertySets.findIndex(
+    (s, idx) => idx !== sourceSetIndex && s.color === targetColor && !s.isComplete
+  );
+
+  let target: PropertyTarget;
+  if (incompleteTargetIndex !== -1) {
+    target = { type: 'existing', setIndex: incompleteTargetIndex, color: targetColor };
+  } else {
+    target = { type: 'new_set', color: targetColor };
+  }
+
+  return { targetColor, target };
+};
+
 interface MockGameStore {
   tableState: MockTableState;
   selectedCardId: string | null;
   validDropTarget: 'bank' | 'property' | 'action' | null;
   validPropertyTargets: PropertyTarget[];
+  tableMovingCard: TableMovingCard | null;
 
   // Actions
   selectCard: (cardId: string | null) => void;
   playSelectedToBank: () => void;
   playSelectedToProperty: (target?: PropertyTarget) => void;
   playSelectedAction: () => void;
+  startTableCardMove: (sourceSetIndex: number, card: CardModel) => void;
+  cancelTableCardMove: () => void;
+  executeTableCardMove: (target?: PropertyTarget) => void;
   drawTwoCards: () => void;
   endTurn: () => void;
   resetMockState: () => void;
@@ -114,17 +159,18 @@ export const useMockGameStore = create<MockGameStore>((set, get) => ({
   selectedCardId: null,
   validDropTarget: null,
   validPropertyTargets: [],
+  tableMovingCard: null,
 
   selectCard: (cardId: string | null) => {
     const { selectedCardId, tableState } = get();
     if (selectedCardId === cardId || !cardId) {
-      set({ selectedCardId: null, validDropTarget: null, validPropertyTargets: [] });
+      set({ selectedCardId: null, validDropTarget: null, validPropertyTargets: [], tableMovingCard: null });
       return;
     }
 
     const card = tableState.currentPlayer.handCards?.find((c) => c.id === cardId);
     if (!card) {
-      set({ selectedCardId: null, validDropTarget: null, validPropertyTargets: [] });
+      set({ selectedCardId: null, validDropTarget: null, validPropertyTargets: [], tableMovingCard: null });
       return;
     }
 
@@ -141,7 +187,7 @@ export const useMockGameStore = create<MockGameStore>((set, get) => ({
       target = 'action';
     }
 
-    set({ selectedCardId: cardId, validDropTarget: target, validPropertyTargets: propTargets });
+    set({ selectedCardId: cardId, validDropTarget: target, validPropertyTargets: propTargets, tableMovingCard: null });
   },
 
   playSelectedToBank: () => {
@@ -266,6 +312,117 @@ export const useMockGameStore = create<MockGameStore>((set, get) => ({
     });
   },
 
+  startTableCardMove: (sourceSetIndex: number, card: CardModel) => {
+    const { tableState, tableMovingCard } = get();
+    if (tableState.turn.actionsRemaining <= 0) return;
+
+    // Toggle off if already moving this card
+    if (tableMovingCard && tableMovingCard.cardId === card.id) {
+      set({ tableMovingCard: null });
+      return;
+    }
+
+    const flipInfo = computeFlipTargetForTableCard(
+      sourceSetIndex,
+      card,
+      tableState.currentPlayer.propertySets
+    );
+    if (!flipInfo) return;
+
+    // Deselect any hand card
+    set({
+      selectedCardId: null,
+      validDropTarget: null,
+      validPropertyTargets: [],
+      tableMovingCard: {
+        sourceSetIndex,
+        cardId: card.id,
+        targetColor: flipInfo.targetColor,
+        target: flipInfo.target,
+      },
+    });
+  },
+
+  cancelTableCardMove: () => {
+    set({ tableMovingCard: null });
+  },
+
+  executeTableCardMove: (chosenTarget?: PropertyTarget) => {
+    const { tableMovingCard, tableState } = get();
+    if (!tableMovingCard) return;
+    if (tableState.turn.actionsRemaining <= 0) return;
+
+    const { sourceSetIndex, cardId, targetColor } = tableMovingCard;
+    const existingSets = [...tableState.currentPlayer.propertySets];
+    const sourceSet = existingSets[sourceSetIndex];
+    if (!sourceSet) return;
+
+    const card = sourceSet.cards.find((c) => c.id === cardId);
+    if (!card) return;
+
+    // 1. Remove card from sourceSet
+    const remainingCardsInSource = sourceSet.cards.filter((c) => c.id !== cardId);
+    const sourceFullSetSize = PROPERTY_CONFIG[sourceSet.color]?.setSize || 3;
+
+    if (remainingCardsInSource.length === 0) {
+      existingSets.splice(sourceSetIndex, 1);
+    } else {
+      existingSets[sourceSetIndex] = {
+        ...sourceSet,
+        cards: remainingCardsInSource,
+        isComplete: remainingCardsInSource.length >= sourceFullSetSize,
+      };
+    }
+
+    // 2. Add card to target set
+    const target = chosenTarget || tableMovingCard.target;
+    const targetFullSetSize = card.fullSetSize || PROPERTY_CONFIG[targetColor]?.setSize || 3;
+
+    if (target.type === 'existing') {
+      const targetSetIndex = existingSets.findIndex(
+        (s) => s.color === target.color && !s.isComplete
+      );
+      if (targetSetIndex !== -1) {
+        const destSet = existingSets[targetSetIndex];
+        const newCards = [...destSet.cards, card];
+        existingSets[targetSetIndex] = {
+          ...destSet,
+          cards: newCards,
+          isComplete: newCards.length >= targetFullSetSize,
+        };
+      } else {
+        existingSets.push({
+          color: targetColor,
+          cards: [card],
+          isComplete: 1 >= targetFullSetSize,
+        });
+      }
+    } else if (target.type === 'new_set') {
+      existingSets.push({
+        color: targetColor,
+        cards: [card],
+        isComplete: 1 >= targetFullSetSize,
+      });
+    }
+
+    const newActions = Math.max(0, tableState.turn.actionsRemaining - 1);
+
+    set({
+      tableMovingCard: null,
+      tableState: {
+        ...tableState,
+        currentPlayer: {
+          ...tableState.currentPlayer,
+          propertySets: existingSets,
+        },
+        turn: {
+          ...tableState.turn,
+          actionsRemaining: newActions,
+        },
+      },
+    });
+  },
+
   drawTwoCards: () => {
     const { tableState } = get();
     // Pick 2 random cards from full deck
@@ -298,6 +455,7 @@ export const useMockGameStore = create<MockGameStore>((set, get) => ({
     set({
       selectedCardId: null,
       validDropTarget: null,
+      tableMovingCard: null,
       tableState: {
         ...tableState,
         activeActionCard: null,
@@ -316,6 +474,7 @@ export const useMockGameStore = create<MockGameStore>((set, get) => ({
       tableState: createInitialMockState(),
       selectedCardId: null,
       validDropTarget: null,
+      tableMovingCard: null,
     });
   },
 }));

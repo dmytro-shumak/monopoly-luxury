@@ -19,10 +19,14 @@ export const GameBoardPage: React.FC = () => {
     selectedCardId,
     validDropTarget,
     validPropertyTargets,
+    tableMovingCard,
     selectCard,
     playSelectedToBank,
     playSelectedToProperty,
     playSelectedAction,
+    startTableCardMove,
+    cancelTableCardMove,
+    executeTableCardMove,
     drawTwoCards,
     endTurn,
     resetMockState,
@@ -111,6 +115,12 @@ export const GameBoardPage: React.FC = () => {
                 validDropTarget={validDropTarget}
                 validPropertyTargets={validPropertyTargets}
                 onPlayToTarget={playSelectedToProperty}
+                tableMovingCard={tableMovingCard}
+                onStartTableCardMove={startTableCardMove}
+                onCancelTableCardMove={cancelTableCardMove}
+                onExecuteTableCardMove={executeTableCardMove}
+                isMyTurn={isMyTurn}
+                actionsRemaining={tableState.turn.actionsRemaining}
               />
             </div>
           </section>

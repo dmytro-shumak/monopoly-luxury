@@ -8,6 +8,7 @@ export interface CardProps {
   card: CardModel;
   onClick?: () => void;
   isHighlighted?: boolean;
+  className?: string;
 }
 
 // Crisp inline SVGs matching the physical cards in the photo
@@ -102,7 +103,7 @@ const getBaseId = (id: string): string => {
   return lastUnderscore !== -1 ? id.substring(0, lastUnderscore) : id;
 };
 
-export const Card: React.FC<CardProps> = ({ card, onClick, isHighlighted }) => {
+export const Card: React.FC<CardProps> = ({ card, onClick, isHighlighted, className }) => {
   const { t } = useTranslation();
   const { type, value, colors, name, description, actionType, isBuilding, rentValues, fullSetSize } = card;
 
@@ -129,7 +130,7 @@ export const Card: React.FC<CardProps> = ({ card, onClick, isHighlighted }) => {
 
   return (
     <div
-      className={`${styles.card} ${isHighlighted ? styles.highlighted : ''}`}
+      className={`${styles.card} ${isHighlighted ? styles.highlighted : ''} ${className || ''}`}
       onClick={onClick}
       data-card-type={type}
     >

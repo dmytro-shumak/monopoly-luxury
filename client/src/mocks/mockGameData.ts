@@ -61,7 +61,7 @@ export const createInitialMockState = (): MockTableState => {
     handCards: [
       getCard('prop_orange_3'), // Single property: existing incomplete set (Orange)
       getCard('prop_dark_blue_1'), // Single property: existing complete set (Dark Blue) -> starts new set
-      getCard('wild_pink_orange_1'), // Dual-color wild: BOTH sets incomplete (Pink & Orange) -> highlights both
+      getCard('wild_purple_lightblue_1'), // Dual-color wild: BOTH sets incomplete (Purple & Light Blue) -> highlights both
       getCard('wild_darkblue_brown_1'), // Dual-color wild: BOTH sets complete (Dark Blue & Brown) -> new set for either
       getCard('wild_all_1'), // All-color wild: highlights all incomplete sets, no new set
       getCard('money_3_3'),
@@ -134,7 +134,7 @@ export const createInitialMockState = (): MockTableState => {
         color: CardColor.ORANGE,
         cards: [
           getCard('prop_orange_1'),
-          getCard('prop_orange_2'),
+          getCard('wild_pink_orange_1'),
         ],
         isComplete: false,
       },

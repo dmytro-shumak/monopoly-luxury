@@ -26,6 +26,30 @@
   outline: 2px solid #64b5f6;
 }
 
+/* 2-Color Wildcard on table eligible to flip - 360 degree crisp outline and glow */
+.card.flippableCard:hover {
+  outline: 3px solid #2ecc71 !important;
+  outline-offset: 1px !important;
+  box-shadow: 0 0 16px rgba(46, 204, 113, 1), 0 0 32px rgba(46, 204, 113, 0.6) !important;
+}
+
+/* 2-Color Wildcard currently selected for move */
+.card.flippableCardMoving {
+  outline: 3.5px solid var(--color-gold) !important;
+  outline-offset: 1px !important;
+  box-shadow: 0 0 20px var(--color-gold), 0 0 40px rgba(212, 175, 55, 0.85) !important;
+  animation: pulseGoldGlow 1.4s infinite alternate;
+}
+
+@keyframes pulseGoldGlow {
+  0% {
+    box-shadow: 0 0 16px var(--color-gold), 0 0 25px rgba(212, 175, 55, 0.6);
+  }
+  100% {
+    box-shadow: 0 0 25px var(--color-gold), 0 0 45px rgba(212, 175, 55, 0.95);
+  }
+}
+
 .outerBorder {
   width: 100%;
   height: 100%;

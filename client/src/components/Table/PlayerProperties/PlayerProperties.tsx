@@ -1,10 +1,11 @@
 import React, { useMemo, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card } from '../../Card/Card';
-import { CardColor } from '../../../types/cards';
+import { CardType, CardColor, type CardModel } from '../../../types/cards';
 import { PROPERTY_CONFIG } from '../../../data/allCards';
 import { type MockPropertySet } from '../../../mocks/mockGameData';
-import { type PropertyTarget } from '../../../mocks/useMockGame';
+import { type PropertyTarget, type TableMovingCard } from '../../../mocks/useMockGame';
+import cardStyles from '../../Card/Card.module.css';
 import styles from './PlayerProperties.module.css';
 
 export interface PlayerPropertiesProps {
@@ -15,6 +16,12 @@ export interface PlayerPropertiesProps {
   onPlayToProperty?: () => void;
   variant?: 'board' | 'tooltip';
   title?: string;
+  tableMovingCard?: TableMovingCard | null;
+  onStartTableCardMove?: (sourceSetIndex: number, card: CardModel) => void;
+  onCancelTableCardMove?: () => void;
+  onExecuteTableCardMove?: (target: PropertyTarget) => void;
+  isMyTurn?: boolean;
+  actionsRemaining?: number;
 }
 
 const getColorVar = (color: CardColor): string => {
@@ -29,16 +36,30 @@ export const PlayerProperties: React.FC<PlayerPropertiesProps> = ({
   onPlayToProperty,
   variant = 'board',
   title,
+  tableMovingCard,
+  onStartTableCardMove,
+  onCancelTableCardMove,
+  onExecuteTableCardMove,
+  isMyTurn = false,
+  actionsRemaining = 0,
 }) => {
   const { t } = useTranslation();
   const isTooltip = variant === 'tooltip';
   const totalCardsCount = propertySets.reduce((sum, set) => sum + set.cards.length, 0);
   const displayTitle = title || `${t('board.properties')} (${propertySets.length})`;
+  const isTableMoveActive = Boolean(tableMovingCard);
 
   // Map of setIndex -> PropertyTarget for existing sets
   const existingTargetMap = useMemo(() => {
     const map = new Map<number, PropertyTarget>();
-    if (!isTooltip && validPropertyTargets) {
+    if (isTooltip) return map;
+
+    if (tableMovingCard && tableMovingCard.target.type === 'existing') {
+      map.set(tableMovingCard.target.setIndex, tableMovingCard.target);
+      return map;
+    }
+
+    if (validPropertyTargets) {
       for (const target of validPropertyTargets) {
         if (target.type === 'existing') {
           map.set(target.setIndex, target);
@@ -46,15 +67,21 @@ export const PlayerProperties: React.FC<PlayerPropertiesProps> = ({
       }
     }
     return map;
-  }, [isTooltip, validPropertyTargets]);
+  }, [isTooltip, validPropertyTargets, tableMovingCard]);
 
   // List of new set targets
   const newSetTargets = useMemo(() => {
-    if (isTooltip || !validPropertyTargets) return [];
+    if (isTooltip) return [];
+
+    if (tableMovingCard && tableMovingCard.target.type === 'new_set') {
+      return [tableMovingCard.target];
+    }
+
+    if (!validPropertyTargets) return [];
     return validPropertyTargets.filter(
       (t): t is Extract<PropertyTarget, { type: 'new_set' }> => t.type === 'new_set'
     );
-  }, [isTooltip, validPropertyTargets]);
+  }, [isTooltip, validPropertyTargets, tableMovingCard]);
 
   const setsGridRef = useRef<HTMLDivElement>(null);
 
@@ -68,6 +95,11 @@ export const PlayerProperties: React.FC<PlayerPropertiesProps> = ({
   return (
     <div
       className={`${styles.propertiesContainer} ${isTooltip ? styles.tooltipVariant : ''}`}
+      onClick={(e) => {
+        if (e.target === e.currentTarget && isTableMoveActive) {
+          onCancelTableCardMove?.();
+        }
+      }}
     >
       {/* Header bar */}
       <div className={styles.propertiesHeader}>
@@ -93,7 +125,9 @@ export const PlayerProperties: React.FC<PlayerPropertiesProps> = ({
                 key={`new_set_${newTarget.color}`}
                 className={styles.newSetSlot}
                 onClick={() => {
-                  if (onPlayToTarget) {
+                  if (isTableMoveActive && onExecuteTableCardMove) {
+                    onExecuteTableCardMove(newTarget);
+                  } else if (onPlayToTarget) {
                     onPlayToTarget(newTarget);
                   } else if (onPlayToProperty) {
                     onPlayToProperty();
@@ -105,9 +139,11 @@ export const PlayerProperties: React.FC<PlayerPropertiesProps> = ({
                     className={styles.colorDot}
                     style={{ background: getColorVar(newTarget.color) }}
                   />
-                  <span className={styles.newSetPlus}>➕</span>
+                  <span className={styles.newSetPlus}>
+                    {isTableMoveActive ? '⚡' : '➕'}
+                  </span>
                   <span className={styles.newSetLabel}>
-                    {t('board.newSet')}
+                    {isTableMoveActive ? t('board.moveHere') : t('board.newSet')}
                   </span>
                   <span className={styles.newSetColorName}>
                     {newTarget.color.replace('_', ' ')}
@@ -130,7 +166,9 @@ export const PlayerProperties: React.FC<PlayerPropertiesProps> = ({
                   className={`${styles.propertySetColumn} ${set.isComplete ? styles.setComplete : ''} ${isSetTarget ? styles.targetSetHighlight : ''}`}
                   onClick={() => {
                     if (isSetTarget && target) {
-                      if (onPlayToTarget) {
+                      if (isTableMoveActive && onExecuteTableCardMove) {
+                        onExecuteTableCardMove(target);
+                      } else if (onPlayToTarget) {
                         onPlayToTarget(target);
                       } else if (onPlayToProperty) {
                         onPlayToProperty();
@@ -158,7 +196,7 @@ export const PlayerProperties: React.FC<PlayerPropertiesProps> = ({
                     <div className={styles.setBadgesGroup}>
                       {isSetTarget && (
                         <span className={styles.targetSetBadge}>
-                          ⚡ {t('board.addToSet')}
+                          ⚡ {isTableMoveActive ? t('board.moveHere') : t('board.addToSet')}
                         </span>
                       )}
                       {set.isComplete && !isSetTarget && (
@@ -173,14 +211,51 @@ export const PlayerProperties: React.FC<PlayerPropertiesProps> = ({
 
                   {/* Stack of Cards for this Property Color */}
                   <div className={styles.cardsStack}>
-                    {set.cards.map((card, cardIdx) => (
-                      <div
-                        key={`${card.id}_${cardIdx}`}
-                        className={styles.cardItem}
-                      >
-                        <Card card={card} />
-                      </div>
-                    ))}
+                    {set.cards.map((card, cardIdx) => {
+                      const isThisCardMoving = tableMovingCard?.cardId === card.id;
+                      const isTwoColorWild =
+                        !isTooltip &&
+                        card.type === CardType.PROPERTY_WILDCARD &&
+                        card.colors &&
+                        card.colors.length === 2 &&
+                        !card.colors.includes(CardColor.ALL_COLOR);
+
+                      const canFlip =
+                        isTwoColorWild &&
+                        isMyTurn &&
+                        actionsRemaining > 0 &&
+                        !set.isComplete;
+
+                      const altColor = isTwoColorWild
+                        ? card.colors?.find((c) => c !== set.color)
+                        : undefined;
+
+                      const cardClass = isThisCardMoving
+                        ? cardStyles.flippableCardMoving
+                        : canFlip
+                        ? cardStyles.flippableCard
+                        : undefined;
+
+                      return (
+                        <div
+                          key={`${card.id}_${cardIdx}`}
+                          className={`${styles.cardItem} ${canFlip ? styles.cardFlipEligible : ''} ${isThisCardMoving ? styles.cardMovingActive : ''}`}
+                          title={
+                            canFlip && altColor
+                              ? t('board.swapColorHint', { color: altColor.replace('_', ' ') })
+                              : undefined
+                          }
+                          onClick={(e) => {
+                            if (canFlip) {
+                              e.stopPropagation();
+                              onStartTableCardMove?.(setIdx, card);
+                            }
+                          }}
+                        >
+                          <Card card={card} className={cardClass} />
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               );

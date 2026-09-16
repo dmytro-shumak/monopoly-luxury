@@ -22,7 +22,7 @@
 *   **Asset Transfer:** Properties transferred to settle a debt go immediately into the active property zone on the receiver's table.
 
 ## 3. Properties and Monopolies
-*   **Grouping:** Players can freely move wildcard properties between incomplete sets on their table (does not consume an action), provided the color of the wildcard is not changed.
+*   **Grouping:** Players can freely move wildcard properties between incomplete sets on their table (does consume an action), provided the color of the wildcard is not changed.
 *   **Two-Color Wildcards:** Changing the active color of a two-color wildcard lying on the table **costs 1 action**.
 *   **Color Lock:** Once a set becomes a complete monopoly, the colors of all wildcards within it are locked and cannot be changed. If the monopoly is broken (e.g., due to debt), the cards are unlocked.
 *   **All-Color Wildcard (10-Color Property):** Once played on the table, its color cannot be changed. Exception: if transferred to settle a debt, the new owner assigns its color upon receipt. A monopoly cannot be formed exclusively from these cards (must contain at least one standard or two-color property).
