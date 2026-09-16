@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { CardType, CardColor, type CardModel } from '../types/cards';
-import { PROPERTY_CONFIG } from '../data/allCards';
+import { PROPERTY_CONFIG, ALL_CARDS } from '../data/allCards';
 import { createInitialMockState, type MockTableState, type MockPropertySet } from './mockGameData';
 
 export type PropertyTarget =

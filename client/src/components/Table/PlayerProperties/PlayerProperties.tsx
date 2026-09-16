@@ -1,7 +1,8 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card } from '../../Card/Card';
 import { CardColor } from '../../../types/cards';
+import { PROPERTY_CONFIG } from '../../../data/allCards';
 import { type MockPropertySet } from '../../../mocks/mockGameData';
 import { type PropertyTarget } from '../../../mocks/useMockGame';
 import styles from './PlayerProperties.module.css';
@@ -55,6 +56,15 @@ export const PlayerProperties: React.FC<PlayerPropertiesProps> = ({
     );
   }, [isTooltip, validPropertyTargets]);
 
+  const setsGridRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to beginning when new set targets appear so they are immediately visible
+  useEffect(() => {
+    if (newSetTargets.length > 0 && setsGridRef.current) {
+      setsGridRef.current.scrollTo({ left: 0, behavior: 'smooth' });
+    }
+  }, [newSetTargets.length]);
+
   return (
     <div
       className={`${styles.propertiesContainer} ${isTooltip ? styles.tooltipVariant : ''}`}
@@ -72,7 +82,7 @@ export const PlayerProperties: React.FC<PlayerPropertiesProps> = ({
       </div>
 
       {/* Property Sets Row */}
-      <div className={styles.setsGrid}>
+      <div ref={setsGridRef} className={styles.setsGrid}>
         {propertySets.length === 0 && newSetTargets.length === 0 ? (
           <div className={styles.emptyProperties}>{t('board.emptyDiscard')}</div>
         ) : (
@@ -109,6 +119,10 @@ export const PlayerProperties: React.FC<PlayerPropertiesProps> = ({
             {propertySets.map((set, setIdx) => {
               const target = existingTargetMap.get(setIdx);
               const isSetTarget = Boolean(target);
+              const targetSetSize =
+                set.cards.find((c) => c.fullSetSize)?.fullSetSize ||
+                (set.color && PROPERTY_CONFIG[set.color]?.setSize) ||
+                3;
 
               return (
                 <div
@@ -126,22 +140,35 @@ export const PlayerProperties: React.FC<PlayerPropertiesProps> = ({
                 >
                   {/* Set Status Header */}
                   <div className={styles.setColHeader}>
-                    {isSetTarget ? (
-                      <span className={styles.targetSetBadge}>
-                        ⚡ {t('board.addToSet')}
+                    {/* Left: Color dot + Progress (e.g. 1/3, 3/3) */}
+                    <div className={styles.setInfoGroup}>
+                      <span
+                        className={styles.headerColorDot}
+                        style={{ background: getColorVar(set.color) }}
+                        title={set.color.replace('_', ' ')}
+                      />
+                      <span
+                        className={`${styles.setProgressCount} ${set.isComplete ? styles.completeCount : ''}`}
+                      >
+                        {set.cards.length}/{targetSetSize}
                       </span>
-                    ) : (
-                      <span className={styles.setCardCount}>
-                        {set.cards.length} {t('board.cards')}
-                      </span>
-                    )}
-                    {set.isComplete && (
-                      <span className={styles.completeBadge}>
-                        {t('board.completeSet')}
-                      </span>
-                    )}
-                    {set.hasHouse && <span className={styles.buildingIcon}>🏠</span>}
-                    {set.hasHotel && <span className={styles.buildingIcon}>🏨</span>}
+                    </div>
+
+                    {/* Right: Badges (Target Add, Complete Star, House/Hotel) */}
+                    <div className={styles.setBadgesGroup}>
+                      {isSetTarget && (
+                        <span className={styles.targetSetBadge}>
+                          ⚡ {t('board.addToSet')}
+                        </span>
+                      )}
+                      {set.isComplete && !isSetTarget && (
+                        <span className={styles.completeBadge}>
+                          {t('board.completeSet')}
+                        </span>
+                      )}
+                      {set.hasHouse && <span className={styles.buildingIcon}>🏠</span>}
+                      {set.hasHotel && <span className={styles.buildingIcon}>🏨</span>}
+                    </div>
                   </div>
 
                   {/* Stack of Cards for this Property Color */}
