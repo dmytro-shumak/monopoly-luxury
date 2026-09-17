@@ -1,0 +1,525 @@
+.lobbyContainer {
+  min-height: 100vh;
+  background: radial-gradient(circle at 50% 20%, #1a162b 0%, #0c0a14 70%, #06050a 100%);
+  color: #f5f6fa;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  overflow-x: hidden;
+  font-family: inherit;
+}
+
+/* Header */
+.topNav {
+  width: 100%;
+  max-width: 1200px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #d4af37;
+  letter-spacing: 0.5px;
+  text-shadow: 0 2px 10px rgba(212, 175, 55, 0.3);
+}
+
+.brandIcon {
+  font-size: 1.6rem;
+}
+
+/* Main Content Card */
+.mainCard {
+  width: 100%;
+  max-width: 540px;
+  margin: auto;
+  padding: 36px 32px;
+  background: rgba(22, 19, 36, 0.85);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  border-radius: 20px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6), 0 0 30px rgba(212, 175, 55, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.titleWrapper {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lobbyTitle {
+  font-size: 2rem;
+  font-weight: 800;
+  margin: 0;
+  background: linear-gradient(135deg, #ffffff 0%, #d4af37 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.lobbySubtitle {
+  font-size: 0.95rem;
+  color: #a4b0be;
+  margin: 0;
+}
+
+/* Error Banner */
+.errorBanner {
+  background: rgba(231, 76, 60, 0.15);
+  border: 1px solid rgba(231, 76, 60, 0.4);
+  color: #ff6b6b;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.errorCloseBtn {
+  background: none;
+  border: none;
+  color: #ff6b6b;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+/* Form Groups */
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.inputLabel {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #dcdde1;
+}
+
+.textInput {
+  background: rgba(10, 8, 18, 0.8);
+  border: 1.5px solid rgba(212, 175, 55, 0.3);
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-size: 1rem;
+  color: #ffffff;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.textInput:focus {
+  border-color: #d4af37;
+  box-shadow: 0 0 12px rgba(212, 175, 55, 0.3);
+}
+
+.textInput::placeholder {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+/* Create Room Action */
+.createBtn {
+  background: linear-gradient(135deg, #27ae60, #2ecc71);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 14px 20px;
+  border-radius: 12px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(46, 204, 113, 0.3);
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.createBtn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #2ecc71, #27ae60);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(46, 204, 113, 0.45);
+}
+
+.createBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Divider */
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: rgba(255, 255, 255, 0.3);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* Join Section */
+.joinSection {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.joinInputRow {
+  display: flex;
+  gap: 10px;
+}
+
+.joinInputRow .textInput {
+  flex: 1;
+}
+
+.joinBtn {
+  background: linear-gradient(135deg, #f39c12, #d4af37);
+  color: #1a162b;
+  border: none;
+  padding: 0 22px;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.joinBtn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #f1c40f, #e67e22);
+  transform: translateY(-1px);
+}
+
+.joinBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Invite Mode Styles */
+.inviteRoomCard {
+  background: rgba(10, 8, 18, 0.6);
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.inviteRoomLabel {
+  font-size: 0.85rem;
+  color: #a4b0be;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.inviteActions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.joinInviteBtn {
+  background: linear-gradient(135deg, #f39c12, #d4af37);
+  color: #1a162b;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 14px 20px;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(212, 175, 55, 0.35);
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.joinInviteBtn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #f1c40f, #e67e22);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(212, 175, 55, 0.5);
+}
+
+.joinInviteBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.backToMenuBtn {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #bdc3c7;
+  padding: 11px 18px;
+  border-radius: 10px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.backToMenuBtn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* ---------------------------------------------------- */
+/* WAITING ROOM (IN LOBBY) STYLES                        */
+/* ---------------------------------------------------- */
+.roomHeaderBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 8px;
+}
+
+.roomBadgeRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.roomCodePill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(10, 8, 18, 0.9);
+  border: 1.5px solid #d4af37;
+  padding: 8px 18px;
+  border-radius: 30px;
+  box-shadow: 0 0 16px rgba(212, 175, 55, 0.2);
+}
+
+.roomCodeText {
+  font-size: 1.3rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: #f1c40f;
+  font-family: monospace;
+}
+
+.copyBtn {
+  background: rgba(212, 175, 55, 0.15);
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  color: #d4af37;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.copyBtn:hover {
+  background: rgba(212, 175, 55, 0.25);
+  color: #ffffff;
+}
+
+.copyBtnSuccess {
+  background: rgba(46, 204, 113, 0.2);
+  border-color: #2ecc71;
+  color: #2ecc71;
+}
+
+/* Players List */
+.playersSection {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.playersSectionTitle {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #dcdde1;
+  display: flex;
+  justify-content: space-between;
+}
+
+.playerSlotsList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.playerSlot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px;
+  background: rgba(10, 8, 18, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.playerSlotConnected {
+  border-color: rgba(46, 204, 113, 0.3);
+  background: rgba(15, 25, 20, 0.5);
+}
+
+.playerInfoLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.onlineDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #2ecc71;
+  box-shadow: 0 0 8px #2ecc71;
+}
+
+.offlineDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #e74c3c;
+}
+
+.playerName {
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: #ffffff;
+}
+
+.playerBadges {
+  display: flex;
+  gap: 6px;
+}
+
+.badgeHost {
+  background: rgba(212, 175, 55, 0.2);
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  color: #f1c40f;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+.badgeYou {
+  background: rgba(52, 152, 219, 0.2);
+  border: 1px solid rgba(52, 152, 219, 0.4);
+  color: #3498db;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+/* Empty Slot */
+.playerSlotEmpty {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 18px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px dashed rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  color: rgba(255, 255, 255, 0.3);
+  font-size: 0.9rem;
+  font-style: italic;
+}
+
+.emptySlotIcon {
+  font-size: 1rem;
+}
+
+/* Lobby Actions */
+.lobbyActions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.startGameBtn {
+  background: linear-gradient(135deg, #27ae60, #2ecc71);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 14px 20px;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(46, 204, 113, 0.35);
+  transition: all 0.2s ease;
+}
+
+.startGameBtn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #2ecc71, #27ae60);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(46, 204, 113, 0.5);
+}
+
+.startGameBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.waitingForHostCard {
+  background: rgba(243, 156, 18, 0.12);
+  border: 1px solid rgba(243, 156, 18, 0.3);
+  color: #f39c12;
+  padding: 12px;
+  border-radius: 10px;
+  text-align: center;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.minPlayersHint {
+  text-align: center;
+  font-size: 0.82rem;
+  color: #95a5a6;
+}
+
+.leaveBtn {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #bdc3c7;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.leaveBtn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.3);
+}

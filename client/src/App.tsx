@@ -12,6 +12,7 @@
  */
 
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { LobbyPage } from './pages/LobbyPage/LobbyPage';
 import { GameBoardPage } from './pages/GameBoardPage/GameBoardPage';
 // TODO: Remove DeckPreviewPage import once the game is ready
 import { DeckPreviewPage } from './pages/DeckPreviewPage/DeckPreviewPage';
@@ -20,8 +21,11 @@ export function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Main route — game board */}
-        <Route path="/" element={<GameBoardPage />} />
+        {/* Main entry: Multiplayer Lobby (Create/Join/Waiting Room) */}
+        <Route path="/" element={<LobbyPage />} />
+
+        {/* Practice / Offline Table (with mock controls and tests) */}
+        <Route path="/practice" element={<GameBoardPage />} />
 
         {/* 
           TODO: Test route for visually inspecting all 107 cards.

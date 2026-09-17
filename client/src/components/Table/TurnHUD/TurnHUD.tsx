@@ -7,9 +7,9 @@ export interface TurnHUDProps {
   activePlayerName: string;
   actionsRemaining: number;
   maxActions: number;
-  onDrawCards: () => void;
+  onDrawCards?: () => void;
   onEndTurn: () => void;
-  onResetMock: () => void;
+  onResetMock?: () => void;
   onTestAttack?: () => void;
   onTestRent?: () => void;
 }
@@ -75,22 +75,26 @@ export const TurnHUD: React.FC<TurnHUDProps> = ({
           </button>
         )}
 
-        <button
-          type="button"
-          className={styles.secondaryBtn}
-          onClick={onResetMock}
-          title={t('board.resetMock')}
-        >
-          🔄 {t('board.resetMock')}
-        </button>
+        {onResetMock && (
+          <button
+            type="button"
+            className={styles.secondaryBtn}
+            onClick={onResetMock}
+            title={t('board.resetMock')}
+          >
+            🔄 {t('board.resetMock')}
+          </button>
+        )}
 
-        <button
-          type="button"
-          className={styles.secondaryBtn}
-          onClick={onDrawCards}
-        >
-          📥 {t('board.drawCards')}
-        </button>
+        {onDrawCards && (
+          <button
+            type="button"
+            className={styles.secondaryBtn}
+            onClick={onDrawCards}
+          >
+            📥 {t('board.drawCards')}
+          </button>
+        )}
 
         <button
           type="button"

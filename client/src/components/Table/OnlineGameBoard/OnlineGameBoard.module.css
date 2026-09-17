@@ -1,0 +1,314 @@
+.pageContainer {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: radial-gradient(circle at 50% 30%, #1a0830 0%, #08020d 100%);
+  color: var(--color-text-main, #f5f6fa);
+  overflow: hidden;
+  position: relative;
+  user-select: none;
+}
+
+/* Header bar */
+.navHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 24px;
+  background: rgba(10, 4, 16, 0.7);
+  border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+  backdrop-filter: blur(8px);
+  z-index: 100;
+  flex-shrink: 0;
+}
+
+.leftNav {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.roomBadge {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-gold-light, #f1c40f);
+  background: rgba(212, 175, 55, 0.12);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  padding: 4px 10px;
+  border-radius: 12px;
+  letter-spacing: 0.5px;
+  font-family: monospace;
+}
+
+.brandTitle {
+  font-family: var(--font-family-serif, Georgia, serif);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-gold, #d4af37);
+  letter-spacing: 1px;
+  text-shadow: 0 0 10px rgba(212, 175, 55, 0.4);
+}
+
+.rightNav {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.deckLink {
+  background: rgba(212, 175, 55, 0.1);
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  color: var(--color-gold-light, #f1c40f);
+  padding: 4px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all var(--transition-fast, 0.2s ease);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.deckLink:hover {
+  background: rgba(212, 175, 55, 0.2);
+  border-color: var(--color-gold, #d4af37);
+  box-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
+}
+
+.leaveGameBtn {
+  background: rgba(231, 76, 60, 0.15);
+  border: 1px solid rgba(231, 76, 60, 0.4);
+  color: #ff7675;
+  padding: 5px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.leaveGameBtn:hover {
+  background: rgba(231, 76, 60, 0.3);
+  color: #ffffff;
+}
+
+/* Table Felt Area */
+.tableFelt {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  margin: 6px 16px;
+  border-radius: 24px;
+  background: radial-gradient(circle at 50% 50%, #150626 0%, #0a0314 100%);
+  border: 2px solid rgba(212, 175, 55, 0.25);
+  box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.8), 0 8px 32px rgba(0, 0, 0, 0.6);
+  position: relative;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.tableFelt::before {
+  content: '';
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  right: 10px;
+  bottom: 10px;
+  border: 1px dashed rgba(212, 175, 55, 0.12);
+  border-radius: 20px;
+  pointer-events: none;
+}
+
+.opponentsWrapper {
+  flex-shrink: 0;
+  padding: 6px 16px 0 16px;
+}
+
+.deckCounterWidget {
+  position: absolute;
+  top: 16px;
+  right: 24px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(22, 9, 36, 0.75);
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  border-radius: 12px;
+  padding: 6px 14px;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  cursor: default;
+  user-select: none;
+}
+
+.deckIcon {
+  font-size: 15px;
+}
+
+.deckLabel {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text-main, #f5f6fa);
+  letter-spacing: 0.5px;
+}
+
+.deckCountValue {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--color-gold-light, #f1c40f);
+  background: rgba(212, 175, 55, 0.15);
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+/* Main Arena: Two-column layout */
+.arenaGrid {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: row;
+  gap: 16px;
+  padding: 6px 16px 12px 16px;
+  box-sizing: border-box;
+}
+
+/* Left Column: Bank on top, Hand on bottom */
+.leftColumn {
+  width: 528px;
+  min-width: 528px;
+  max-width: 528px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 10px;
+  height: 100%;
+  min-height: 0;
+  box-sizing: border-box;
+}
+
+.bankWrapper {
+  flex-shrink: 0;
+  height: fit-content;
+  display: flex;
+}
+
+.handWrapper {
+  flex-shrink: 0;
+  height: 240px;
+  display: flex;
+}
+
+/* Right Column: CenterTable on top, Properties below CenterTable */
+.rightColumn {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  height: 100%;
+  min-height: 0;
+  box-sizing: border-box;
+}
+
+.centerWrapper {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.propertiesWrapper {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+/* Game Over Overlay */
+.gameOverOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.gameOverCard {
+  background: rgba(22, 16, 36, 0.95);
+  border: 2px solid #d4af37;
+  border-radius: 24px;
+  padding: 40px;
+  text-align: center;
+  max-width: 480px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9), 0 0 40px rgba(212, 175, 55, 0.3);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.trophyIcon {
+  font-size: 4rem;
+  animation: bounce 1.5s infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.gameOverTitle {
+  font-size: 2rem;
+  font-weight: 800;
+  margin: 0;
+  color: #f1c40f;
+}
+
+.gameOverSubtitle {
+  font-size: 1.1rem;
+  color: #dcdde1;
+  margin: 0;
+}
+
+.winnerPill {
+  background: rgba(212, 175, 55, 0.2);
+  border: 1.5px solid #d4af37;
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 1.2rem;
+  padding: 8px 24px;
+  border-radius: 30px;
+  box-shadow: 0 0 20px rgba(212, 175, 55, 0.4);
+}
+
+.returnLobbyBtn {
+  background: linear-gradient(135deg, #27ae60, #2ecc71);
+  color: #ffffff;
+  border: none;
+  padding: 14px 28px;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 12px;
+  box-shadow: 0 6px 20px rgba(46, 204, 113, 0.4);
+  transition: all 0.2s ease;
+}
+
+.returnLobbyBtn:hover {
+  background: linear-gradient(135deg, #2ecc71, #27ae60);
+  transform: translateY(-2px);
+}

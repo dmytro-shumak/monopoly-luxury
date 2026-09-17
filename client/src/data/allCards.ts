@@ -287,3 +287,17 @@ export const generateFullDeck = (): CardModel[] => {
 };
 
 export const ALL_CARDS = generateFullDeck();
+export const CARD_MAP = new Map<string, CardModel>(ALL_CARDS.map((c) => [c.id, c]));
+
+export function getCardModel(cardId: string): CardModel {
+  const found = CARD_MAP.get(cardId);
+  if (found) return found;
+
+  // Fallback for hidden or unknown card
+  return {
+    id: cardId,
+    type: CardType.MONEY,
+    name: cardId,
+    value: 1,
+  };
+}
