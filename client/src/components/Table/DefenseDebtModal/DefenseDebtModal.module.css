@@ -237,3 +237,56 @@
   box-shadow: none;
   cursor: not-allowed;
 }
+
+/* Orange Continue Button for progressive stages */
+.continueBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #d35400 0%, #e67e22 100%);
+  border: 1.5px solid #f39c12;
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 14px;
+  padding: 10px 24px;
+  border-radius: 10px;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(230, 126, 34, 0.45);
+  transition: all 0.2s ease;
+  margin-left: auto;
+}
+
+.continueBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 22px rgba(230, 126, 34, 0.65);
+  filter: brightness(1.1);
+}
+
+/* Properties Selection on table */
+.propertiesSelectableWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.propertiesInstruction {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+.monopolyWarningBanner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(231, 76, 60, 0.15);
+  border: 1px solid rgba(231, 76, 60, 0.5);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: #ff7675;
+  font-weight: 600;
+  line-height: 1.4;
+}

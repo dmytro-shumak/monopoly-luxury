@@ -34,6 +34,9 @@ export interface PlayerPropertiesProps {
   selectedDealBreakerSetIndex?: number | null;
   onSelectDealBreakerSet?: (setIndex: number, set: MockPropertySet) => void;
   onDoubleClickDealBreakerSet?: (setIndex: number, set: MockPropertySet) => void;
+  isMultiSelectMode?: boolean;
+  selectedCardIds?: string[];
+  onToggleSelectCard?: (card: CardModel) => void;
 }
 
 const getColorVar = (color: CardColor): string => {
@@ -66,6 +69,9 @@ export const PlayerProperties: React.FC<PlayerPropertiesProps> = ({
   selectedDealBreakerSetIndex = null,
   onSelectDealBreakerSet,
   onDoubleClickDealBreakerSet,
+  isMultiSelectMode = false,
+  selectedCardIds = [],
+  onToggleSelectCard,
 }) => {
   const { t } = useTranslation();
   const isTooltip = variant === 'tooltip';
@@ -79,7 +85,7 @@ export const PlayerProperties: React.FC<PlayerPropertiesProps> = ({
   // Map of setIndex -> PropertyTarget for existing sets
   const existingTargetMap = useMemo(() => {
     const map = new Map<number, PropertyTarget>();
-    if (isTooltip || isModal || isStealMode || isTradeGiveMode || isDealBreakerMode) return map;
+    if (isTooltip || isModal || isStealMode || isTradeGiveMode || isDealBreakerMode || isMultiSelectMode) return map;
 
     if (tableMovingCard && tableMovingCard.target.type === 'existing') {
       map.set(tableMovingCard.target.setIndex, tableMovingCard.target);
@@ -94,11 +100,11 @@ export const PlayerProperties: React.FC<PlayerPropertiesProps> = ({
       }
     }
     return map;
-  }, [isTooltip, isModal, isStealMode, isTradeGiveMode, isDealBreakerMode, validPropertyTargets, tableMovingCard]);
+  }, [isTooltip, isModal, isStealMode, isTradeGiveMode, isDealBreakerMode, isMultiSelectMode, validPropertyTargets, tableMovingCard]);
 
   // List of new set targets
   const newSetTargets = useMemo(() => {
-    if (isTooltip || isModal || isStealMode || isTradeGiveMode || isDealBreakerMode) return [];
+    if (isTooltip || isModal || isStealMode || isTradeGiveMode || isDealBreakerMode || isMultiSelectMode) return [];
 
     if (tableMovingCard && tableMovingCard.target.type === 'new_set') {
       return [tableMovingCard.target];
@@ -108,7 +114,7 @@ export const PlayerProperties: React.FC<PlayerPropertiesProps> = ({
     return validPropertyTargets.filter(
       (t): t is Extract<PropertyTarget, { type: 'new_set' }> => t.type === 'new_set'
     );
-  }, [isTooltip, isModal, isStealMode, isTradeGiveMode, isDealBreakerMode, validPropertyTargets, tableMovingCard]);
+  }, [isTooltip, isModal, isStealMode, isTradeGiveMode, isDealBreakerMode, isMultiSelectMode, validPropertyTargets, tableMovingCard]);
 
   const setsGridRef = useRef<HTMLDivElement>(null);
 
@@ -293,9 +299,14 @@ export const PlayerProperties: React.FC<PlayerPropertiesProps> = ({
                       const isSelectedCard =
                         (isStealMode && selectedStealCardId === card.id) ||
                         (isTradeGiveMode && selectedTradeGiveCardId === card.id);
+                      const isMultiSelected = isMultiSelectMode && selectedCardIds?.includes(card.id);
 
                       let cardClass: string | undefined = undefined;
-                      if (isStealMode || isTradeGiveMode) {
+                      if (isMultiSelectMode) {
+                        if (isMultiSelected) {
+                          cardClass = cardStyles.selectedStealCard;
+                        }
+                      } else if (isStealMode || isTradeGiveMode) {
                         if (isSelectedCard) {
                           cardClass = cardStyles.selectedStealCard;
                         } else if (isStealable) {
@@ -312,7 +323,8 @@ export const PlayerProperties: React.FC<PlayerPropertiesProps> = ({
                         canFlip ? styles.cardFlipEligible : '',
                         isThisCardMoving ? styles.cardMovingActive : '',
                         isStealable ? styles.stealableCardItem : '',
-                        isSelectedCard ? styles.selectedStealCardItem : '',
+                        isSelectedCard || isMultiSelected ? styles.selectedStealCardItem : '',
+                        isMultiSelectMode ? styles.cardFlipEligible : '',
                       ].filter(Boolean).join(' ');
 
                       return (
@@ -325,7 +337,10 @@ export const PlayerProperties: React.FC<PlayerPropertiesProps> = ({
                               : undefined
                           }
                           onClick={(e) => {
-                            if (isDealBreakerMode) {
+                            if (isMultiSelectMode) {
+                              e.stopPropagation();
+                              onToggleSelectCard?.(card);
+                            } else if (isDealBreakerMode) {
                               e.stopPropagation();
                               if (isStealableDealBreaker && onSelectDealBreakerSet) {
                                 onSelectDealBreakerSet(setIdx, set);

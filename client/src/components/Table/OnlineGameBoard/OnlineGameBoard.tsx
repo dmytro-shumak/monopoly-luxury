@@ -641,6 +641,7 @@ export const OnlineGameBoard: React.FC = () => {
         isOpen={Boolean(incomingDebt)}
         incomingDebt={incomingDebt}
         bankCards={bankCards}
+        propertySets={propertySets}
         hasJustSayNo={hasJustSayNo}
         onPay={handlePayDebt}
         onJustSayNo={handleJustSayNoAction}

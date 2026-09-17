@@ -268,6 +268,7 @@ export const GameBoardPage: React.FC = () => {
           isOpen={Boolean(incomingDebt)}
           incomingDebt={incomingDebt}
           bankCards={tableState.currentPlayer.bankCards}
+          propertySets={tableState.currentPlayer.propertySets}
           hasJustSayNo={hasJustSayNo}
           onPay={payIncomingDebt}
           onJustSayNo={cancelWithJustSayNo}
