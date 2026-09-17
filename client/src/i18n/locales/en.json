@@ -112,7 +112,14 @@
     "defenseActionCanceled": "🚫 You played «Just Say No» and blocked {{name}}'s attack!",
     "defenseDebtCanceled": "🚫 You played «Just Say No» and declined payment to {{name}}!",
     "defenseActionAccepted": "Opponent {{name}}'s demand accepted, property transferred.",
-    "defenseDebtPaid": "You paid ${{amount}} to {{name}}."
+    "defenseDebtPaid": "You paid ${{amount}} to {{name}}.",
+    "discardTitle": "Discard Excess Cards",
+    "discardSubtitle": "Hand limit at the end of turn is 7. Choose {{count}} card(s) to discard:",
+    "discardLimitBadge": "Limit: {{current}} / 7",
+    "discardSelectedProgress": "Selected: {{selected}} of {{required}}",
+    "discardBtn": "Discard {{count}} card(s) & End Turn",
+    "discardBackBtn": "Return",
+    "discardActionMessage": "You discarded {{count}} card(s) to the discard pile."
   },
   "deckPreview": {
     "title": "Monopoly Deal — Full Deck ({{count}} cards)",

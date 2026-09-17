@@ -112,7 +112,14 @@
     "defenseActionCanceled": "🚫 Ви зіграли «Ні!» та заблокували напад {{name}}!",
     "defenseDebtCanceled": "🚫 Ви зіграли «Ні!» та відхилили вимогу оплати від {{name}}!",
     "defenseActionAccepted": "Вимогу суперника {{name}} прийнято, майно передано.",
-    "defenseDebtPaid": "Ви сплатили ${{amount}} для {{name}}."
+    "defenseDebtPaid": "Ви сплатили ${{amount}} для {{name}}.",
+    "discardTitle": "Скидання зайвих карт",
+    "discardSubtitle": "Ліміт карт на кінець ходу — 7. Оберіть {{count}} карт(и) для скидання у відбій:",
+    "discardLimitBadge": "Ліміт: {{current}} / 7",
+    "discardSelectedProgress": "Обрано: {{selected}} з {{required}}",
+    "discardBtn": "Скинути {{count}} карт(и) та завершити хід",
+    "discardBackBtn": "Повернутися",
+    "discardActionMessage": "Ви скинули {{count}} карт(и) у відбій."
   },
   "deckPreview": {
     "title": "Monopoly Deal — Повна колода ({{count}} карт)",

@@ -352,6 +352,7 @@ interface MockGameStore {
   dealBreakerTargetOpponentId: string | null;
   incomingAction: IncomingAction | null;
   incomingDebt: IncomingDebt | null;
+  isDiscardModalOpen: boolean;
 
   // Actions
   selectCard: (cardId: string | null) => void;
@@ -386,6 +387,8 @@ interface MockGameStore {
   acceptIncomingAction: () => void;
   payIncomingDebt: (selectedCards: CardModel[]) => void;
   dismissDefenseModal: () => void;
+  executeDiscardExcessCards: (cardIds: string[]) => void;
+  closeDiscardModal: () => void;
 }
 
 export const useMockGameStore = create<MockGameStore>((set, get) => ({
@@ -406,6 +409,7 @@ export const useMockGameStore = create<MockGameStore>((set, get) => ({
   dealBreakerTargetOpponentId: null,
   incomingAction: null,
   incomingDebt: null,
+  isDiscardModalOpen: false,
 
   selectCard: (cardId: string | null) => {
     const { selectedCardId, tableState } = get();
@@ -1361,9 +1365,20 @@ export const useMockGameStore = create<MockGameStore>((set, get) => ({
   endTurn: () => {
     const { tableState } = get();
     const isNowOpponent = tableState.turn.activePlayerId === 'player_you';
+
+    // In Monopoly Deal, if current player has more than 7 cards at the end of their turn, they must discard excess cards
+    if (isNowOpponent) {
+      const hand = tableState.currentPlayer.handCards || [];
+      if (hand.length > 7) {
+        set({ isDiscardModalOpen: true });
+        return;
+      }
+    }
+
     const nextPlayerId = isNowOpponent ? 'player_elena' : 'player_you';
 
     set({
+      isDiscardModalOpen: false,
       selectedCardId: null,
       validDropTarget: null,
       tableMovingCard: null,
@@ -1392,6 +1407,54 @@ export const useMockGameStore = create<MockGameStore>((set, get) => ({
     });
   },
 
+  executeDiscardExcessCards: (cardIds: string[]) => {
+    const { tableState } = get();
+    const hand = tableState.currentPlayer.handCards || [];
+    const discardedCards = hand.filter((c) => cardIds.includes(c.id));
+    const remainingHand = hand.filter((c) => !cardIds.includes(c.id));
+
+    const nextPlayerId = tableState.turn.activePlayerId === 'player_you' ? 'player_elena' : 'player_you';
+
+    set({
+      isDiscardModalOpen: false,
+      selectedCardId: null,
+      validDropTarget: null,
+      tableMovingCard: null,
+      activeMoneyDemand: null,
+      pendingDoubleRent: null,
+      activeSlyDeal: null,
+      slyDealTargetOpponentId: null,
+      activeForcedDeal: null,
+      forcedDealMyCard: null,
+      forcedDealTargetOpponentId: null,
+      activeDealBreaker: null,
+      dealBreakerTargetOpponentId: null,
+      pendingStolenCardPlacement: null,
+      incomingAction: null,
+      incomingDebt: null,
+      tableState: {
+        ...tableState,
+        discardPile: [...discardedCards, ...tableState.discardPile],
+        currentPlayer: {
+          ...tableState.currentPlayer,
+          handCards: remainingHand,
+          handCount: remainingHand.length,
+        },
+        activeActionCard: null,
+        activeActionMessage: `Ви скинули ${discardedCards.length} карт(и) у відбій.`,
+        turn: {
+          activePlayerId: nextPlayerId,
+          actionsRemaining: 3,
+          maxActions: 3,
+        },
+      },
+    });
+  },
+
+  closeDiscardModal: () => {
+    set({ isDiscardModalOpen: false });
+  },
+
   resetMockState: () => {
     set({
       tableState: createInitialMockState(),
@@ -1411,6 +1474,7 @@ export const useMockGameStore = create<MockGameStore>((set, get) => ({
       pendingStolenCardPlacement: null,
       incomingAction: null,
       incomingDebt: null,
+      isDiscardModalOpen: false,
     });
   },
 

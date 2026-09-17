@@ -14,6 +14,7 @@ import { ForcedDealModal } from '../../components/Table/ForcedDealModal/ForcedDe
 import { DealBreakerModal } from '../../components/Table/DealBreakerModal/DealBreakerModal';
 import { DefenseActionModal } from '../../components/Table/DefenseActionModal/DefenseActionModal';
 import { DefenseDebtModal } from '../../components/Table/DefenseDebtModal/DefenseDebtModal';
+import { DiscardCardsModal } from '../../components/Table/DiscardCardsModal/DiscardCardsModal';
 import { ActionCardType } from '../../types/cards';
 import { LanguageSwitcher } from '../../components/LanguageSwitcher/LanguageSwitcher';
 import styles from './GameBoardPage.module.css';
@@ -67,9 +68,14 @@ export const GameBoardPage: React.FC = () => {
     payIncomingDebt,
     simulateIncomingAction,
     simulateIncomingDebt,
+    isDiscardModalOpen,
+    executeDiscardExcessCards,
+    closeDiscardModal,
   } = useMockGameStore();
 
   const isMyTurn = tableState.turn.activePlayerId === 'player_you';
+  const handCards = tableState.currentPlayer.handCards || [];
+  const excessCardsCount = Math.max(0, handCards.length - 7);
   const activePlayer = tableState.opponents.find((o) => o.id === tableState.turn.activePlayerId);
   const activePlayerName = isMyTurn ? t('board.you') : activePlayer?.name || 'Opponent';
   const selectedCard = tableState.currentPlayer.handCards?.find((c) => c.id === selectedCardId);
@@ -265,6 +271,17 @@ export const GameBoardPage: React.FC = () => {
           hasJustSayNo={hasJustSayNo}
           onPay={payIncomingDebt}
           onJustSayNo={cancelWithJustSayNo}
+        />
+      )}
+
+      {/* 10. Discard Excess Cards Modal */}
+      {excessCardsCount > 0 && (
+        <DiscardCardsModal
+          isOpen={isDiscardModalOpen}
+          handCards={handCards}
+          excessCount={excessCardsCount}
+          onConfirmDiscard={executeDiscardExcessCards}
+          onClose={closeDiscardModal}
         />
       )}
     </div>
