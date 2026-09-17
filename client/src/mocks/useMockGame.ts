@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { CardType, CardColor, BuildingType, ActionCardType, type CardModel } from '../types/cards';
 import { PROPERTY_CONFIG, ALL_CARDS } from '../data/allCards';
-import { createInitialMockState, type MockTableState, type MockPropertySet, type MockPlayer } from './mockGameData';
+import { createInitialMockState, getCard, type MockTableState, type MockPropertySet, type MockPlayer } from './mockGameData';
 
 export type PropertyTarget =
   | { type: 'existing'; setIndex: number; color: CardColor }
@@ -231,6 +231,28 @@ export interface PendingStolenCardPlacement {
   fromOpponentName: string;
 }
 
+export interface IncomingAction {
+  type: 'sly_deal' | 'forced_deal' | 'deal_breaker';
+  attackerId: string;
+  attackerName: string;
+  actionCard: CardModel;
+  stolenCard?: CardModel;
+  stolenCardSetIndex?: number;
+  theirCard?: CardModel;
+  myTargetCard?: CardModel;
+  myTargetCardSetIndex?: number;
+  stolenSetIndex?: number;
+  stolenSet?: MockPropertySet;
+}
+
+export interface IncomingDebt {
+  attackerId: string;
+  attackerName: string;
+  actionCard: CardModel;
+  amount: number;
+  reason: string;
+}
+
 export const computeRentForColor = (
   color: CardColor,
   propertySets: MockPropertySet[]
@@ -328,6 +350,8 @@ interface MockGameStore {
   forcedDealTargetOpponentId: string | null;
   activeDealBreaker: ActiveDealBreaker | null;
   dealBreakerTargetOpponentId: string | null;
+  incomingAction: IncomingAction | null;
+  incomingDebt: IncomingDebt | null;
 
   // Actions
   selectCard: (cardId: string | null) => void;
@@ -356,6 +380,12 @@ interface MockGameStore {
   drawTwoCards: () => void;
   endTurn: () => void;
   resetMockState: () => void;
+  simulateIncomingAction: (type?: 'sly_deal' | 'forced_deal' | 'deal_breaker') => void;
+  simulateIncomingDebt: (amount?: number, reason?: string) => void;
+  cancelWithJustSayNo: () => void;
+  acceptIncomingAction: () => void;
+  payIncomingDebt: (selectedCards: CardModel[]) => void;
+  dismissDefenseModal: () => void;
 }
 
 export const useMockGameStore = create<MockGameStore>((set, get) => ({
@@ -374,6 +404,8 @@ export const useMockGameStore = create<MockGameStore>((set, get) => ({
   forcedDealTargetOpponentId: null,
   activeDealBreaker: null,
   dealBreakerTargetOpponentId: null,
+  incomingAction: null,
+  incomingDebt: null,
 
   selectCard: (cardId: string | null) => {
     const { selectedCardId, tableState } = get();
@@ -1345,6 +1377,8 @@ export const useMockGameStore = create<MockGameStore>((set, get) => ({
       activeDealBreaker: null,
       dealBreakerTargetOpponentId: null,
       pendingStolenCardPlacement: null,
+      incomingAction: null,
+      incomingDebt: null,
       tableState: {
         ...tableState,
         activeActionCard: null,
@@ -1375,6 +1409,296 @@ export const useMockGameStore = create<MockGameStore>((set, get) => ({
       activeDealBreaker: null,
       dealBreakerTargetOpponentId: null,
       pendingStolenCardPlacement: null,
+      incomingAction: null,
+      incomingDebt: null,
     });
+  },
+
+  simulateIncomingAction: (type = 'sly_deal') => {
+    const { tableState } = get();
+    const elena = tableState.opponents.find((o) => o.id === 'player_elena') || tableState.opponents[0];
+    const attackerName = elena ? elena.name : 'Elena';
+    const attackerId = elena ? elena.id : 'player_elena';
+
+    if (type === 'deal_breaker') {
+      const completeSetIndex = tableState.currentPlayer.propertySets.findIndex((s) => s.isComplete);
+      const setIndex = completeSetIndex !== -1 ? completeSetIndex : 0;
+      const targetSet = tableState.currentPlayer.propertySets[setIndex];
+
+      set({
+        incomingDebt: null,
+        incomingAction: {
+          type: 'deal_breaker',
+          attackerId,
+          attackerName,
+          actionCard: getCard('action_deal_breaker_1'),
+          stolenSetIndex: setIndex,
+          stolenSet: targetSet,
+        },
+        tableState: {
+          ...tableState,
+          activeActionCard: getCard('action_deal_breaker_1'),
+          activeActionMessage: `${attackerName} грає «Зривник угод» проти вас!`,
+        },
+      });
+    } else if (type === 'forced_deal') {
+      const incompleteSetIndex = tableState.currentPlayer.propertySets.findIndex((s) => !s.isComplete && s.cards.length > 0);
+      const setIndex = incompleteSetIndex !== -1 ? incompleteSetIndex : 0;
+      const myCard = tableState.currentPlayer.propertySets[setIndex]?.cards[0] || getCard('prop_pink_1');
+      const opponentCard = elena?.propertySets[0]?.cards[0] || getCard('prop_maroon_1');
+
+      set({
+        incomingDebt: null,
+        incomingAction: {
+          type: 'forced_deal',
+          attackerId,
+          attackerName,
+          actionCard: getCard('action_forced_deal_1'),
+          myTargetCard: myCard,
+          myTargetCardSetIndex: setIndex,
+          theirCard: opponentCard,
+        },
+        tableState: {
+          ...tableState,
+          activeActionCard: getCard('action_forced_deal_1'),
+          activeActionMessage: `${attackerName} грає «Примусовий обмін» проти вас!`,
+        },
+      });
+    } else {
+      // Default: Sly Deal
+      const incompleteSetIndex = tableState.currentPlayer.propertySets.findIndex((s) => !s.isComplete && s.cards.length > 0);
+      const setIndex = incompleteSetIndex !== -1 ? incompleteSetIndex : 0;
+      const targetSet = tableState.currentPlayer.propertySets[setIndex];
+      const targetCard = targetSet?.cards[0] || getCard('prop_pink_1');
+
+      set({
+        incomingDebt: null,
+        incomingAction: {
+          type: 'sly_deal',
+          attackerId,
+          attackerName,
+          actionCard: getCard('action_sly_deal_1'),
+          stolenCard: targetCard,
+          stolenCardSetIndex: setIndex,
+        },
+        tableState: {
+          ...tableState,
+          activeActionCard: getCard('action_sly_deal_1'),
+          activeActionMessage: `${attackerName} грає «Спритна оборудка» проти вас!`,
+        },
+      });
+    }
+  },
+
+  simulateIncomingDebt: (amount = 5, reason = 'Оренда (Темно-синій)') => {
+    const { tableState } = get();
+    const elena = tableState.opponents.find((o) => o.id === 'player_elena') || tableState.opponents[0];
+    const attackerName = elena ? elena.name : 'Elena';
+    const attackerId = elena ? elena.id : 'player_elena';
+
+    set({
+      incomingAction: null,
+      incomingDebt: {
+        attackerId,
+        attackerName,
+        actionCard: getCard('rent_darkblue_purple_1'),
+        amount,
+        reason,
+      },
+      tableState: {
+        ...tableState,
+        activeActionCard: getCard('rent_darkblue_purple_1'),
+        activeActionMessage: `${attackerName} вимагає сплатити $${amount} (${reason})!`,
+      },
+    });
+  },
+
+  cancelWithJustSayNo: () => {
+    const { tableState, incomingAction, incomingDebt } = get();
+    const hand = tableState.currentPlayer.handCards || [];
+    const justSayNoIndex = hand.findIndex(
+      (c) => c.actionType === ActionCardType.JUST_SAY_NO || c.id.startsWith('action_just_say_no')
+    );
+
+    if (justSayNoIndex === -1) return;
+
+    const justSayNoCard = hand[justSayNoIndex];
+    const updatedHand = hand.filter((_, idx) => idx !== justSayNoIndex);
+
+    const opponentName = incomingAction?.attackerName || incomingDebt?.attackerName || 'Суперника';
+    const msg = `🚫 Ви зіграли «Ні!» та заблокували дію ${opponentName}!`;
+
+    set({
+      incomingAction: null,
+      incomingDebt: null,
+      tableState: {
+        ...tableState,
+        currentPlayer: {
+          ...tableState.currentPlayer,
+          handCards: updatedHand,
+          handCount: updatedHand.length,
+        },
+        activeActionCard: justSayNoCard,
+        activeActionMessage: msg,
+      },
+    });
+  },
+
+  acceptIncomingAction: () => {
+    const { tableState, incomingAction } = get();
+    if (!incomingAction) return;
+
+    const { type, attackerId, attackerName } = incomingAction;
+    let newCurrentPlayer = { ...tableState.currentPlayer };
+    let newOpponents = [...tableState.opponents];
+    let msg = `Вимогу суперника ${attackerName} прийнято.`;
+
+    if (type === 'sly_deal' && incomingAction.stolenCard && incomingAction.stolenCardSetIndex !== undefined) {
+      const cardToSteal = incomingAction.stolenCard;
+      const setIdx = incomingAction.stolenCardSetIndex;
+
+      const updatedSets = newCurrentPlayer.propertySets.map((s, idx) => {
+        if (idx !== setIdx) return s;
+        const filteredCards = s.cards.filter((c) => c.id !== cardToSteal.id);
+        return {
+          ...s,
+          cards: filteredCards,
+          isComplete: false,
+        };
+      }).filter((s) => s.cards.length > 0);
+
+      newCurrentPlayer = {
+        ...newCurrentPlayer,
+        propertySets: updatedSets,
+      };
+
+      newOpponents = newOpponents.map((opp) => {
+        if (opp.id !== attackerId) return opp;
+        const cardColor = cardToSteal.colors?.[0] || CardColor.PINK;
+        const matchingSet = opp.propertySets.find((s) => s.color === cardColor && !s.isComplete);
+        let updatedOppSets = [...opp.propertySets];
+        if (matchingSet) {
+          updatedOppSets = opp.propertySets.map((s) =>
+            s === matchingSet ? { ...s, cards: [...s.cards, cardToSteal] } : s
+          );
+        } else {
+          updatedOppSets.push({
+            color: cardColor,
+            cards: [cardToSteal],
+            isComplete: false,
+          });
+        }
+        return {
+          ...opp,
+          propertySets: updatedOppSets,
+        };
+      });
+
+      msg = `${attackerName} викрав «${cardToSteal.name}»!`;
+    } else if (type === 'deal_breaker' && incomingAction.stolenSetIndex !== undefined) {
+      const setIdx = incomingAction.stolenSetIndex;
+      const setObj = newCurrentPlayer.propertySets[setIdx] || incomingAction.stolenSet;
+
+      if (setObj) {
+        const updatedSets = newCurrentPlayer.propertySets.filter((_, idx) => idx !== setIdx);
+        newCurrentPlayer = {
+          ...newCurrentPlayer,
+          propertySets: updatedSets,
+        };
+
+        newOpponents = newOpponents.map((opp) => {
+          if (opp.id !== attackerId) return opp;
+          return {
+            ...opp,
+            propertySets: [...opp.propertySets, setObj],
+          };
+        });
+
+        msg = `${attackerName} захопив вашу монополію «${setObj.color}»!`;
+      }
+    } else if (type === 'forced_deal' && incomingAction.myTargetCard && incomingAction.theirCard) {
+      const myCard = incomingAction.myTargetCard;
+      const theirCard = incomingAction.theirCard;
+      const mySetIdx = incomingAction.myTargetCardSetIndex ?? 0;
+
+      const updatedMySets = newCurrentPlayer.propertySets.map((s, idx) => {
+        if (idx !== mySetIdx) return s;
+        const filtered = s.cards.filter((c) => c.id !== myCard.id);
+        return { ...s, cards: filtered, isComplete: false };
+      }).filter((s) => s.cards.length > 0);
+
+      const theirColor = theirCard.colors?.[0] || CardColor.PINK;
+      const matchingMySet = updatedMySets.find((s) => s.color === theirColor && !s.isComplete);
+      if (matchingMySet) {
+        matchingMySet.cards.push(theirCard);
+      } else {
+        updatedMySets.push({ color: theirColor, cards: [theirCard], isComplete: false });
+      }
+
+      newCurrentPlayer = { ...newCurrentPlayer, propertySets: updatedMySets };
+
+      newOpponents = newOpponents.map((opp) => {
+        if (opp.id !== attackerId) return opp;
+        const updatedOppSets = opp.propertySets.map((s) => {
+          const filtered = s.cards.filter((c) => c.id !== theirCard.id);
+          return { ...s, cards: filtered, isComplete: false };
+        }).filter((s) => s.cards.length > 0);
+
+        const myColor = myCard.colors?.[0] || CardColor.PINK;
+        const matchingOppSet = updatedOppSets.find((s) => s.color === myColor && !s.isComplete);
+        if (matchingOppSet) {
+          matchingOppSet.cards.push(myCard);
+        } else {
+          updatedOppSets.push({ color: myColor, cards: [myCard], isComplete: false });
+        }
+        return { ...opp, propertySets: updatedOppSets };
+      });
+
+      msg = `Обмін з ${attackerName} завершено: ви віддали «${myCard.name}», отримали «${theirCard.name}».`;
+    }
+
+    set({
+      incomingAction: null,
+      tableState: {
+        ...tableState,
+        currentPlayer: newCurrentPlayer,
+        opponents: newOpponents,
+        activeActionMessage: msg,
+      },
+    });
+  },
+
+  payIncomingDebt: (selectedCards: CardModel[]) => {
+    const { tableState, incomingDebt } = get();
+    if (!incomingDebt) return;
+
+    const selectedCardIds = new Set(selectedCards.map((c) => c.id));
+    const remainingBank = tableState.currentPlayer.bankCards.filter((c) => !selectedCardIds.has(c.id));
+    const totalPaid = selectedCards.reduce((acc, c) => acc + (c.value || 0), 0);
+
+    const updatedOpponents = tableState.opponents.map((opp) => {
+      if (opp.id !== incomingDebt.attackerId) return opp;
+      return {
+        ...opp,
+        bankCards: [...opp.bankCards, ...selectedCards],
+      };
+    });
+
+    set({
+      incomingDebt: null,
+      tableState: {
+        ...tableState,
+        currentPlayer: {
+          ...tableState.currentPlayer,
+          bankCards: remainingBank,
+        },
+        opponents: updatedOpponents,
+        activeActionMessage: `Ви сплатили $${totalPaid} для ${incomingDebt.attackerName}.`,
+      },
+    });
+  },
+
+  dismissDefenseModal: () => {
+    set({ incomingAction: null, incomingDebt: null });
   },
 }));

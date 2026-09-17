@@ -264,4 +264,15 @@
   display: none !important;
 }
 
+/* Selectable Mode (for Debt Payment modal) */
+.cardItemSelectable {
+  cursor: pointer;
+}
+
+.cardItemSelected > div {
+  outline: 2.5px solid #2ecc71;
+  outline-offset: -1px;
+  border-radius: 8px;
+}
+
 

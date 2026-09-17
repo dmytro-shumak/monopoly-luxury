@@ -12,6 +12,9 @@ export interface PlayerBankProps {
   onPlayToBank?: () => void;
   variant?: 'board' | 'tooltip';
   title?: string;
+  isSelectableMode?: boolean;
+  selectedCardIds?: string[];
+  onToggleSelectCard?: (card: CardModel) => void;
 }
 
 export const PlayerBank: React.FC<PlayerBankProps> = ({
@@ -20,6 +23,9 @@ export const PlayerBank: React.FC<PlayerBankProps> = ({
   onPlayToBank,
   variant = 'board',
   title,
+  isSelectableMode = false,
+  selectedCardIds = [],
+  onToggleSelectCard,
 }) => {
   const { t } = useTranslation();
   const isTooltip = variant === 'tooltip';
@@ -98,14 +104,23 @@ export const PlayerBank: React.FC<PlayerBankProps> = ({
 
               {/* Vertical cascading card stack for cards of this denomination */}
               <div className={styles.cardsStack}>
-                {group.cards.map((card, cardIdx) => (
-                  <div
-                    key={`${card.id}_${cardIdx}`}
-                    className={styles.cardItem}
-                  >
-                    <Card card={card} />
-                  </div>
-                ))}
+                {group.cards.map((card, cardIdx) => {
+                  const isSelected = isSelectableMode && selectedCardIds.includes(card.id);
+                  return (
+                    <div
+                      key={`${card.id}_${cardIdx}`}
+                      className={`${styles.cardItem} ${isSelectableMode ? styles.cardItemSelectable : ''} ${isSelected ? styles.cardItemSelected : ''}`}
+                      onClick={(e) => {
+                        if (isSelectableMode && onToggleSelectCard) {
+                          e.stopPropagation();
+                          onToggleSelectCard(card);
+                        }
+                      }}
+                    >
+                      <Card card={card} />
+                    </div>
+                  );
+                })}
               </div>
             </div>
           ))

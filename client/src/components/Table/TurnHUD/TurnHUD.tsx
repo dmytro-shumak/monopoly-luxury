@@ -10,6 +10,8 @@ export interface TurnHUDProps {
   onDrawCards: () => void;
   onEndTurn: () => void;
   onResetMock: () => void;
+  onTestAttack?: () => void;
+  onTestRent?: () => void;
 }
 
 export const TurnHUD: React.FC<TurnHUDProps> = ({
@@ -20,6 +22,8 @@ export const TurnHUD: React.FC<TurnHUDProps> = ({
   onDrawCards,
   onEndTurn,
   onResetMock,
+  onTestAttack,
+  onTestRent,
 }) => {
   const { t } = useTranslation();
 
@@ -49,6 +53,28 @@ export const TurnHUD: React.FC<TurnHUDProps> = ({
 
       {/* Right controls: Actions */}
       <div className={styles.rightControls}>
+        {onTestAttack && (
+          <button
+            type="button"
+            className={`${styles.secondaryBtn} ${styles.testAttackBtn}`}
+            onClick={onTestAttack}
+            title={t('board.testAttackBtn')}
+          >
+            ⚔️ {t('board.testAttackBtn')}
+          </button>
+        )}
+
+        {onTestRent && (
+          <button
+            type="button"
+            className={`${styles.secondaryBtn} ${styles.testRentBtn}`}
+            onClick={onTestRent}
+            title={t('board.testRentBtn')}
+          >
+            💰 {t('board.testRentBtn')}
+          </button>
+        )}
+
         <button
           type="button"
           className={styles.secondaryBtn}

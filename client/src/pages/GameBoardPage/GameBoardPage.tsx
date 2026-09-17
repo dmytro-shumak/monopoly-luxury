@@ -12,6 +12,9 @@ import { DoubleRentModal } from '../../components/Table/DoubleRentModal/DoubleRe
 import { SlyDealModal } from '../../components/Table/SlyDealModal/SlyDealModal';
 import { ForcedDealModal } from '../../components/Table/ForcedDealModal/ForcedDealModal';
 import { DealBreakerModal } from '../../components/Table/DealBreakerModal/DealBreakerModal';
+import { DefenseActionModal } from '../../components/Table/DefenseActionModal/DefenseActionModal';
+import { DefenseDebtModal } from '../../components/Table/DefenseDebtModal/DefenseDebtModal';
+import { ActionCardType } from '../../types/cards';
 import { LanguageSwitcher } from '../../components/LanguageSwitcher/LanguageSwitcher';
 import styles from './GameBoardPage.module.css';
 
@@ -57,6 +60,13 @@ export const GameBoardPage: React.FC = () => {
     drawTwoCards,
     endTurn,
     resetMockState,
+    incomingAction,
+    incomingDebt,
+    cancelWithJustSayNo,
+    acceptIncomingAction,
+    payIncomingDebt,
+    simulateIncomingAction,
+    simulateIncomingDebt,
   } = useMockGameStore();
 
   const isMyTurn = tableState.turn.activePlayerId === 'player_you';
@@ -66,6 +76,11 @@ export const GameBoardPage: React.FC = () => {
   const slyDealTargetOpponent = tableState.opponents.find((o) => o.id === slyDealTargetOpponentId);
   const forcedDealTargetOpponent = tableState.opponents.find((o) => o.id === forcedDealTargetOpponentId);
   const dealBreakerTargetOpponent = tableState.opponents.find((o) => o.id === dealBreakerTargetOpponentId);
+  const hasJustSayNo = Boolean(
+    tableState.currentPlayer.handCards?.some(
+      (c) => c.actionType === ActionCardType.JUST_SAY_NO || c.id.startsWith('action_just_say_no')
+    )
+  );
 
   return (
     <div className={styles.pageContainer}>
@@ -180,6 +195,8 @@ export const GameBoardPage: React.FC = () => {
         onDrawCards={drawTwoCards}
         onEndTurn={endTurn}
         onResetMock={resetMockState}
+        onTestAttack={() => simulateIncomingAction('sly_deal')}
+        onTestRent={() => simulateIncomingDebt(5, 'Оренда (Темно-синій)')}
       />
 
       {/* 4. Double Rent Confirm Modal */}
@@ -223,6 +240,31 @@ export const GameBoardPage: React.FC = () => {
           opponent={dealBreakerTargetOpponent}
           onStealSet={(setIndex) => executeDealBreaker(dealBreakerTargetOpponent.id, setIndex)}
           onClose={cancelDealBreakerOpponent}
+        />
+      )}
+
+      {/* 8. Defense Action Modal (Sly Deal, Forced Deal, Deal Breaker) */}
+      {incomingAction && (
+        <DefenseActionModal
+          key={`${incomingAction.type}_${incomingAction.attackerId}`}
+          isOpen={Boolean(incomingAction)}
+          incomingAction={incomingAction}
+          hasJustSayNo={hasJustSayNo}
+          onAccept={acceptIncomingAction}
+          onJustSayNo={cancelWithJustSayNo}
+        />
+      )}
+
+      {/* 9. Defense Debt Modal (Rent, Debt Collector, Birthday) */}
+      {incomingDebt && (
+        <DefenseDebtModal
+          key={`${incomingDebt.attackerId}_${incomingDebt.amount}_${incomingDebt.reason}`}
+          isOpen={Boolean(incomingDebt)}
+          incomingDebt={incomingDebt}
+          bankCards={tableState.currentPlayer.bankCards}
+          hasJustSayNo={hasJustSayNo}
+          onPay={payIncomingDebt}
+          onJustSayNo={cancelWithJustSayNo}
         />
       )}
     </div>

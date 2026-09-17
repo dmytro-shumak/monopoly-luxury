@@ -57,8 +57,9 @@ export const createInitialMockState = (): MockTableState => {
     name: 'Alex',
     avatar: '👑',
     isCurrentPlayer: true,
-    handCount: 16,
+    handCount: 17,
     handCards: [
+      getCard('action_just_say_no_1'), // Just Say No (Відміна / «Ні!»)
       getCard('action_deal_breaker_1'), // Deal Breaker (Steal 1 full complete set)
       getCard('action_forced_deal_1'), // Forced Deal (Swap 1 property with opponent)
       getCard('action_sly_deal_1'), // Sly Deal (Steal 1 property from opponent)
