@@ -140,6 +140,13 @@ io.on("connection", (socket: Socket) => {
     handleError(res.error);
   });
 
+  socket.on("pass_reaction", () => {
+    const ctx = getPlayerContext();
+    if (!ctx) return;
+    const res = ctx.room.passReaction(ctx.playerId);
+    handleError(res.error);
+  });
+
   socket.on("pay_debt", (data: { assetIds: string[] }) => {
     const ctx = getPlayerContext();
     if (!ctx) return;

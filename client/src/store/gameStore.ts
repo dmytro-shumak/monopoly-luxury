@@ -88,6 +88,7 @@ interface GameStore {
   endTurn: () => void;
   discardCards: (cardIds: string[]) => void;
   reactJustSayNo: (cardId: string) => void;
+  passReaction: () => void;
   payDebt: (assetIds: string[]) => void;
 }
 
@@ -231,6 +232,10 @@ export const useGameStore = create<GameStore>((set, get) => {
 
     reactJustSayNo: (cardId: string) => {
       socket.emit('react_jsn', { cardId });
+    },
+
+    passReaction: () => {
+      socket.emit('pass_reaction');
     },
 
     payDebt: (assetIds: string[]) => {
