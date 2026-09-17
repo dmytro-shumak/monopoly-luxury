@@ -391,17 +391,20 @@ export class GameRoom implements IGameRoom {
     if (!cardDef.colors?.includes(toColor as CardColor) && cardDef.colors?.[0] !== CardColor.ALL_COLOR) {
        return { success: false, error: "Wildcard cannot be this color" };
     }
-    if (cardDef.colors?.[0] === CardColor.ALL_COLOR && currentSet.color !== toColor) {
-       if (currentSet.color !== CardColor.ALL_COLOR) {
-           return { success: false, error: "All-Color wildcard cannot change color once assigned" };
-       }
+    if (toColor === CardColor.ALL_COLOR) {
+       return { success: false, error: "Cannot move wildcard to generic ALL_COLOR set" };
     }
 
-    // Changing color of 2-color wildcard costs 1 action
-    const isTwoColor = cardDef.colors && cardDef.colors.length === 2;
-    if (isTwoColor && currentSet.color !== toColor) {
-       if (player.actionsRemaining <= 0) return { success: false, error: "No actions left to change color" };
-       player.actionsRemaining -= 1;
+    // Changing color of 2-color or all-color wildcard costs 1 action (unless it was just received)
+    const isMultiColor = (cardDef.colors && cardDef.colors.length === 2) || cardDef.colors?.[0] === CardColor.ALL_COLOR;
+    if (isMultiColor && currentSet.color !== toColor) {
+       const isFreeMove = (player as any).freeMoveCardIds && (player as any).freeMoveCardIds.includes(cardId);
+       if (isFreeMove) {
+          (player as any).freeMoveCardIds = (player as any).freeMoveCardIds.filter((id: string) => id !== cardId);
+       } else {
+          if (player.actionsRemaining <= 0) return { success: false, error: "No actions left to change color" };
+          player.actionsRemaining -= 1;
+       }
     }
 
     currentSet.cards.splice(cardIndex, 1);
@@ -525,7 +528,7 @@ export class GameRoom implements IGameRoom {
     if (!debtor || !creditor) return { success: false, error: "Invalid players" };
 
     let totalValue = 0;
-    const assetsToRemove: { source: "BANK" | "TABLE", id: string, setIndex?: number }[] = [];
+    const assetsToRemove: { source: "BANK" | "TABLE", id: string, isComplete?: boolean }[] = [];
 
     // Calculate value and verify ownership
     for (const assetId of assetIds) {
@@ -540,24 +543,21 @@ export class GameRoom implements IGameRoom {
         continue;
       }
 
-      let foundOnTable = false;
-      for (let i = 0; i < debtor.table.length; i++) {
-        if (debtor.table[i]!.cards.includes(assetId)) {
-          totalValue += cardDef.value;
-          assetsToRemove.push({ source: "TABLE", id: assetId, setIndex: i });
-          foundOnTable = true;
-          break;
-        }
+      const tableSet = debtor.table.find(s => s.cards.includes(assetId));
+      if (tableSet) {
+        totalValue += cardDef.value;
+        assetsToRemove.push({ source: "TABLE", id: assetId, isComplete: tableSet.isComplete });
+        continue;
       }
 
-      if (!foundOnTable) return { success: false, error: `You don't own ${assetId}` };
+      return { success: false, error: `You don't own ${assetId}` };
     }
 
     // Strict Payment Hierarchy Check
     // 1. Bank Money MUST be exhausted before Free Properties
     // 2. Free Properties MUST be exhausted before Monopolies
-    const usingMonopoly = assetsToRemove.some(a => a.source === "TABLE" && debtor.table[a.setIndex!]!.isComplete);
-    const usingFreeProp = assetsToRemove.some(a => a.source === "TABLE" && !debtor.table[a.setIndex!]!.isComplete);
+    const usingMonopoly = assetsToRemove.some(a => a.source === "TABLE" && a.isComplete);
+    const usingFreeProp = assetsToRemove.some(a => a.source === "TABLE" && !a.isComplete);
     const bankRemainingValue = debtor.bank.filter(id => !assetIds.includes(id)).reduce((acc, id) => acc + (CARDS_DICTIONARY[id]?.value || 0), 0);
     const freePropsRemaining = debtor.table.filter(s => !s.isComplete).flatMap(s => s.cards).filter(id => !assetIds.includes(id));
     
@@ -585,21 +585,20 @@ export class GameRoom implements IGameRoom {
       if (asset.source === "BANK") {
         debtor.bank = debtor.bank.filter(id => id !== asset.id);
         creditor.bank.push(asset.id);
-      } else if (asset.source === "TABLE" && asset.setIndex !== undefined) {
-        const set = debtor.table[asset.setIndex]!;
+      } else if (asset.source === "TABLE") {
+        const set = debtor.table.find(s => s.cards.includes(asset.id));
+        if (!set) continue;
         
         // Building destruction rule
         if (set.isComplete) {
            // If monopoly broken, discard buildings
            const hasBuildings = set.cards.some(id => CARDS_DICTIONARY[id]?.isBuilding);
            if (hasBuildings) {
-               // We don't track building card IDs in `buildings` array currently, we should fix this if needed.
-               // Actually, buildings are just cards in `set.cards` with `isBuilding`.
-                   const buildingCards = set.cards.filter(id => CARDS_DICTIONARY[id]?.isBuilding);
-                   for (const bc of buildingCards) {
-                      this.discardCard(bc);
-                      set.cards = set.cards.filter(id => id !== bc);
-                   }
+              const buildingCards = set.cards.filter(id => CARDS_DICTIONARY[id]?.isBuilding);
+              for (const bc of buildingCards) {
+                 this.discardCard(bc);
+                 set.cards = set.cards.filter(id => id !== bc);
+              }
            }
         }
 
@@ -610,12 +609,29 @@ export class GameRoom implements IGameRoom {
            this.updateSetCompletion(set);
         }
         
-        // Add to creditor's table (lazy: match color if available)
+        // Add to creditor's table (match incomplete sets where possible)
         const assetCardDef = CARDS_DICTIONARY[asset.id];
         let color = set.color;
         if (assetCardDef?.colors?.[0] === CardColor.ALL_COLOR) {
-           color = (options?.wildcardAssignments?.[asset.id] as CardColor) || CardColor.ALL_COLOR;
+           const credIncomplete = creditor.table.find(s => !s.isComplete);
+           color = (options?.wildcardAssignments?.[asset.id] as CardColor) || credIncomplete?.color || set.color;
+           if (color === CardColor.ALL_COLOR) {
+              color = CardColor.DARK_BLUE;
+           }
+        } else if (assetCardDef?.colors && assetCardDef.colors.length === 2) {
+           const matchingCredSet = creditor.table.find(s => assetCardDef.colors!.includes(s.color as CardColor) && !s.isComplete);
+           if (matchingCredSet) {
+              color = matchingCredSet.color;
+           }
         }
+
+        if (assetCardDef?.type === CardType.PROPERTY_WILDCARD) {
+           (creditor as any).freeMoveCardIds = (creditor as any).freeMoveCardIds || [];
+           if (!(creditor as any).freeMoveCardIds.includes(asset.id)) {
+              (creditor as any).freeMoveCardIds.push(asset.id);
+           }
+        }
+
         let creditorSet = creditor.table.find(s => s.color === color && !s.isComplete);
         if (!creditorSet) {
           creditorSet = { color, cards: [], isComplete: false };

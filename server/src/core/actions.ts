@@ -191,8 +191,8 @@ export function executePendingAction(room: IGameRoom, action: PendingAction) {
                 
                 const stolenCardDef = CARDS_DICTIONARY[payload.targetCardId];
                 let colorToAssign = payload.destinationColor;
-                if (!colorToAssign) {
-                    colorToAssign = stolenCardDef?.colors?.[0] === CardColor.ALL_COLOR ? CardColor.ALL_COLOR : targetOldColor;
+                if (!colorToAssign || colorToAssign === CardColor.ALL_COLOR) {
+                    colorToAssign = targetOldColor;
                 } else if (stolenCardDef?.colors?.[0] !== CardColor.ALL_COLOR && !stolenCardDef?.colors?.includes(colorToAssign as CardColor)) {
                     colorToAssign = targetOldColor;
                 }
@@ -238,8 +238,8 @@ export function executePendingAction(room: IGameRoom, action: PendingAction) {
                 
                 const targetCardDef = CARDS_DICTIONARY[payload.targetCardId];
                 let initColorToAssign = payload.destinationColor;
-                if (!initColorToAssign) {
-                    initColorToAssign = targetCardDef?.colors?.[0] === CardColor.ALL_COLOR ? CardColor.ALL_COLOR : targetOldColor;
+                if (!initColorToAssign || initColorToAssign === CardColor.ALL_COLOR) {
+                    initColorToAssign = targetOldColor;
                 } else if (targetCardDef?.colors?.[0] !== CardColor.ALL_COLOR && !targetCardDef?.colors?.includes(initColorToAssign as CardColor)) {
                     initColorToAssign = targetOldColor;
                 }
@@ -253,8 +253,8 @@ export function executePendingAction(room: IGameRoom, action: PendingAction) {
                 
                 const myCardDef = CARDS_DICTIONARY[payload.myCardId];
                 let targetColorToAssign = payload.targetDestinationColor;
-                if (!targetColorToAssign) {
-                    targetColorToAssign = myCardDef?.colors?.[0] === CardColor.ALL_COLOR ? CardColor.ALL_COLOR : initOldColor;
+                if (!targetColorToAssign || targetColorToAssign === CardColor.ALL_COLOR) {
+                    targetColorToAssign = initOldColor;
                 } else if (myCardDef?.colors?.[0] !== CardColor.ALL_COLOR && !myCardDef?.colors?.includes(targetColorToAssign as CardColor)) {
                     targetColorToAssign = initOldColor;
                 }

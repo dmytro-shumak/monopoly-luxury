@@ -312,3 +312,61 @@
   background: linear-gradient(135deg, #2ecc71, #27ae60);
   transform: translateY(-2px);
 }
+
+/* Stolen / Transferred Wildcard Placement Banner */
+.placementNoticeBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: linear-gradient(135deg, rgba(39, 174, 96, 0.25), rgba(46, 204, 113, 0.15));
+  border: 1.5px solid rgba(46, 204, 113, 0.6);
+  border-radius: 12px;
+  padding: 10px 16px;
+  margin-bottom: 12px;
+  box-shadow: 0 4px 16px rgba(46, 204, 113, 0.2);
+  animation: pulseGlow 2s infinite ease-in-out;
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(46, 204, 113, 0.2);
+    border-color: rgba(46, 204, 113, 0.6);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(46, 204, 113, 0.45);
+    border-color: rgba(46, 204, 113, 0.9);
+  }
+}
+
+.placementNoticeText {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #ecf0f1;
+}
+
+.placementNoticeIcon {
+  font-size: 18px;
+}
+
+.cancelPlacementBtn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #bdc3c7;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.cancelPlacementBtn:hover {
+  background: rgba(231, 76, 60, 0.3);
+  border-color: #e74c3c;
+  color: #ffffff;
+}

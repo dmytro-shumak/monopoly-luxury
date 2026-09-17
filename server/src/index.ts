@@ -107,18 +107,26 @@ io.on("connection", (socket: Socket) => {
     }
   });
 
+  const safeAction = (actionName: string, fn: () => { error?: string }) => {
+    try {
+      const res = fn();
+      handleError(res.error);
+    } catch (err: any) {
+      console.error(`Error in ${actionName}:`, err);
+      handleError(err?.message || "Internal server error");
+    }
+  };
+
   socket.on("start_game", () => {
     const ctx = getPlayerContext();
     if (!ctx) return;
-    const res = ctx.room.startGame(ctx.playerId);
-    handleError(res.error);
+    safeAction("start_game", () => ctx.room.startGame(ctx.playerId));
   });
 
   socket.on("move_property", ({ cardId, toColor }: { cardId: string; toColor: string }) => {
     const ctx = getPlayerContext();
     if (!ctx) return;
-    const res = ctx.room.moveProperty(ctx.playerId, cardId, toColor);
-    handleError(res.error);
+    safeAction("move_property", () => ctx.room.moveProperty(ctx.playerId, cardId, toColor));
   });
 
   socket.on("play_card", (data: { cardId: string; targetId?: string; propertyColor?: string; modifierCardId?: string; payload?: any }) => {
@@ -129,43 +137,37 @@ io.on("connection", (socket: Socket) => {
     if (data.propertyColor) options.propertyColor = data.propertyColor;
     if (data.modifierCardId) options.modifierCardId = data.modifierCardId;
     if (data.payload) options.payload = data.payload;
-    const res = ctx.room.playCard(ctx.playerId, data.cardId, options);
-    handleError(res.error);
+    safeAction("play_card", () => ctx.room.playCard(ctx.playerId, data.cardId, options));
   });
 
   socket.on("react_jsn", (data: { cardId: string }) => {
     const ctx = getPlayerContext();
     if (!ctx) return;
-    const res = ctx.room.reactJustSayNo(ctx.playerId, data.cardId);
-    handleError(res.error);
+    safeAction("react_jsn", () => ctx.room.reactJustSayNo(ctx.playerId, data.cardId));
   });
 
   socket.on("pass_reaction", () => {
     const ctx = getPlayerContext();
     if (!ctx) return;
-    const res = ctx.room.passReaction(ctx.playerId);
-    handleError(res.error);
+    safeAction("pass_reaction", () => ctx.room.passReaction(ctx.playerId));
   });
 
-  socket.on("pay_debt", (data: { assetIds: string[] }) => {
+  socket.on("pay_debt", (data: { assetIds: string[]; options?: any }) => {
     const ctx = getPlayerContext();
     if (!ctx) return;
-    const res = ctx.room.payDebt(ctx.playerId, data.assetIds);
-    handleError(res.error);
+    safeAction("pay_debt", () => ctx.room.payDebt(ctx.playerId, data.assetIds, data?.options));
   });
 
   socket.on("discard", (data: { cardIds: string[] }) => {
     const ctx = getPlayerContext();
     if (!ctx) return;
-    const res = ctx.room.discardExcess(ctx.playerId, data.cardIds);
-    handleError(res.error);
+    safeAction("discard", () => ctx.room.discardExcess(ctx.playerId, data.cardIds));
   });
 
   socket.on("end_turn", () => {
     const ctx = getPlayerContext();
     if (!ctx) return;
-    const res = ctx.room.endTurn(ctx.playerId);
-    handleError(res.error);
+    safeAction("end_turn", () => ctx.room.endTurn(ctx.playerId));
   });
 
   socket.on("disconnect", () => {
@@ -179,6 +181,13 @@ io.on("connection", (socket: Socket) => {
       socketToSession.delete(socket.id);
     }
   });
+});
+
+process.on("uncaughtException", (err) => {
+  console.error("Uncaught exception in server:", err);
+});
+process.on("unhandledRejection", (reason) => {
+  console.error("Unhandled rejection in server:", reason);
 });
 
 httpServer.listen(PORT, () => {

@@ -87,18 +87,20 @@ export const PlayerProperties: React.FC<PlayerPropertiesProps> = ({
     const map = new Map<number, PropertyTarget>();
     if (isTooltip || isModal || isStealMode || isTradeGiveMode || isDealBreakerMode || isMultiSelectMode) return map;
 
-    if (tableMovingCard && tableMovingCard.target.type === 'existing') {
-      map.set(tableMovingCard.target.setIndex, tableMovingCard.target);
-      return map;
-    }
-
-    if (validPropertyTargets) {
+    if (validPropertyTargets && validPropertyTargets.length > 0) {
       for (const target of validPropertyTargets) {
         if (target.type === 'existing') {
           map.set(target.setIndex, target);
         }
       }
+      return map;
     }
+
+    if (tableMovingCard && tableMovingCard.target.type === 'existing') {
+      map.set(tableMovingCard.target.setIndex, tableMovingCard.target);
+      return map;
+    }
+
     return map;
   }, [isTooltip, isModal, isStealMode, isTradeGiveMode, isDealBreakerMode, isMultiSelectMode, validPropertyTargets, tableMovingCard]);
 
@@ -106,14 +108,17 @@ export const PlayerProperties: React.FC<PlayerPropertiesProps> = ({
   const newSetTargets = useMemo(() => {
     if (isTooltip || isModal || isStealMode || isTradeGiveMode || isDealBreakerMode || isMultiSelectMode) return [];
 
+    if (validPropertyTargets && validPropertyTargets.length > 0) {
+      return validPropertyTargets.filter(
+        (t): t is Extract<PropertyTarget, { type: 'new_set' }> => t.type === 'new_set'
+      );
+    }
+
     if (tableMovingCard && tableMovingCard.target.type === 'new_set') {
       return [tableMovingCard.target];
     }
 
-    if (!validPropertyTargets) return [];
-    return validPropertyTargets.filter(
-      (t): t is Extract<PropertyTarget, { type: 'new_set' }> => t.type === 'new_set'
-    );
+    return [];
   }, [isTooltip, isModal, isStealMode, isTradeGiveMode, isDealBreakerMode, isMultiSelectMode, validPropertyTargets, tableMovingCard]);
 
   const setsGridRef = useRef<HTMLDivElement>(null);
@@ -282,8 +287,7 @@ export const PlayerProperties: React.FC<PlayerPropertiesProps> = ({
                         !isTradeGiveMode &&
                         card.type === CardType.PROPERTY_WILDCARD &&
                         card.colors &&
-                        card.colors.length === 2 &&
-                        !card.colors.includes(CardColor.ALL_COLOR);
+                        (card.colors.length === 2 || card.colors.includes(CardColor.ALL_COLOR));
 
                       const canFlip =
                         isTwoColorWild &&
@@ -291,8 +295,8 @@ export const PlayerProperties: React.FC<PlayerPropertiesProps> = ({
                         actionsRemaining > 0 &&
                         !set.isComplete;
 
-                      const altColor = isTwoColorWild
-                        ? card.colors?.find((c) => c !== set.color)
+                      const altColor = card.colors && card.colors.length === 2
+                        ? card.colors.find((c) => c !== set.color)
                         : undefined;
 
                       const isStealable = (isStealMode || isTradeGiveMode) && !set.isComplete;
@@ -333,7 +337,7 @@ export const PlayerProperties: React.FC<PlayerPropertiesProps> = ({
                           className={itemClass}
                           title={
                             canFlip && altColor
-                              ? t('board.swapColorHint', { color: altColor.replace('_', ' ') })
+                              ? t('board.swapColorHint', { color: t(`colors.${altColor}`) || altColor.replace('_', ' ') })
                               : undefined
                           }
                           onClick={(e) => {

@@ -7,7 +7,9 @@ import { type MockPlayer, type MockPropertySet } from '../../../mocks/mockGameDa
 import {
   computeValidPropertyTargets,
   computeBestRentForCard,
+  computeFlipTargetForTableCard,
   type PropertyTarget,
+  type TableMovingCard,
   type IncomingAction,
   type IncomingDebt,
 } from '../../../mocks/useMockGame';
@@ -40,6 +42,7 @@ export const OnlineGameBoard: React.FC = () => {
     reactJustSayNo,
     passReaction,
     payDebt,
+    moveProperty,
     leaveRoom,
   } = useGameStore();
 
@@ -53,6 +56,18 @@ export const OnlineGameBoard: React.FC = () => {
   const [forcedDealMyCard, setForcedDealMyCard] = useState<CardModel | null>(null);
   const [forcedDealOpponentId, setForcedDealOpponentId] = useState<string | null>(null);
   const [dealBreakerOpponentId, setDealBreakerOpponentId] = useState<string | null>(null);
+  const [tableMovingCard, setTableMovingCard] = useState<TableMovingCard | null>(null);
+  const [pendingStolenCardPlacement, setPendingStolenCardPlacement] = useState<{
+    card: CardModel;
+    fromOpponentName: string;
+    actionType: ActionCardType.SLY_DEAL | ActionCardType.FORCED_DEAL | 'DEBT_PAYMENT';
+    cardToPlayId?: string;
+    targetId?: string;
+    propertyColor?: CardColor;
+    myCardId?: string;
+    myPropertyColor?: CardColor;
+  } | null>(null);
+  const prevPropertyCardIdsRef = React.useRef<Set<string>>(new Set());
   const [pendingDoubleRentModal, setPendingDoubleRentModal] = useState<{
     rentCard: CardModel;
     baseAmount: number;
@@ -222,6 +237,8 @@ export const OnlineGameBoard: React.FC = () => {
     setForcedDealOpponentId(null);
     setDealBreakerOpponentId(null);
     setPendingDoubleRentModal(null);
+    setTableMovingCard(null);
+    setPendingStolenCardPlacement(null);
   };
 
   // Card Selection handler
@@ -258,15 +275,56 @@ export const OnlineGameBoard: React.FC = () => {
 
   // 2. Play to Property
   const handlePlayToPropertyTarget = (target: PropertyTarget) => {
+    if (pendingStolenCardPlacement) {
+      if (
+        pendingStolenCardPlacement.actionType === ActionCardType.SLY_DEAL &&
+        pendingStolenCardPlacement.cardToPlayId &&
+        pendingStolenCardPlacement.targetId
+      ) {
+        playCard(pendingStolenCardPlacement.cardToPlayId, {
+          targetId: pendingStolenCardPlacement.targetId,
+          payload: {
+            targetCardId: pendingStolenCardPlacement.card.id,
+            propertyColor: pendingStolenCardPlacement.propertyColor,
+            destinationColor: target.color,
+          },
+        });
+      } else if (
+        pendingStolenCardPlacement.actionType === ActionCardType.FORCED_DEAL &&
+        pendingStolenCardPlacement.cardToPlayId &&
+        pendingStolenCardPlacement.targetId
+      ) {
+        playCard(pendingStolenCardPlacement.cardToPlayId, {
+          targetId: pendingStolenCardPlacement.targetId,
+          payload: {
+            targetCardId: pendingStolenCardPlacement.card.id,
+            propertyColor: pendingStolenCardPlacement.propertyColor,
+            destinationColor: target.color,
+            myCardId: pendingStolenCardPlacement.myCardId,
+            myPropertyColor: pendingStolenCardPlacement.myPropertyColor,
+          },
+        });
+      } else if (pendingStolenCardPlacement.actionType === 'DEBT_PAYMENT') {
+        moveProperty(pendingStolenCardPlacement.card.id, target.color);
+      }
+      setPendingStolenCardPlacement(null);
+      setValidPropertyTargets([]);
+      return;
+    }
+
     if (!selectedCard || !isMyTurn || actionsRemaining <= 0) return;
     playCard(selectedCard.id, { propertyColor: target.color });
     resetSelection();
   };
 
   const handlePlayToProperty = () => {
-    if (!selectedCard || !isMyTurn || actionsRemaining <= 0) return;
     const target = validPropertyTargets[0];
-    const color = target?.color || selectedCard.colors?.[0];
+    if (target) {
+      handlePlayToPropertyTarget(target);
+      return;
+    }
+    if (!selectedCard || !isMyTurn || actionsRemaining <= 0) return;
+    const color = selectedCard.colors?.[0];
     playCard(selectedCard.id, color ? { propertyColor: color } : undefined);
     resetSelection();
   };
@@ -389,16 +447,39 @@ export const OnlineGameBoard: React.FC = () => {
     const opp = opponents.find((o) => o.id === slyDealOpponentId);
     const set = opp?.propertySets.find((s) => s.cards.some((c) => c.id === stolenCard.id));
     const cardToPlay = selectedCard || handCards.find((c) => c.actionType === ActionCardType.SLY_DEAL);
-    if (opp && set && cardToPlay) {
+    if (!opp || !set || !cardToPlay) return;
+
+    const isWild =
+      stolenCard.type === CardType.PROPERTY_WILDCARD ||
+      Boolean(stolenCard.colors && stolenCard.colors.length > 1) ||
+      stolenCard.colors?.includes(CardColor.ALL_COLOR);
+
+    if (isWild) {
+      setSlyDealOpponentId(null);
+      setSelectedCardId(null);
+      setValidDropTarget('property');
+      const targets = computeValidPropertyTargets(stolenCard, propertySets);
+      setPendingStolenCardPlacement({
+        card: stolenCard,
+        fromOpponentName: opp.name,
+        actionType: ActionCardType.SLY_DEAL,
+        cardToPlayId: cardToPlay.id,
+        targetId: opp.id,
+        propertyColor: set.color,
+      });
+      setValidPropertyTargets(targets);
+    } else {
       playCard(cardToPlay.id, {
         targetId: opp.id,
         payload: {
           targetCardId: stolenCard.id,
           propertyColor: set.color,
+          destinationColor: stolenCard.colors?.[0] || set.color,
         },
       });
+      resetSelection();
+      setSlyDealOpponentId(null);
     }
-    resetSelection();
   };
 
   // Confirm Forced Deal from ForcedDealModal
@@ -407,18 +488,164 @@ export const OnlineGameBoard: React.FC = () => {
     const theirSet = opp?.propertySets.find((s) => s.cards.some((c) => c.id === theirCard.id));
     const mySet = propertySets.find((s) => s.cards.some((c) => c.id === forcedDealMyCard?.id));
     const cardToPlay = selectedCard || handCards.find((c) => c.actionType === ActionCardType.FORCED_DEAL);
-    if (opp && theirSet && mySet && forcedDealMyCard && cardToPlay) {
+    if (!opp || !theirSet || !mySet || !forcedDealMyCard || !cardToPlay) return;
+
+    const isWild =
+      theirCard.type === CardType.PROPERTY_WILDCARD ||
+      Boolean(theirCard.colors && theirCard.colors.length > 1) ||
+      theirCard.colors?.includes(CardColor.ALL_COLOR);
+
+    if (isWild) {
+      setForcedDealOpponentId(null);
+      setSelectedCardId(null);
+      setValidDropTarget('property');
+      const targets = computeValidPropertyTargets(theirCard, propertySets);
+      setPendingStolenCardPlacement({
+        card: theirCard,
+        fromOpponentName: opp.name,
+        actionType: ActionCardType.FORCED_DEAL,
+        cardToPlayId: cardToPlay.id,
+        targetId: opp.id,
+        propertyColor: theirSet.color,
+        myCardId: forcedDealMyCard.id,
+        myPropertyColor: mySet.color,
+      });
+      setValidPropertyTargets(targets);
+    } else {
       playCard(cardToPlay.id, {
         targetId: opp.id,
         payload: {
           targetCardId: theirCard.id,
           propertyColor: theirSet.color,
+          destinationColor: theirCard.colors?.[0] || theirSet.color,
           myCardId: forcedDealMyCard.id,
           myPropertyColor: mySet.color,
         },
       });
+      resetSelection();
+      setForcedDealOpponentId(null);
     }
+  };
+
+  // Detect received wildcards from debt payments to let creditor place them freely
+  React.useEffect(() => {
+    if (!myPlayer || !isMyTurn) {
+      if (myPlayer?.table) {
+        prevPropertyCardIdsRef.current = new Set(myPlayer.table.flatMap((s) => s.cards));
+      }
+      return;
+    }
+
+    const currentCardIds = new Set(myPlayer.table.flatMap((s) => s.cards));
+    if (prevPropertyCardIdsRef.current.size > 0 && !pendingStolenCardPlacement) {
+      const newlyAddedIds = Array.from(currentCardIds).filter((id) => !prevPropertyCardIdsRef.current.has(id));
+      for (const newId of newlyAddedIds) {
+        const cardModel = getCardModel(newId);
+        const isWild =
+          cardModel.type === CardType.PROPERTY_WILDCARD ||
+          Boolean(cardModel.colors && cardModel.colors.length > 1) ||
+          cardModel.colors?.includes(CardColor.ALL_COLOR);
+
+        const isFree = (myPlayer as any).freeMoveCardIds?.includes(newId);
+        if (isWild && isFree) {
+          const targets = computeValidPropertyTargets(cardModel, propertySets);
+          setPendingStolenCardPlacement({
+            card: cardModel,
+            fromOpponentName: 'Opponent',
+            actionType: 'DEBT_PAYMENT',
+          });
+          setValidPropertyTargets(targets);
+          break;
+        }
+      }
+    }
+    prevPropertyCardIdsRef.current = currentCardIds;
+  }, [myPlayer, isMyTurn, pendingStolenCardPlacement, propertySets]);
+
+  // Table card move / flip handlers
+  const handleStartTableCardMove = (sourceSetIndex: number, card: CardModel) => {
+    if (!isMyTurn || actionsRemaining <= 0) return;
+
+    if (tableMovingCard && tableMovingCard.cardId === card.id) {
+      setTableMovingCard(null);
+      setValidPropertyTargets([]);
+      return;
+    }
+
+    const sourceSet = propertySets[sourceSetIndex];
+    if (!sourceSet || sourceSet.isComplete) return;
+
+    const isAllColor = card.colors?.includes(CardColor.ALL_COLOR);
+
     resetSelection();
+
+    if (isAllColor) {
+      const targets: PropertyTarget[] = [];
+      propertySets.forEach((s, idx) => {
+        if (idx !== sourceSetIndex && !s.isComplete) {
+          targets.push({ type: 'existing', setIndex: idx, color: s.color });
+        }
+      });
+      const allColors: CardColor[] = [
+        CardColor.PINK,
+        CardColor.ORANGE,
+        CardColor.BROWN,
+        CardColor.LIGHT_GREEN,
+        CardColor.PURPLE,
+        CardColor.DARK_BLUE,
+        CardColor.LIGHT_BLUE,
+        CardColor.GREEN,
+        CardColor.RED,
+        CardColor.MAROON,
+        CardColor.DARK_GREEN,
+        CardColor.DARK_MAROON,
+      ];
+      const existingIncompleteColors = new Set(targets.map((t) => t.color));
+      allColors.forEach((c) => {
+        if (!existingIncompleteColors.has(c)) {
+          targets.push({ type: 'new_set', color: c });
+        }
+      });
+
+      if (targets.length === 0) return;
+
+      setTableMovingCard({
+        sourceSetIndex,
+        cardId: card.id,
+        targetColor: targets[0].color,
+        target: targets[0],
+      });
+      setValidPropertyTargets(targets);
+    } else {
+      const flipInfo = computeFlipTargetForTableCard(
+        sourceSetIndex,
+        card,
+        propertySets
+      );
+      if (!flipInfo) return;
+
+      setTableMovingCard({
+        sourceSetIndex,
+        cardId: card.id,
+        targetColor: flipInfo.targetColor,
+        target: flipInfo.target,
+      });
+      setValidPropertyTargets([flipInfo.target]);
+    }
+  };
+
+  const handleCancelTableCardMove = () => {
+    setTableMovingCard(null);
+    setValidPropertyTargets([]);
+  };
+
+  const handleExecuteTableCardMove = (chosenTarget?: PropertyTarget) => {
+    if (!tableMovingCard || !isMyTurn || actionsRemaining <= 0) return;
+
+    const targetColor = chosenTarget?.color || tableMovingCard.targetColor;
+    moveProperty(tableMovingCard.cardId, targetColor);
+    setTableMovingCard(null);
+    setValidPropertyTargets([]);
   };
 
   // Confirm Deal Breaker from DealBreakerModal
@@ -587,13 +814,48 @@ export const OnlineGameBoard: React.FC = () => {
 
             {/* 🟢 Green Zone: Player Properties (Extends below Action Arena) */}
             <div className={styles.propertiesWrapper}>
+              {pendingStolenCardPlacement && (
+                <div className={styles.placementNoticeBanner}>
+                  <div className={styles.placementNoticeText}>
+                    <span className={styles.placementNoticeIcon}>
+                      {pendingStolenCardPlacement.actionType === ActionCardType.SLY_DEAL
+                        ? '🥷'
+                        : pendingStolenCardPlacement.actionType === ActionCardType.FORCED_DEAL
+                        ? '🔄'
+                        : '💰'}
+                    </span>
+                    <span>
+                      {pendingStolenCardPlacement.actionType === ActionCardType.SLY_DEAL
+                        ? t('board.slyDealPlaceWildPrompt', { card: pendingStolenCardPlacement.card.name })
+                        : pendingStolenCardPlacement.actionType === ActionCardType.FORCED_DEAL
+                        ? t('board.forcedDealPlaceWildPrompt', { card: pendingStolenCardPlacement.card.name })
+                        : `Картку «${pendingStolenCardPlacement.card.name}» отримано! Оберіть набір або новий слот на своєму столі для її розміщення.`}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    className={styles.cancelPlacementBtn}
+                    onClick={() => {
+                      setPendingStolenCardPlacement(null);
+                      setValidPropertyTargets([]);
+                    }}
+                  >
+                    ✕
+                  </button>
+                </div>
+              )}
+
               <PlayerProperties
                 propertySets={propertySets}
-                validDropTarget={validDropTarget}
+                validDropTarget={pendingStolenCardPlacement ? 'property' : validDropTarget}
                 validPropertyTargets={validPropertyTargets}
                 onPlayToTarget={handlePlayToPropertyTarget}
                 onPlayToProperty={handlePlayToProperty}
-                selectedCard={selectedCard}
+                selectedCard={selectedCard || pendingStolenCardPlacement?.card || null}
+                tableMovingCard={tableMovingCard}
+                onStartTableCardMove={handleStartTableCardMove}
+                onCancelTableCardMove={handleCancelTableCardMove}
+                onExecuteTableCardMove={handleExecuteTableCardMove}
                 isMyTurn={isMyTurn}
                 actionsRemaining={actionsRemaining}
                 isTradeGiveMode={selectedCard?.actionType === ActionCardType.FORCED_DEAL && !forcedDealMyCard}

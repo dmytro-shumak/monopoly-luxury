@@ -128,7 +128,27 @@
     "discardSelectedProgress": "Selected: {{selected}} of {{required}}",
     "discardBtn": "Discard {{count}} card(s) & End Turn",
     "discardBackBtn": "Return",
-    "discardActionMessage": "You discarded {{count}} card(s) to the discard pile."
+    "discardActionMessage": "You discarded {{count}} card(s) to the discard pile.",
+    "chooseDestinationColor": "Choose color for your table:",
+    "wildcardModalTitle": "Change Card Color",
+    "wildcardModalSubtitle": "Choose set to move the wildcard to (1 action)",
+    "changeColorHint": "Click to change color (1 action)",
+    "current": "Current"
+  },
+  "colors": {
+    "PINK": "Pink",
+    "ORANGE": "Orange",
+    "BROWN": "Brown",
+    "LIGHT_GREEN": "Light Green",
+    "PURPLE": "Purple",
+    "DARK_BLUE": "Dark Blue",
+    "LIGHT_BLUE": "Light Blue",
+    "GREEN": "Green",
+    "RED": "Red",
+    "MAROON": "Maroon",
+    "DARK_GREEN": "Dark Green",
+    "DARK_MAROON": "Dark Maroon",
+    "ALL_COLOR": "All Colors"
   },
   "deckPreview": {
     "title": "Monopoly Deal — Full Deck ({{count}} cards)",

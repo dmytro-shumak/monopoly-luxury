@@ -407,6 +407,23 @@ describe('Monopoly Deal - Exhaustive Test Suite', () => {
       expect(res.success).toBe(true);
       expect(room.state.status).toBe("ACTION_PHASE"); // Debt forgiven, turns continues
     });
+
+    it('Pays debt with multiple properties from different sets where sets become empty', () => {
+      const { p1, p2 } = setupGame();
+      room.state.debtQueue.push({ creditorId: p2, debtorId: p1, amount: 4, paidAmount: 0 });
+      room["processNextDebt"]();
+
+      room.state.players[p1]!.bank = [];
+      room.state.players[p1]!.table = [
+        { color: CardColor.PINK, cards: ["prop_pink_1"], isComplete: false },
+        { color: CardColor.LIGHT_GREEN, cards: ["prop_light_green_1"], isComplete: false }
+      ];
+
+      const res = room.payDebt(p1, ["prop_pink_1", "prop_light_green_1"]);
+      expect(res.success).toBe(true);
+      expect(room.state.players[p1]!.table.length).toBe(0);
+      expect(room.state.players[p2]!.table.length).toBeGreaterThan(0);
+    });
   });
 
   // --- 9. WIN CONDITIONS ---
@@ -472,13 +489,14 @@ describe('Monopoly Deal - Exhaustive Test Suite', () => {
       expect(room.state.players[p2]!.table[0]?.cards.includes("action_house_1")).toBe(true);
     });
 
-    it('All-Color wildcard cannot change color once played', () => {
+    it('All-Color wildcard can change color when moved', () => {
       const { p1 } = setupGame();
       room.state.players[p1]!.table = [{ color: CardColor.PINK, cards: ["wild_all_1"], isComplete: false }];
       
       const res = room.moveProperty(p1, "wild_all_1", CardColor.GREEN);
-      expect(res.success).toBe(false);
-      expect(res.error).toBe("All-Color wildcard cannot change color once assigned");
+      expect(res.success).toBe(true);
+      expect(room.state.players[p1]!.actionsRemaining).toBe(2);
+      expect(room.state.players[p1]!.table.some(s => s.color === CardColor.GREEN && s.cards.includes("wild_all_1"))).toBe(true);
     });
 
     it('Double Rent must be played alongside a Rent card', () => {
@@ -533,5 +551,33 @@ describe('Monopoly Deal - Exhaustive Test Suite', () => {
       // Ensure the house was destroyed
       expect(room.state.discardPile).toContain("action_house_1");
     });
+
+    it('Transferred wildcard from debt joins valid set and is free to move once', () => {
+      const { p1, p2 } = setupGame();
+      room.state.debtQueue.push({ creditorId: p2, debtorId: p1, amount: 5, paidAmount: 0 });
+      room["processNextDebt"]();
+      
+      room.state.players[p1]!.table = [
+        { color: CardColor.GREEN, cards: ["wild_green_pink_1"], isComplete: false }
+      ];
+      room.state.players[p2]!.table = [
+        { color: CardColor.PINK, cards: ["prop_pink_1"], isComplete: false }
+      ];
+
+      const res = room.payDebt(p1, ["wild_green_pink_1"]);
+      expect(res.success).toBe(true);
+
+      // Creditor p2 should have it in PINK set (matching their incomplete set)
+      const p2Pink = room.state.players[p2]!.table.find(s => s.color === CardColor.PINK);
+      expect(p2Pink?.cards).toContain("wild_green_pink_1");
+
+      // Creditor p2 can move it to GREEN for 0 actions (free move from debt receipt)
+      room.state.activePlayerId = p2;
+      room.state.players[p2]!.actionsRemaining = 0; // Even with 0 actions!
+      const moveRes = room.moveProperty(p2, "wild_green_pink_1", CardColor.GREEN);
+      expect(moveRes.success).toBe(true);
+      expect(room.state.players[p2]!.actionsRemaining).toBe(0);
+    });
   });
 });
+

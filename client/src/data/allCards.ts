@@ -1,7 +1,7 @@
 import type { CardModel } from "../types/cards";
 import { CardColor, CardType, ActionCardType, BuildingType } from "../types/cards";
 
-export const PROPERTY_CONFIG: Record<CardColor, { names: string[]; values: number[]; setSize: number }> = {
+export const PROPERTY_CONFIG: Record<CardColor, { names: string[]; values: number[]; setSize: number; }> = {
   [CardColor.PINK]: {
     names: ["вул. Басейна", "вул. Шовковична", "вул. Лютеранська", "вул. Шота Руставелі"],
     values: [1, 2, 3, 4],
@@ -164,72 +164,72 @@ export const generateFullDeck = (): CardModel[] => {
     description: string;
     isBuilding?: BuildingType;
   }> = [
-    {
-      baseId: 'action_pass_go',
-      count: 9,
-      actionType: ActionCardType.PASS_GO,
-      name: "Вперед!",
-      description: "Візьміть 2 карти з колоди. Витрачає 1 дію."
-    },
-    {
-      baseId: 'action_sly_deal',
-      count: 4,
-      actionType: ActionCardType.SLY_DEAL,
-      name: "Спритна угода",
-      description: "Вкрадіть 1 вільну нерухомість у будь-якого суперника (крім повного комплекту)."
-    },
-    {
-      baseId: 'action_forced_deal',
-      count: 3,
-      actionType: ActionCardType.FORCED_DEAL,
-      name: "Примусова угода",
-      description: "Обміняйте 1 свою нерухомість на 1 нерухомість суперника (крім повних комплектів)."
-    },
-    {
-      baseId: 'action_deal_breaker',
-      count: 2,
-      actionType: ActionCardType.DEAL_BREAKER,
-      name: "Зривник угод",
-      description: "Вкрадіть цілий зібраний комплект нерухомості разом із будинками та готелем!"
-    },
-    {
-      baseId: 'action_just_say_no',
-      count: 3,
-      actionType: ActionCardType.JUST_SAY_NO,
-      name: "Ні!",
-      description: "Скасовує будь-яку дію суперника проти вас. Грається позачергово."
-    },
-    {
-      baseId: 'action_debt_collector',
-      count: 3,
-      actionType: ActionCardType.DEBT_COLLECTOR,
-      name: "Збирач боргів",
-      description: "Один обраний гравець повинен заплатити вам $5."
-    },
-    {
-      baseId: 'action_birthday',
-      count: 3,
-      actionType: ActionCardType.BIRTHDAY,
-      name: "День народження",
-      description: "Усі гравці повинні подарувати вам по $2."
-    },
-    {
-      baseId: 'action_house',
-      count: 2,
-      actionType: ActionCardType.HOUSE,
-      name: "Будинок",
-      isBuilding: BuildingType.HOUSE,
-      description: "Додає +$3 до ренти повного комплекту. Максимум 1 на монополію."
-    },
-    {
-      baseId: 'action_hotel',
-      count: 2,
-      actionType: ActionCardType.HOTEL,
-      name: "Готель",
-      isBuilding: BuildingType.HOTEL,
-      description: "Додає +$4 до ренти комплекту з будинком. Максимум 1 на монополію."
-    }
-  ];
+      {
+        baseId: 'action_pass_go',
+        count: 9,
+        actionType: ActionCardType.PASS_GO,
+        name: "Вперед!",
+        description: "Візьміть 2 карти з колоди. Витрачає 1 дію."
+      },
+      {
+        baseId: 'action_sly_deal',
+        count: 4,
+        actionType: ActionCardType.SLY_DEAL,
+        name: "Тіньова угода",
+        description: "Вкрадіть 1 вільну нерухомість у будь-якого суперника (крім повного комплекту)."
+      },
+      {
+        baseId: 'action_forced_deal',
+        count: 3,
+        actionType: ActionCardType.FORCED_DEAL,
+        name: "Примусова угода",
+        description: "Обміняйте 1 свою нерухомість на 1 нерухомість суперника (крім повних комплектів)."
+      },
+      {
+        baseId: 'action_deal_breaker',
+        count: 2,
+        actionType: ActionCardType.DEAL_BREAKER,
+        name: "Шахрай",
+        description: "Вкрадіть цілий зібраний комплект нерухомості разом із будинками та готелем!"
+      },
+      {
+        baseId: 'action_just_say_no',
+        count: 3,
+        actionType: ActionCardType.JUST_SAY_NO,
+        name: "Ні!",
+        description: "Скасовує будь-яку дію суперника проти вас. Грається позачергово."
+      },
+      {
+        baseId: 'action_debt_collector',
+        count: 3,
+        actionType: ActionCardType.DEBT_COLLECTOR,
+        name: "Збирач боргів",
+        description: "Один обраний гравець повинен заплатити вам $5."
+      },
+      {
+        baseId: 'action_birthday',
+        count: 3,
+        actionType: ActionCardType.BIRTHDAY,
+        name: "День народження",
+        description: "Усі гравці повинні подарувати вам по $2."
+      },
+      {
+        baseId: 'action_house',
+        count: 2,
+        actionType: ActionCardType.HOUSE,
+        name: "Будинок",
+        isBuilding: BuildingType.HOUSE,
+        description: "Додає +$3 до ренти повного комплекту. Максимум 1 на монополію."
+      },
+      {
+        baseId: 'action_hotel',
+        count: 2,
+        actionType: ActionCardType.HOTEL,
+        name: "Готель",
+        isBuilding: BuildingType.HOTEL,
+        description: "Додає +$4 до ренти комплекту з будинком. Максимум 1 на монополію."
+      }
+    ];
 
   actionConfigs.forEach((cfg) => {
     for (let i = 1; i <= cfg.count; i++) {
@@ -253,7 +253,7 @@ export const generateFullDeck = (): CardModel[] => {
     { baseId: 'rent_darkblue_purple', count: 1, colors: [CardColor.DARK_BLUE, CardColor.PURPLE], name: "Рента: Темно-синій / Фіолетовий" },
     { baseId: 'rent_lightgreen_maroon', count: 1, colors: [CardColor.LIGHT_GREEN, CardColor.MAROON], name: "Рента: Салатовий / Бордовий" },
     { baseId: 'rent_wild', count: 3, colors: [CardColor.ALL_COLOR], name: "Універсальна рента" },
-    { baseId: 'rent_double', count: 2, actionType: ActionCardType.DOUBLE_RENT, name: "Подвійна рента" }
+    { baseId: 'rent_double', count: 2, actionType: ActionCardType.DOUBLE_RENT, name: "Подвійний відсоток" }
   ];
 
   rentConfigs.forEach((cfg) => {

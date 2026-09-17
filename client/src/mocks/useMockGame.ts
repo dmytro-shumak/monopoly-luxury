@@ -4,8 +4,8 @@ import { PROPERTY_CONFIG, ALL_CARDS } from '../data/allCards';
 import { createInitialMockState, getCard, type MockTableState, type MockPropertySet, type MockPlayer } from './mockGameData';
 
 export type PropertyTarget =
-  | { type: 'existing'; setIndex: number; color: CardColor }
-  | { type: 'new_set'; color: CardColor };
+  | { type: 'existing'; setIndex: number; color: CardColor; }
+  | { type: 'new_set'; color: CardColor; };
 
 export const computeValidPropertyTargets = (
   card: CardModel,
@@ -43,12 +43,30 @@ export const computeValidPropertyTargets = (
 
   // Case 3: Universal All-Color Wildcard (e.g. wild_all or CardColor.ALL_COLOR)
   if (colors.includes(CardColor.ALL_COLOR) || colors.length === 0) {
-    // Only existing INCOMPLETE sets can be targeted; cannot start a new set!
     propertySets.forEach((set, idx) => {
       if (!set.isComplete) {
         targets.push({ type: 'existing', setIndex: idx, color: set.color });
       }
     });
+    if (targets.length === 0) {
+      const allColors: CardColor[] = [
+        CardColor.PINK,
+        CardColor.ORANGE,
+        CardColor.BROWN,
+        CardColor.LIGHT_GREEN,
+        CardColor.PURPLE,
+        CardColor.DARK_BLUE,
+        CardColor.LIGHT_BLUE,
+        CardColor.GREEN,
+        CardColor.RED,
+        CardColor.MAROON,
+        CardColor.DARK_GREEN,
+        CardColor.DARK_MAROON,
+      ];
+      allColors.forEach((color) => {
+        targets.push({ type: 'new_set', color });
+      });
+    }
     return targets;
   }
 
@@ -128,15 +146,27 @@ export const computeFlipTargetForTableCard = (
   card: CardModel,
   propertySets: MockPropertySet[]
 ): { targetColor: CardColor; target: PropertyTarget } | null => {
-  if (card.type !== CardType.PROPERTY_WILDCARD || !card.colors || card.colors.length !== 2) {
-    return null;
-  }
-  if (card.colors.includes(CardColor.ALL_COLOR)) {
+  if (card.type !== CardType.PROPERTY_WILDCARD || !card.colors) {
     return null;
   }
   const sourceSet = propertySets[sourceSetIndex];
   if (!sourceSet || sourceSet.isComplete) {
     return null; // Color lock in complete monopoly
+  }
+
+  // All-Color wildcard: move to any other incomplete set on table
+  if (card.colors.includes(CardColor.ALL_COLOR)) {
+    const otherIncompleteIndex = propertySets.findIndex(
+      (s, idx) => idx !== sourceSetIndex && !s.isComplete
+    );
+    if (otherIncompleteIndex !== -1) {
+      const targetSet = propertySets[otherIncompleteIndex];
+      return {
+        targetColor: targetSet.color,
+        target: { type: 'existing', setIndex: otherIncompleteIndex, color: targetSet.color },
+      };
+    }
+    return null;
   }
 
   const currentColor = sourceSet.color;
@@ -160,7 +190,7 @@ export const computeFlipTargetForTableCard = (
 export const drawCardsFromDeck = (
   tableState: MockTableState,
   count: number = 2
-): { drawnCards: CardModel[]; newDeckCount: number } => {
+): { drawnCards: CardModel[]; newDeckCount: number; } => {
   const usedCardIds = new Set<string>([
     ...(tableState.currentPlayer.handCards || []).map((c) => c.id),
     ...tableState.currentPlayer.bankCards.map((c) => c.id),
@@ -307,7 +337,7 @@ export const computeBestRentForCard = (
 export const settlePaymentFromPlayer = (
   payer: MockPlayer,
   amount: number
-): { paidCards: CardModel[]; updatedPayer: MockPlayer; totalPaid: number } => {
+): { paidCards: CardModel[]; updatedPayer: MockPlayer; totalPaid: number; } => {
   let remainingDue = amount;
   const paidCards: CardModel[] = [];
   const remainingBank: CardModel[] = [];
@@ -1193,7 +1223,7 @@ export const useMockGameStore = create<MockGameStore>((set, get) => ({
           ...tableState.currentPlayer,
           propertySets: updatedMySets,
         },
-        activeActionMessage: `⚡ «Зривник угод»: ви захопили повний комплект (${stolenSet.color.replace('_', ' ')}) у ${opponent.name}!`,
+        activeActionMessage: `⚡ «Шахрай»: ви захопили повний комплект (${stolenSet.color.replace('_', ' ')}) у ${opponent.name}!`,
       },
     });
   },
@@ -1502,7 +1532,7 @@ export const useMockGameStore = create<MockGameStore>((set, get) => ({
         tableState: {
           ...tableState,
           activeActionCard: getCard('action_deal_breaker_1'),
-          activeActionMessage: `${attackerName} грає «Зривник угод» проти вас!`,
+          activeActionMessage: `${attackerName} грає «Шахрай» проти вас!`,
         },
       });
     } else if (type === 'forced_deal') {

@@ -90,6 +90,7 @@ interface GameStore {
   reactJustSayNo: (cardId: string) => void;
   passReaction: () => void;
   payDebt: (assetIds: string[]) => void;
+  moveProperty: (cardId: string, toColor: string) => void;
 }
 
 export const useGameStore = create<GameStore>((set, get) => {
@@ -240,6 +241,10 @@ export const useGameStore = create<GameStore>((set, get) => {
 
     payDebt: (assetIds: string[]) => {
       socket.emit('pay_debt', { assetIds });
+    },
+
+    moveProperty: (cardId: string, toColor: string) => {
+      socket.emit('move_property', { cardId, toColor });
     },
   };
 });
