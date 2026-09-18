@@ -256,7 +256,11 @@
     "waitingForHost": "⏳ Waiting for host to start the game...",
     "minPlayersHint": "At least 2 players are required to start (currently: {{count}} / 4)",
     "leaveRoomBtn": "← Leave Room",
-    "connecting": "Connecting..."
+    "connecting": "Connecting...",
+    "reconnectingTitle": "Connecting to Game...",
+    "reconnectingSubtitle": "Restoring room {{roomId}}",
+    "resumeGameLabel": "Previous Game",
+    "resumeGameBtn": "Resume Game →"
   },
   "onlineGame": {
     "playToBank": "💰 To Bank (+${{val}})",

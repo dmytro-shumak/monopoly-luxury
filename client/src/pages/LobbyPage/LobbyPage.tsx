@@ -1,15 +1,17 @@
-import React, { useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams, useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useGameStore } from '../../store/gameStore';
-import { getSavedPlayerName } from '../../services/session';
+import { getSavedPlayerName, getLastRoomId } from '../../services/session';
 import { LanguageSwitcher } from '../../components/LanguageSwitcher/LanguageSwitcher';
 import { OnlineGameBoard } from '../../components/Table/OnlineGameBoard/OnlineGameBoard';
 import styles from './LobbyPage.module.css';
 
 export const LobbyPage: React.FC = () => {
   const { t } = useTranslation();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const { roomId: routeRoomId } = useParams<{ roomId?: string }>();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   const {
     roomId,
@@ -26,11 +28,48 @@ export const LobbyPage: React.FC = () => {
 
   const [playerName, setPlayerName] = useState(() => getSavedPlayerName());
   const queryRoom = searchParams.get('room')?.trim() || '';
-  const isInviteMode = Boolean(queryRoom);
   const [inputRoomCode, setInputRoomCode] = useState('');
   const [isCopied, setIsCopied] = useState(false);
+  const [hasAttemptedJoin, setHasAttemptedJoin] = useState(false);
 
-  const isInRoom = Boolean(roomId && roomState);
+  // If entered via query param e.g. /?room=room_xxx, redirect to /room/room_xxx
+  useEffect(() => {
+    if (queryRoom) {
+      navigate(`/room/${queryRoom}`, { replace: true });
+    }
+  }, [queryRoom, navigate]);
+
+  // Synchronize route with active roomId
+  useEffect(() => {
+    if (roomId && routeRoomId !== roomId) {
+      navigate(`/room/${roomId}`, { replace: true });
+    }
+  }, [roomId, routeRoomId, navigate]);
+
+  const activeTargetRoomId = routeRoomId || '';
+  const lastSavedRoomId = getLastRoomId();
+
+  // Reset attempt flag if route changes
+  useEffect(() => {
+    setHasAttemptedJoin(false);
+  }, [activeTargetRoomId]);
+
+  // Automatic join / reconnect if user opened /room/:roomId and has saved name
+  useEffect(() => {
+    if (!activeTargetRoomId) return;
+
+    // Already connected to this room
+    if (roomId === activeTargetRoomId && roomState) return;
+
+    // Attempt auto-join once if player name exists and not currently connecting
+    if (!hasAttemptedJoin && playerName.trim() && !errorMessage && !isConnecting) {
+      setHasAttemptedJoin(true);
+      joinRoom(activeTargetRoomId, playerName);
+    }
+  }, [activeTargetRoomId, roomId, roomState, playerName, errorMessage, isConnecting, hasAttemptedJoin, joinRoom]);
+
+  // Determine game and room states
+  const isInRoom = Boolean(roomId && roomState && (!activeTargetRoomId || roomId === activeTargetRoomId));
   const isGameActive = Boolean(isInRoom && roomState && roomState.status !== 'LOBBY');
 
   if (isGameActive) {
@@ -56,24 +95,24 @@ export const LobbyPage: React.FC = () => {
 
   const handleJoinInvite = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!playerName.trim() || !queryRoom) return;
-    joinRoom(queryRoom, playerName);
+    if (!playerName.trim() || !activeTargetRoomId) return;
+    joinRoom(activeTargetRoomId, playerName);
   };
 
   const handleBackToMainMenu = () => {
-    setSearchParams({});
-    setInputRoomCode('');
+    setHasAttemptedJoin(false);
     clearError();
+    navigate('/');
   };
 
   const handleLeaveRoom = () => {
     leaveRoom();
-    setSearchParams({});
+    navigate('/');
   };
 
   const handleCopyLink = async () => {
     if (!roomId) return;
-    const inviteUrl = `${window.location.origin}/?room=${roomId}`;
+    const inviteUrl = `${window.location.origin}/room/${roomId}`;
     try {
       if (navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(inviteUrl);
@@ -91,6 +130,13 @@ export const LobbyPage: React.FC = () => {
       setIsCopied(false);
     }
   };
+
+  const isAutoConnecting = Boolean(
+    activeTargetRoomId &&
+    !isInRoom &&
+    !errorMessage &&
+    (isConnecting || hasAttemptedJoin)
+  );
 
   return (
     <div className={styles.lobbyContainer}>
@@ -120,9 +166,28 @@ export const LobbyPage: React.FC = () => {
         )}
 
         {!isInRoom || !roomState ? (
-          isInviteMode ? (
+          isAutoConnecting ? (
             /* ======================================================= */
-            /* 1A. INVITE MODE: User followed an invite link           */
+            /* 1A. RECONNECTING / AUTO-CONNECTING STATE                */
+            /* ======================================================= */
+            <div className={styles.reconnectCard}>
+              <div className={styles.reconnectSpinner} />
+              <h2 className={styles.reconnectTitle}>{t('lobby.reconnectingTitle')}</h2>
+              <p className={styles.reconnectSubtitle}>
+                {t('lobby.reconnectingSubtitle', { roomId: activeTargetRoomId })}
+              </p>
+              <button
+                type="button"
+                className={styles.leaveBtn}
+                onClick={handleBackToMainMenu}
+                style={{ marginTop: 8 }}
+              >
+                {t('lobby.backToMainMenuBtn')}
+              </button>
+            </div>
+          ) : activeTargetRoomId ? (
+            /* ======================================================= */
+            /* 1B. INVITE MODE: Direct room URL without auto-connect   */
             /* ======================================================= */
             <form onSubmit={handleJoinInvite}>
               <div className={styles.titleWrapper}>
@@ -135,7 +200,7 @@ export const LobbyPage: React.FC = () => {
                 <span className={styles.inviteRoomLabel}>{t('lobby.inviteRoomLabel')}</span>
                 <div className={styles.roomCodePill}>
                   <span>🔑</span>
-                  <span className={styles.roomCodeText}>{queryRoom}</span>
+                  <span className={styles.roomCodeText}>{activeTargetRoomId}</span>
                 </div>
               </div>
 
@@ -176,13 +241,30 @@ export const LobbyPage: React.FC = () => {
             </form>
           ) : (
             /* ======================================================= */
-            /* 1B. STANDARD WELCOME SCREEN: Create or Join Room        */
+            /* 1C. STANDARD WELCOME SCREEN: Create or Join Room        */
             /* ======================================================= */
             <>
               <div className={styles.titleWrapper}>
                 <h1 className={styles.lobbyTitle}>{t('lobby.title')}</h1>
                 <p className={styles.lobbySubtitle}>{t('lobby.subtitle')}</p>
               </div>
+
+              {/* Resume Last Room Shortcut if available */}
+              {lastSavedRoomId && (
+                <div className={styles.resumeLastRoomCard}>
+                  <div className={styles.resumeLastRoomText}>
+                    <span className={styles.resumeLastRoomLabel}>{t('lobby.resumeGameLabel')}</span>
+                    <span className={styles.resumeLastRoomCode}>{lastSavedRoomId}</span>
+                  </div>
+                  <button
+                    type="button"
+                    className={styles.resumeLastRoomBtn}
+                    onClick={() => navigate(`/room/${lastSavedRoomId}`)}
+                  >
+                    {t('lobby.resumeGameBtn')}
+                  </button>
+                </div>
+              )}
 
               {/* Player Name Input */}
               <div className={styles.formGroup}>

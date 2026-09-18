@@ -1,5 +1,6 @@
 const KEY_SESSION_ID = 'monopoly_session_id';
 const KEY_PLAYER_NAME = 'monopoly_player_name';
+const KEY_LAST_ROOM_ID = 'monopoly_last_room_id';
 
 export function getSessionId(): string {
   try {
@@ -33,3 +34,30 @@ export function savePlayerName(name: string): void {
     // LocalStorage not available, ignore
   }
 }
+
+export function getLastRoomId(): string {
+  try {
+    return localStorage.getItem(KEY_LAST_ROOM_ID) || '';
+  } catch {
+    return '';
+  }
+}
+
+export function saveLastRoomId(roomId: string): void {
+  try {
+    if (roomId) {
+      localStorage.setItem(KEY_LAST_ROOM_ID, roomId.trim());
+    }
+  } catch {
+    // LocalStorage not available, ignore
+  }
+}
+
+export function clearLastRoomId(): void {
+  try {
+    localStorage.removeItem(KEY_LAST_ROOM_ID);
+  } catch {
+    // LocalStorage not available, ignore
+  }
+}
+

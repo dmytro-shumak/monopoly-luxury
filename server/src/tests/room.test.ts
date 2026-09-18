@@ -578,6 +578,32 @@ describe('Monopoly Deal - Exhaustive Test Suite', () => {
       expect(moveRes.success).toBe(true);
       expect(room.state.players[p2]!.actionsRemaining).toBe(0);
     });
+
+    it('Allows existing player to reconnect by sessionId during active game', () => {
+      const r = new GameRoom("room_recon", () => {});
+      const join1 = r.join("sess_alice", "Alice");
+      const join2 = r.join("sess_bob", "Bob");
+      expect(join1.success).toBe(true);
+      expect(join2.success).toBe(true);
+      
+      const start = r.startGame(join1.playerId!);
+      expect(start.success).toBe(true);
+      expect(r.state.status).toBe("ACTION_PHASE");
+
+      // Player 1 disconnects
+      r.disconnectPlayer(join1.playerId!);
+      expect(r.state.players[join1.playerId!]!.isConnected).toBe(false);
+
+      // Player 1 reconnects with same sessionId
+      const recon = r.join("sess_alice", "Alice Renamed");
+      expect(recon.success).toBe(true);
+      expect(recon.playerId).toBe(join1.playerId);
+      
+      r.connectPlayer(recon.playerId!);
+      expect(r.state.players[join1.playerId!]!.isConnected).toBe(true);
+      expect(r.state.players[join1.playerId!]!.name).toBe("Alice Renamed");
+      expect(r.state.status).toBe("ACTION_PHASE");
+    });
   });
 });
 

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { socket } from '../services/socket';
-import { getSessionId, savePlayerName } from '../services/session';
+import { getSessionId, savePlayerName, saveLastRoomId, clearLastRoomId } from '../services/session';
 
 export type GamePhase = 
   | 'LOBBY'
@@ -104,6 +104,7 @@ export const useGameStore = create<GameStore>((set, get) => {
   });
 
   socket.on('room_joined', (data: { roomId: string; playerId: string }) => {
+    saveLastRoomId(data.roomId);
     set({
       roomId: data.roomId,
       myPlayerId: data.playerId,
@@ -113,6 +114,9 @@ export const useGameStore = create<GameStore>((set, get) => {
   });
 
   socket.on('room_state', (state: GameState) => {
+    if (state.roomId) {
+      saveLastRoomId(state.roomId);
+    }
     set({
       roomState: state,
       roomId: state.roomId,
@@ -205,6 +209,7 @@ export const useGameStore = create<GameStore>((set, get) => {
     },
 
     leaveRoom: () => {
+      clearLastRoomId();
       socket.disconnect();
       set({
         roomId: null,

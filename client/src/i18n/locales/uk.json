@@ -392,7 +392,11 @@
     "waitingForHost": "⏳ Очікуємо, поки хост розпочне гру...",
     "minPlayersHint": "Для початку гри потрібно мінімум 2 гравці (зараз: {{count}} / 4)",
     "leaveRoomBtn": "← Вийти з кімнати",
-    "connecting": "Підключення..."
+    "connecting": "Підключення...",
+    "reconnectingTitle": "Підключення до гри...",
+    "reconnectingSubtitle": "Відновлюємо стан кімнати {{roomId}}",
+    "resumeGameLabel": "Попередня гра",
+    "resumeGameBtn": "Повернутися до гри →"
   },
   "onlineGame": {
     "playToBank": "💰 В банк (+${{val}})",

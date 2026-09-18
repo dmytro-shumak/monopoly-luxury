@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useGameStore } from '../../../store/gameStore';
 import { getCardModel } from '../../../data/allCards';
@@ -31,6 +32,7 @@ import styles from './OnlineGameBoard.module.css';
 
 export const OnlineGameBoard: React.FC = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
 
   const {
     roomId,
@@ -45,6 +47,11 @@ export const OnlineGameBoard: React.FC = () => {
     moveProperty,
     leaveRoom,
   } = useGameStore();
+
+  const handleLeaveGame = () => {
+    leaveRoom();
+    navigate('/');
+  };
 
   // Selection state
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
@@ -222,6 +229,41 @@ export const OnlineGameBoard: React.FC = () => {
       reason: t('board.defenseDebtTitle'),
     };
   }, [roomState, myPlayerId, t]);
+
+  // Detect received wildcards from debt payments to let creditor place them freely (Hook must be called before any early return)
+  React.useEffect(() => {
+    if (!myPlayer || !isMyTurn) {
+      if (myPlayer?.table) {
+        prevPropertyCardIdsRef.current = new Set(myPlayer.table.flatMap((s) => s.cards));
+      }
+      return;
+    }
+
+    const currentCardIds = new Set(myPlayer.table.flatMap((s) => s.cards));
+    if (prevPropertyCardIdsRef.current.size > 0 && !pendingStolenCardPlacement) {
+      const newlyAddedIds = Array.from(currentCardIds).filter((id) => !prevPropertyCardIdsRef.current.has(id));
+      for (const newId of newlyAddedIds) {
+        const cardModel = getCardModel(newId);
+        const isWild =
+          cardModel.type === CardType.PROPERTY_WILDCARD ||
+          Boolean(cardModel.colors && cardModel.colors.length > 1) ||
+          cardModel.colors?.includes(CardColor.ALL_COLOR);
+
+        const isFree = (myPlayer as any).freeMoveCardIds?.includes(newId);
+        if (isWild && isFree) {
+          const targets = computeValidPropertyTargets(cardModel, propertySets);
+          setPendingStolenCardPlacement({
+            card: cardModel,
+            fromOpponentName: 'Opponent',
+            actionType: 'DEBT_PAYMENT',
+          });
+          setValidPropertyTargets(targets);
+          break;
+        }
+      }
+    }
+    prevPropertyCardIdsRef.current = currentCardIds;
+  }, [myPlayer, isMyTurn, pendingStolenCardPlacement, propertySets]);
 
   if (!roomState || !myPlayerId || !myPlayer) {
     return null;
@@ -527,41 +569,6 @@ export const OnlineGameBoard: React.FC = () => {
     }
   };
 
-  // Detect received wildcards from debt payments to let creditor place them freely
-  React.useEffect(() => {
-    if (!myPlayer || !isMyTurn) {
-      if (myPlayer?.table) {
-        prevPropertyCardIdsRef.current = new Set(myPlayer.table.flatMap((s) => s.cards));
-      }
-      return;
-    }
-
-    const currentCardIds = new Set(myPlayer.table.flatMap((s) => s.cards));
-    if (prevPropertyCardIdsRef.current.size > 0 && !pendingStolenCardPlacement) {
-      const newlyAddedIds = Array.from(currentCardIds).filter((id) => !prevPropertyCardIdsRef.current.has(id));
-      for (const newId of newlyAddedIds) {
-        const cardModel = getCardModel(newId);
-        const isWild =
-          cardModel.type === CardType.PROPERTY_WILDCARD ||
-          Boolean(cardModel.colors && cardModel.colors.length > 1) ||
-          cardModel.colors?.includes(CardColor.ALL_COLOR);
-
-        const isFree = (myPlayer as any).freeMoveCardIds?.includes(newId);
-        if (isWild && isFree) {
-          const targets = computeValidPropertyTargets(cardModel, propertySets);
-          setPendingStolenCardPlacement({
-            card: cardModel,
-            fromOpponentName: 'Opponent',
-            actionType: 'DEBT_PAYMENT',
-          });
-          setValidPropertyTargets(targets);
-          break;
-        }
-      }
-    }
-    prevPropertyCardIdsRef.current = currentCardIds;
-  }, [myPlayer, isMyTurn, pendingStolenCardPlacement, propertySets]);
-
   // Table card move / flip handlers
   const handleStartTableCardMove = (sourceSetIndex: number, card: CardModel) => {
     if (!isMyTurn || actionsRemaining <= 0) return;
@@ -735,7 +742,7 @@ export const OnlineGameBoard: React.FC = () => {
           <button
             type="button"
             className={styles.leaveGameBtn}
-            onClick={leaveRoom}
+            onClick={handleLeaveGame}
           >
             {t('onlineGame.leaveGameBtn')}
           </button>
@@ -968,7 +975,7 @@ export const OnlineGameBoard: React.FC = () => {
             <button
               type="button"
               className={styles.returnLobbyBtn}
-              onClick={leaveRoom}
+              onClick={handleLeaveGame}
             >
               {t('onlineGame.leaveGameBtn')}
             </button>

@@ -23,6 +23,7 @@ export function App() {
       <Routes>
         {/* Main entry: Multiplayer Lobby (Create/Join/Waiting Room) */}
         <Route path="/" element={<LobbyPage />} />
+        <Route path="/room/:roomId" element={<LobbyPage />} />
 
         {/* Practice / Offline Table (with mock controls and tests) */}
         <Route path="/practice" element={<GameBoardPage />} />

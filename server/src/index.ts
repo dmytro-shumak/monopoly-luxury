@@ -25,6 +25,7 @@ const io = new Server(httpServer, {
 // Global state
 const rooms = new Map<string, GameRoom>();
 const socketToSession = new Map<string, { sessionId: string, roomId: string, playerId: string }>();
+const playerActiveSocket = new Map<string, string>(); // playerId -> current active socket.id
 
 // Helper to broadcast state with filtered hands
 const broadcastState = (roomId: string) => {
@@ -80,6 +81,7 @@ io.on("connection", (socket: Socket) => {
     if (res.success && res.playerId) {
       socket.join(roomId);
       socketToSession.set(socket.id, { sessionId: data.sessionId, roomId, playerId: res.playerId });
+      playerActiveSocket.set(res.playerId, socket.id);
       room.connectPlayer(res.playerId);
       socket.emit("room_joined", { roomId, playerId: res.playerId });
       broadcastState(roomId);
@@ -99,6 +101,7 @@ io.on("connection", (socket: Socket) => {
     if (res.success && res.playerId) {
       socket.join(data.roomId);
       socketToSession.set(socket.id, { sessionId: data.sessionId, roomId: data.roomId, playerId: res.playerId });
+      playerActiveSocket.set(res.playerId, socket.id);
       room.connectPlayer(res.playerId);
       socket.emit("room_joined", { roomId: data.roomId, playerId: res.playerId });
       broadcastState(data.roomId);
@@ -174,11 +177,15 @@ io.on("connection", (socket: Socket) => {
     console.log(`Client disconnected: ${socket.id}`);
     const info = socketToSession.get(socket.id);
     if (info) {
-      const room = rooms.get(info.roomId);
-      if (room) {
-        room.disconnectPlayer(info.playerId);
-      }
       socketToSession.delete(socket.id);
+      // Only disconnect the player if this closing socket is their current active socket
+      if (playerActiveSocket.get(info.playerId) === socket.id) {
+        playerActiveSocket.delete(info.playerId);
+        const room = rooms.get(info.roomId);
+        if (room) {
+          room.disconnectPlayer(info.playerId);
+        }
+      }
     }
   });
 });

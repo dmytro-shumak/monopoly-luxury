@@ -47,7 +47,12 @@ export class GameRoom implements IGameRoom {
 
   public join(sessionId: string, name: string): { success: boolean; playerId?: string; error?: string } {
     const existingPlayer = Object.values(this.state.players).find(p => p.sessionId === sessionId);
-    if (existingPlayer) return { success: true, playerId: existingPlayer.id };
+    if (existingPlayer) {
+      if (name && name.trim()) {
+        existingPlayer.name = name.trim();
+      }
+      return { success: true, playerId: existingPlayer.id };
+    }
     if (this.state.status !== "LOBBY") return { success: false, error: "Game in progress" };
     if (Object.keys(this.state.players).length >= 4) return { success: false, error: "Room full (max 4 players)" };
 
