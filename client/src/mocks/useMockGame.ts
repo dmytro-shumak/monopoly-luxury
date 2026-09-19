@@ -11,8 +11,8 @@ export const computeValidPropertyTargets = (
   card: CardModel,
   propertySets: MockPropertySet[]
 ): PropertyTarget[] => {
-  const isHouse = card.isBuilding === BuildingType.HOUSE || card.actionType === ActionCardType.HOUSE;
-  const isHotel = card.isBuilding === BuildingType.HOTEL || card.actionType === ActionCardType.HOTEL;
+  const isHouse = card.isBuilding === BuildingType.HOUSE || card.actionType === ActionCardType.HOUSE || card.id.includes('house');
+  const isHotel = card.isBuilding === BuildingType.HOTEL || card.actionType === ActionCardType.HOTEL || card.id.includes('hotel');
 
   if (isHouse) {
     const targets: PropertyTarget[] = [];
@@ -292,7 +292,7 @@ export const computeRentForColor = (
 
   let maxRent = 0;
   setsOfColor.forEach((set) => {
-    let rent = set.cards.length;
+    let rent = set.cards.filter((c) => c.type === CardType.PROPERTY || c.type === CardType.PROPERTY_WILDCARD).length;
     if (set.hasHouse) rent += 3;
     if (set.hasHotel) rent += 4;
     if (rent > maxRent) {
@@ -458,8 +458,8 @@ export const useMockGameStore = create<MockGameStore>((set, get) => ({
     let target: 'bank' | 'property' | 'action' | null = null;
     let propTargets: PropertyTarget[] = [];
 
-    const isHouse = card.isBuilding === BuildingType.HOUSE || card.actionType === ActionCardType.HOUSE;
-    const isHotel = card.isBuilding === BuildingType.HOTEL || card.actionType === ActionCardType.HOTEL;
+    const isHouse = card.isBuilding === BuildingType.HOUSE || card.actionType === ActionCardType.HOUSE || card.id.includes('house');
+    const isHotel = card.isBuilding === BuildingType.HOTEL || card.actionType === ActionCardType.HOTEL || card.id.includes('hotel');
 
     if (isHouse || isHotel) {
       propTargets = computeValidPropertyTargets(card, tableState.currentPlayer.propertySets);

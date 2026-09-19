@@ -251,7 +251,7 @@ export const PlayerProperties: React.FC<PlayerPropertiesProps> = ({
                       <span
                         className={`${styles.setProgressCount} ${set.isComplete ? styles.completeCount : ''}`}
                       >
-                        {set.cards.length}/{targetSetSize}
+                        {set.cards.filter((c) => c.type === CardType.PROPERTY || c.type === CardType.PROPERTY_WILDCARD).length}/{targetSetSize}
                       </span>
                     </div>
 

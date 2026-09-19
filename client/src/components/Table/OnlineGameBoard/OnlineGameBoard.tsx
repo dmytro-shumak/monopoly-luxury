@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useGameStore } from '../../../store/gameStore';
 import { getCardModel } from '../../../data/allCards';
-import { CardType, ActionCardType, CardColor, type CardModel } from '../../../types/cards';
+import { CardType, ActionCardType, BuildingType, CardColor, type CardModel } from '../../../types/cards';
 import { type MockPlayer, type MockPropertySet } from '../../../mocks/mockGameData';
 import {
   computeValidPropertyTargets,
@@ -100,11 +100,30 @@ export const OnlineGameBoard: React.FC = () => {
   }, [myPlayer?.bank]);
 
   const propertySets: MockPropertySet[] = useMemo(() => {
-    return myPlayer?.table.map((set) => ({
-      color: set.color as CardColor,
-      cards: set.cards.map(getCardModel),
-      isComplete: set.isComplete,
-    })) || [];
+    return (
+      myPlayer?.table.map((set) => {
+        const cards = set.cards.map(getCardModel);
+        const hasHouse = cards.some(
+          (c) =>
+            c.isBuilding === BuildingType.HOUSE ||
+            c.actionType === ActionCardType.HOUSE ||
+            c.id.includes('house')
+        );
+        const hasHotel = cards.some(
+          (c) =>
+            c.isBuilding === BuildingType.HOTEL ||
+            c.actionType === ActionCardType.HOTEL ||
+            c.id.includes('hotel')
+        );
+        return {
+          color: set.color as CardColor,
+          cards,
+          isComplete: set.isComplete,
+          hasHouse,
+          hasHotel,
+        };
+      }) || []
+    );
   }, [myPlayer?.table]);
 
   // Map Opponents
@@ -120,11 +139,28 @@ export const OnlineGameBoard: React.FC = () => {
           avatar: '👤',
           handCount: p.hand.length,
           bankCards: p.bank.map(getCardModel),
-          propertySets: p.table.map((set) => ({
-            color: set.color as CardColor,
-            cards: set.cards.map(getCardModel),
-            isComplete: set.isComplete,
-          })),
+          propertySets: p.table.map((set) => {
+            const cards = set.cards.map(getCardModel);
+            const hasHouse = cards.some(
+              (c) =>
+                c.isBuilding === BuildingType.HOUSE ||
+                c.actionType === ActionCardType.HOUSE ||
+                c.id.includes('house')
+            );
+            const hasHotel = cards.some(
+              (c) =>
+                c.isBuilding === BuildingType.HOTEL ||
+                c.actionType === ActionCardType.HOTEL ||
+                c.id.includes('hotel')
+            );
+            return {
+              color: set.color as CardColor,
+              cards,
+              isComplete: set.isComplete,
+              hasHouse,
+              hasHotel,
+            };
+          }),
         };
       });
   }, [roomState, myPlayerId]);
@@ -296,7 +332,19 @@ export const OnlineGameBoard: React.FC = () => {
       const card = handCards.find((c) => c.id === cardId);
       if (!card) return;
 
-      if (card.type === CardType.MONEY) {
+      const isBuilding =
+        card.isBuilding === BuildingType.HOUSE ||
+        card.isBuilding === BuildingType.HOTEL ||
+        card.actionType === ActionCardType.HOUSE ||
+        card.actionType === ActionCardType.HOTEL ||
+        card.id.includes('house') ||
+        card.id.includes('hotel');
+
+      if (isBuilding) {
+        setValidDropTarget('property');
+        const propTargets = computeValidPropertyTargets(card, propertySets);
+        setValidPropertyTargets(propTargets);
+      } else if (card.type === CardType.MONEY) {
         setValidDropTarget('bank');
       } else if (card.type === CardType.PROPERTY || card.type === CardType.PROPERTY_WILDCARD) {
         setValidDropTarget('property');
@@ -355,7 +403,9 @@ export const OnlineGameBoard: React.FC = () => {
     }
 
     if (!selectedCard || !isMyTurn || actionsRemaining <= 0) return;
-    playCard(selectedCard.id, { propertyColor: target.color });
+    const targetSet = target.type === 'existing' ? propertySets[target.setIndex] : null;
+    const targetSetCardId = targetSet?.cards[0]?.id;
+    playCard(selectedCard.id, { propertyColor: target.color, targetSetCardId });
     resetSelection();
   };
 
@@ -374,6 +424,15 @@ export const OnlineGameBoard: React.FC = () => {
   // 3. Play Action Cards
   const handlePlayActionDirect = () => {
     if (!selectedCard || !isMyTurn || actionsRemaining <= 0) return;
+
+    const isBuilding =
+      selectedCard.isBuilding === BuildingType.HOUSE ||
+      selectedCard.isBuilding === BuildingType.HOTEL ||
+      selectedCard.actionType === ActionCardType.HOUSE ||
+      selectedCard.actionType === ActionCardType.HOTEL ||
+      selectedCard.id.includes('house') ||
+      selectedCard.id.includes('hotel');
+    if (isBuilding) return;
 
     // A. Rent card
     if (selectedCard.actionType === ActionCardType.RENT) {

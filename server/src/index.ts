@@ -152,7 +152,7 @@ io.on("connection", (socket: Socket) => {
     safeAction("move_property", () => ctx.room.moveProperty(ctx.playerId, cardId, toColor));
   });
 
-  socket.on("play_card", (data: { cardId: string; targetId?: string; propertyColor?: string; modifierCardId?: string; payload?: any }) => {
+  socket.on("play_card", (data: { cardId: string; targetId?: string; propertyColor?: string; modifierCardId?: string; payload?: any; targetSetCardId?: string }) => {
     const ctx = getPlayerContext();
     if (!ctx) return;
     const options: any = {};
@@ -160,6 +160,7 @@ io.on("connection", (socket: Socket) => {
     if (data.propertyColor) options.propertyColor = data.propertyColor;
     if (data.modifierCardId) options.modifierCardId = data.modifierCardId;
     if (data.payload) options.payload = data.payload;
+    if (data.targetSetCardId) options.targetSetCardId = data.targetSetCardId;
     safeAction("play_card", () => ctx.room.playCard(ctx.playerId, data.cardId, options));
   });
 

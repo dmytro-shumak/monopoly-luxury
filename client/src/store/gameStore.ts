@@ -85,7 +85,7 @@ interface GameStore {
   leaveRoom: () => void;
   clearError: () => void;
   // In-Game Socket Actions
-  playCard: (cardId: string, options?: { targetId?: string; propertyColor?: string; payload?: any; modifierCardId?: string }) => void;
+  playCard: (cardId: string, options?: { targetId?: string; propertyColor?: string; payload?: any; modifierCardId?: string; targetSetCardId?: string }) => void;
   endTurn: () => void;
   discardCards: (cardIds: string[]) => void;
   reactJustSayNo: (cardId: string) => void;
@@ -229,7 +229,7 @@ export const useGameStore = create<GameStore>((set, get) => {
       set({ errorMessage: null });
     },
 
-    playCard: (cardId: string, options?: { targetId?: string; propertyColor?: string; payload?: any; modifierCardId?: string }) => {
+    playCard: (cardId: string, options?: { targetId?: string; propertyColor?: string; payload?: any; modifierCardId?: string; targetSetCardId?: string }) => {
       socket.emit('play_card', { cardId, ...options });
     },
 

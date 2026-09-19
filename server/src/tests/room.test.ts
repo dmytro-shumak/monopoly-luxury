@@ -308,6 +308,26 @@ describe('Monopoly Deal - Exhaustive Test Suite', () => {
       const res = room.playCard(p1, "action_hotel_1", { propertyColor: CardColor.BROWN });
       expect(res.success).toBe(false);
     });
+
+    it('Places House using targetSetCardId', () => {
+      const { p1 } = setupGame();
+      room.state.players[p1]!.hand = ["action_house_1"];
+      room.state.players[p1]!.table = [{ color: CardColor.DARK_BLUE, cards: ["prop_darkblue_1", "prop_darkblue_2", "prop_darkblue_3"], isComplete: true }];
+
+      const res = room.playCard(p1, "action_house_1", { targetSetCardId: "prop_darkblue_1" });
+      expect(res.success).toBe(true);
+      expect(room.state.players[p1]!.table[0]?.cards).toContain("action_house_1");
+    });
+
+    it('Fails to place second House on a monopoly that already has a House', () => {
+      const { p1 } = setupGame();
+      room.state.players[p1]!.hand = ["action_house_1"];
+      room.state.players[p1]!.table = [{ color: CardColor.BROWN, cards: ["prop_brown_1", "prop_brown_2", "prop_brown_3", "action_house_2"], isComplete: true }];
+
+      const res = room.playCard(p1, "action_house_1", { propertyColor: CardColor.BROWN });
+      expect(res.success).toBe(false);
+      expect(res.error).toBe("Already has a house");
+    });
   });
 
   // --- 7. WILDCARDS & MOVE PROPERTY ---
