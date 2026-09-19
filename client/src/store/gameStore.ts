@@ -245,6 +245,8 @@ export const useGameStore = create<GameStore>((set, get) => {
     },
 
     endTurn: () => {
+      const { roomState, myPlayerId } = get();
+      if (!roomState || !myPlayerId || roomState.activePlayerId !== myPlayerId) return;
       socket.emit('end_turn');
     },
 

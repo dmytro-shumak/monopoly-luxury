@@ -38,17 +38,19 @@ export const TurnHUD: React.FC<TurnHUDProps> = ({
           </span>
         </div>
 
-        <div className={styles.actionPipsWrapper}>
-          <span>{t('board.actionsLeft', { count: actionsRemaining })}</span>
-          <div className={styles.pipsContainer}>
-            {Array.from({ length: maxActions }).map((_, i) => (
-              <div
-                key={i}
-                className={`${styles.pip} ${i < actionsRemaining ? styles.pipActive : ''}`}
-              />
-            ))}
+        {isMyTurn && (
+          <div className={styles.actionPipsWrapper}>
+            <span>{t('board.actionsLeft', { count: actionsRemaining })}</span>
+            <div className={styles.pipsContainer}>
+              {Array.from({ length: maxActions }).map((_, i) => (
+                <div
+                  key={i}
+                  className={`${styles.pip} ${i < actionsRemaining ? styles.pipActive : ''}`}
+                />
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Right controls: Actions */}
@@ -100,6 +102,7 @@ export const TurnHUD: React.FC<TurnHUDProps> = ({
           type="button"
           className={styles.endTurnBtn}
           onClick={onEndTurn}
+          disabled={!isMyTurn}
         >
           <span>{t('board.endTurn')}</span>
           <span>➔</span>
