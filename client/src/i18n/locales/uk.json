@@ -416,6 +416,10 @@
     "reconnectingGameSubtitle": "Синхронізація ігрового столу...",
     "gameNotFound": "Гру не знайдено",
     "gameNotFoundDesc": "Кімнату не знайдено або термін дії сесії вичерпано",
-    "backToLobby": "← До головного меню"
+    "backToLobby": "← До головного меню",
+    "restartGameBtn": "🔄 Грати знову",
+    "inspectTableBtn": "👁️ Оглянути стіл",
+    "showSummaryBtn": "📋 Відкрити підсумок",
+    "waitingForHostRestart": "⏳ Очікуємо рішення хоста щодо нової гри..."
   }
 }

@@ -82,6 +82,7 @@ interface GameStore {
   createRoom: (playerName: string) => void;
   joinRoom: (roomId: string, playerName: string) => void;
   startGame: () => void;
+  restartGame: () => void;
   leaveRoom: () => void;
   clearError: () => void;
   // In-Game Socket Actions
@@ -210,6 +211,16 @@ export const useGameStore = create<GameStore>((set, get) => {
       }
 
       socket.emit('start_game');
+    },
+
+    restartGame: () => {
+      const { roomState, myPlayerId } = get();
+      if (!roomState || !myPlayerId) return;
+      if (roomState.hostId !== myPlayerId) {
+        set({ errorMessage: 'Only the host can restart the game' });
+        return;
+      }
+      socket.emit('restart_game');
     },
 
     leaveRoom: () => {

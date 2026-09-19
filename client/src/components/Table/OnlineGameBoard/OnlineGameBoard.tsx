@@ -46,6 +46,7 @@ export const OnlineGameBoard: React.FC = () => {
     payDebt,
     moveProperty,
     leaveRoom,
+    restartGame,
   } = useGameStore();
 
   const handleLeaveGame = () => {
@@ -57,6 +58,7 @@ export const OnlineGameBoard: React.FC = () => {
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
   const [validDropTarget, setValidDropTarget] = useState<'bank' | 'property' | 'action' | null>(null);
   const [validPropertyTargets, setValidPropertyTargets] = useState<PropertyTarget[]>([]);
+  const [isInspectTableMode, setIsInspectTableMode] = useState(false);
 
   // Complex action state
   const [slyDealOpponentId, setSlyDealOpponentId] = useState<string | null>(null);
@@ -779,6 +781,12 @@ export const OnlineGameBoard: React.FC = () => {
   // Game Over
   const isGameOver = roomState.status === 'GAME_OVER';
   const winnerPlayer = roomState.winnerId ? roomState.players[roomState.winnerId] : null;
+  const isHost = Boolean(roomState?.hostId && roomState.hostId === myPlayerId);
+
+  const handleRestartGame = () => {
+    setIsInspectTableMode(false);
+    restartGame();
+  };
 
   // Modals active opponent references
   const slyDealOpponent = opponents.find((o) => o.id === slyDealOpponentId) || null;
@@ -795,6 +803,34 @@ export const OnlineGameBoard: React.FC = () => {
           </span>
           <span className={styles.brandTitle}>Monopoly Deal</span>
         </div>
+
+        {isGameOver && winnerPlayer && isInspectTableMode && (
+          <div className={styles.headerInspectBanner}>
+            <span className={styles.inspectWinnerText}>
+              {t('onlineGame.winnerBadge', { name: winnerPlayer.name })}
+            </span>
+            {isHost ? (
+              <button
+                type="button"
+                className={styles.restartBtnHeader}
+                onClick={handleRestartGame}
+              >
+                {t('onlineGame.restartGameBtn')}
+              </button>
+            ) : (
+              <span className={styles.waitingHostHintHeader}>
+                {t('onlineGame.waitingForHostRestart')}
+              </span>
+            )}
+            <button
+              type="button"
+              className={styles.showSummaryBtnHeader}
+              onClick={() => setIsInspectTableMode(false)}
+            >
+              {t('onlineGame.showSummaryBtn')}
+            </button>
+          </div>
+        )}
 
         <div className={styles.rightNav}>
           <LanguageSwitcher />
@@ -1019,8 +1055,8 @@ export const OnlineGameBoard: React.FC = () => {
         />
       )}
 
-      {/* H. Game Over Modal */}
-      {isGameOver && winnerPlayer && (
+      {/* H. Game Over Modal / Floating Banner */}
+      {isGameOver && winnerPlayer && !isInspectTableMode && (
         <div className={styles.gameOverOverlay}>
           <div className={styles.gameOverCard}>
             <span className={styles.trophyIcon}>🏆</span>
@@ -1031,13 +1067,38 @@ export const OnlineGameBoard: React.FC = () => {
             <div className={styles.winnerPill}>
               {t('onlineGame.winnerBadge', { name: winnerPlayer.name })}
             </div>
-            <button
-              type="button"
-              className={styles.returnLobbyBtn}
-              onClick={handleLeaveGame}
-            >
-              {t('onlineGame.leaveGameBtn')}
-            </button>
+
+            <div className={styles.gameOverActions}>
+              {isHost ? (
+                <button
+                  type="button"
+                  className={styles.restartGameBtn}
+                  onClick={handleRestartGame}
+                >
+                  {t('onlineGame.restartGameBtn')}
+                </button>
+              ) : (
+                <div className={styles.waitingHostCard}>
+                  {t('onlineGame.waitingForHostRestart')}
+                </div>
+              )}
+
+              <button
+                type="button"
+                className={styles.inspectTableBtn}
+                onClick={() => setIsInspectTableMode(true)}
+              >
+                {t('onlineGame.inspectTableBtn')}
+              </button>
+
+              <button
+                type="button"
+                className={styles.returnLobbyBtn}
+                onClick={handleLeaveGame}
+              >
+                {t('onlineGame.leaveGameBtn')}
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -635,6 +635,43 @@ describe('Monopoly Deal - Exhaustive Test Suite', () => {
       expect(r.state.gameId).toBeDefined();
       expect(r.state.gameId).toMatch(/^game_unique_[a-z0-9]+$/);
     });
+
+    it('allows host to restart game, resets state, and generates new gameId', () => {
+      const r = new GameRoom("room_restart", () => {});
+      const p1 = r.join("s1", "Host").playerId!;
+      const p2 = r.join("s2", "Guest").playerId!;
+      r.startGame(p1);
+      const initialGameId = r.state.gameId;
+
+      // Simulate some gameplay
+      r.state.players[p1]!.bank.push("money_1_1");
+      r.state.players[p1]!.table.push({ color: CardColor.PINK, cards: ["prop_pink_1"], isComplete: false });
+      r.state.discardPile.push("action_pass_go_1");
+      r.state.winnerId = p1;
+      r.state.status = "GAME_OVER";
+
+      // Non-host attempts restart -> fails
+      const failRes = r.restartGame(p2);
+      expect(failRes.success).toBe(false);
+      expect(failRes.error).toBe("Only the host can restart the game");
+
+      // Host restarts game -> succeeds
+      const successRes = r.restartGame(p1);
+      expect(successRes.success).toBe(true);
+      expect(r.state.status).toBe("ACTION_PHASE");
+      expect(r.state.winnerId).toBeNull();
+      expect(r.state.discardPile.length).toBe(0);
+      expect(r.state.gameId).not.toBe(initialGameId);
+      expect(r.state.gameId).toMatch(/^game_restart_[a-z0-9]+$/);
+
+      // Verify hands and banks reset
+      expect(r.state.players[p1]!.bank.length).toBe(0);
+      expect(r.state.players[p1]!.table.length).toBe(0);
+      expect(r.state.players[p2]!.table.length).toBe(0);
+      // P1 is active and drew 2 cards on start turn -> 5 + 2 = 7 cards
+      expect(r.state.players[p1]!.hand.length).toBe(7);
+      expect(r.state.players[p2]!.hand.length).toBe(5);
+    });
   });
 });
 

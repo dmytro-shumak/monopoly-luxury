@@ -146,6 +146,22 @@ io.on("connection", (socket: Socket) => {
     });
   });
 
+  socket.on("restart_game", () => {
+    const ctx = getPlayerContext();
+    if (!ctx) return;
+    if (ctx.room.state.hostId !== ctx.playerId) {
+      handleError("Only the host can restart the game");
+      return;
+    }
+    safeAction("restart_game", () => {
+      const res = ctx.room.restartGame(ctx.playerId);
+      if (res.success && ctx.room.state.gameId) {
+        rooms.set(ctx.room.state.gameId, ctx.room);
+      }
+      return res;
+    });
+  });
+
   socket.on("move_property", ({ cardId, toColor }: { cardId: string; toColor: string }) => {
     const ctx = getPlayerContext();
     if (!ctx) return;

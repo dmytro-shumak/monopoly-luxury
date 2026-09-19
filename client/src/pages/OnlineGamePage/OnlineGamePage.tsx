@@ -39,6 +39,13 @@ export const OnlineGamePage: React.FC = () => {
     }
   }, [roomState, navigate]);
 
+  // Synchronize route when gameId changes (e.g. after host restarts the game)
+  useEffect(() => {
+    if (roomState && roomState.gameId && roomState.gameId !== gameId && roomState.status !== 'LOBBY') {
+      navigate(`/game/${roomState.gameId}`, { replace: true });
+    }
+  }, [roomState, gameId, navigate]);
+
   // Active game in progress: render the full online game board
   if (roomState && roomState.gameId === gameId && roomState.status !== 'LOBBY') {
     return <OnlineGameBoard />;

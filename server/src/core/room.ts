@@ -154,6 +154,37 @@ export class GameRoom implements IGameRoom {
     return { success: true };
   }
 
+  public restartGame(playerId: string): { success: boolean; error?: string } {
+    if (this.state.hostId !== playerId) return { success: false, error: "Only the host can restart the game" };
+    if (this.state.playerOrder.length < 2) return { success: false, error: "Not enough players to restart" };
+
+    this.clearActiveTimer();
+    this.state.gameId = `game_${this.state.roomId.replace("room_", "")}_${Math.random().toString(36).substring(2, 6)}`;
+
+    this.deckManager.initDeck();
+    this.state.status = "TURN_START";
+    this.state.discardPile = [];
+    this.state.actionQueue = [];
+    this.state.currentAction = null;
+    this.state.debtQueue = [];
+    this.state.currentDebt = null;
+    this.state.winnerId = null;
+
+    for (const pId of this.state.playerOrder) {
+      const p = this.state.players[pId];
+      if (p) {
+        p.hand = this.drawCardsFromDeck(5);
+        p.bank = [];
+        p.table = [];
+        p.actionsRemaining = 0;
+      }
+    }
+
+    this.state.activePlayerId = this.state.playerOrder[0] ?? null;
+    this.startTurn(); // calls notify and updates deck count
+    return { success: true };
+  }
+
   public startTurn() {
     if (!this.state.activePlayerId || this.state.status === "GAME_OVER") return;
     this.state.status = "TURN_START";

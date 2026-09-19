@@ -15,18 +15,21 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 24px;
+  padding: 6px 20px;
   background: rgba(10, 4, 16, 0.7);
   border-bottom: 1px solid rgba(212, 175, 55, 0.2);
   backdrop-filter: blur(8px);
   z-index: 100;
   flex-shrink: 0;
+  gap: 16px;
+  min-height: 48px;
 }
 
 .leftNav {
   display: flex;
   align-items: center;
   gap: 16px;
+  flex-shrink: 0;
 }
 
 .roomBadge {
@@ -54,6 +57,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-shrink: 0;
 }
 
 .deckLink {
@@ -294,23 +298,163 @@
   box-shadow: 0 0 20px rgba(212, 175, 55, 0.4);
 }
 
-.returnLobbyBtn {
-  background: linear-gradient(135deg, #27ae60, #2ecc71);
-  color: #ffffff;
+.gameOverActions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.restartGameBtn {
+  background: linear-gradient(135deg, #d4af37, #f1c40f);
+  color: #090312;
   border: none;
-  padding: 14px 28px;
+  padding: 12px 24px;
   border-radius: 12px;
-  font-size: 1.1rem;
+  font-size: 1.05rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
+  transition: all 0.2s ease;
+}
+
+.restartGameBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 22px rgba(212, 175, 55, 0.6);
+}
+
+.inspectTableBtn {
+  background: rgba(52, 152, 219, 0.2);
+  border: 1.5px solid #3498db;
+  color: #ffffff;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-size: 1.05rem;
   font-weight: 700;
   cursor: pointer;
-  margin-top: 12px;
-  box-shadow: 0 6px 20px rgba(46, 204, 113, 0.4);
+  transition: all 0.2s ease;
+}
+
+.inspectTableBtn:hover {
+  background: rgba(52, 152, 219, 0.35);
+  transform: translateY(-2px);
+}
+
+.waitingHostCard {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  color: #bdc3c7;
+  font-size: 0.95rem;
+  padding: 10px 16px;
+  border-radius: 10px;
+}
+
+.returnLobbyBtn {
+  background: rgba(231, 76, 60, 0.2);
+  color: #ffffff;
+  border: 1.5px solid #e74c3c;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
   transition: all 0.2s ease;
 }
 
 .returnLobbyBtn:hover {
-  background: linear-gradient(135deg, #2ecc71, #27ae60);
+  background: rgba(231, 76, 60, 0.35);
   transform: translateY(-2px);
+}
+
+/* Header Inspect Table Banner (in-flow in the center of header) */
+.headerInspectBanner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 4px 16px;
+  border-radius: 10px;
+  background: rgba(22, 16, 36, 0.95);
+  border: 1.5px solid var(--color-gold, #d4af37);
+  box-shadow: 0 0 14px rgba(212, 175, 55, 0.25);
+  margin: 0 auto;
+  width: fit-content;
+  max-width: fit-content;
+  height: 36px;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.inspectWinnerText {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--color-gold-light, #f1c40f);
+  white-space: nowrap;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+}
+
+.restartBtnHeader {
+  background: linear-gradient(135deg, #d4af37, #f1c40f);
+  color: #090312;
+  border: none;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(212, 175, 55, 0.4);
+  height: 26px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+}
+
+.restartBtnHeader:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.6);
+}
+
+.waitingHostHintHeader {
+  font-size: 12px;
+  font-weight: 600;
+  color: #e2e8f0;
+  background: rgba(255, 255, 255, 0.06);
+  padding: 4px 12px;
+  border-radius: 6px;
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  white-space: nowrap;
+  height: 26px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+}
+
+.showSummaryBtnHeader {
+  background: rgba(52, 152, 219, 0.2);
+  border: 1px solid #3498db;
+  color: #ffffff;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  height: 26px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+}
+
+.showSummaryBtnHeader:hover {
+  background: rgba(52, 152, 219, 0.35);
+  transform: translateY(-1px);
 }
 
 /* Stolen / Transferred Wildcard Placement Banner */

@@ -280,6 +280,10 @@
     "reconnectingGameSubtitle": "Synchronizing game table...",
     "gameNotFound": "Game not found",
     "gameNotFoundDesc": "Room not found or session has expired",
-    "backToLobby": "← Main Menu"
+    "backToLobby": "← Main Menu",
+    "restartGameBtn": "🔄 Play Again",
+    "inspectTableBtn": "👁️ Inspect Table",
+    "showSummaryBtn": "📋 Show Summary",
+    "waitingForHostRestart": "⏳ Waiting for host to start a new game..."
   }
 }
