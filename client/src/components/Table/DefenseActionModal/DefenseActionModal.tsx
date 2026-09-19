@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal } from '../../Modal';
 import { Card } from '../../Card/Card';
-import { type IncomingAction } from '../../../mocks/useMockGame';
+import { type IncomingAction } from '../../../types/table';
 import styles from './DefenseActionModal.module.css';
 
 const REACTION_TIMEOUT_MS = 15000;

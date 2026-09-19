@@ -3,13 +3,12 @@ import { useTranslation } from 'react-i18next';
 import { Card } from '../../Card/Card';
 import { CardType, CardColor, BuildingType, ActionCardType, type CardModel } from '../../../types/cards';
 import { PROPERTY_CONFIG } from '../../../data/allCards';
-import { type MockPropertySet } from '../../../mocks/mockGameData';
-import { type PropertyTarget, type TableMovingCard } from '../../../mocks/useMockGame';
+import type { TablePropertySet, PropertyTarget, TableMovingCard } from '../../../types/table';
 import cardStyles from '../../Card/Card.module.css';
 import styles from './PlayerProperties.module.css';
 
 export interface PlayerPropertiesProps {
-  propertySets: MockPropertySet[];
+  propertySets: TablePropertySet[];
   validDropTarget?: 'bank' | 'property' | 'action' | null;
   validPropertyTargets?: PropertyTarget[];
   onPlayToTarget?: (target: PropertyTarget) => void;
@@ -32,8 +31,8 @@ export interface PlayerPropertiesProps {
   onSelectTradeGiveCard?: (card: CardModel) => void;
   isDealBreakerMode?: boolean;
   selectedDealBreakerSetIndex?: number | null;
-  onSelectDealBreakerSet?: (setIndex: number, set: MockPropertySet) => void;
-  onDoubleClickDealBreakerSet?: (setIndex: number, set: MockPropertySet) => void;
+  onSelectDealBreakerSet?: (setIndex: number, set: TablePropertySet) => void;
+  onDoubleClickDealBreakerSet?: (setIndex: number, set: TablePropertySet) => void;
   isMultiSelectMode?: boolean;
   selectedCardIds?: string[];
   onToggleSelectCard?: (card: CardModel) => void;

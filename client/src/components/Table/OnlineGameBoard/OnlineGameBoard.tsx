@@ -4,16 +4,19 @@ import { useTranslation } from 'react-i18next';
 import { useGameStore } from '../../../store/gameStore';
 import { getCardModel } from '../../../data/allCards';
 import { CardType, ActionCardType, BuildingType, CardColor, type CardModel } from '../../../types/cards';
-import { type MockPlayer, type MockPropertySet } from '../../../mocks/mockGameData';
+import type {
+  TablePlayer,
+  TablePropertySet,
+  PropertyTarget,
+  TableMovingCard,
+  IncomingAction,
+  IncomingDebt,
+} from '../../../types/table';
 import {
   computeValidPropertyTargets,
   computeBestRentForCard,
   computeFlipTargetForTableCard,
-  type PropertyTarget,
-  type TableMovingCard,
-  type IncomingAction,
-  type IncomingDebt,
-} from '../../../mocks/useMockGame';
+} from '../../../utils/tableCalculations';
 import { OpponentsArea } from '../OpponentsArea/OpponentsArea';
 import { CenterTable } from '../CenterTable/CenterTable';
 import { PlayerBank } from '../PlayerBank/PlayerBank';
@@ -101,7 +104,7 @@ export const OnlineGameBoard: React.FC = () => {
     return myPlayer?.bank.map(getCardModel) || [];
   }, [myPlayer?.bank]);
 
-  const propertySets: MockPropertySet[] = useMemo(() => {
+  const propertySets: TablePropertySet[] = useMemo(() => {
     return (
       myPlayer?.table.map((set) => {
         const cards = set.cards.map(getCardModel);
@@ -129,7 +132,7 @@ export const OnlineGameBoard: React.FC = () => {
   }, [myPlayer?.table]);
 
   // Map Opponents
-  const opponents: MockPlayer[] = useMemo(() => {
+  const opponents: TablePlayer[] = useMemo(() => {
     if (!roomState || !myPlayerId) return [];
     return roomState.playerOrder
       .filter((id) => id !== myPlayerId)

@@ -4,8 +4,7 @@ import { Modal } from '../../Modal';
 import { PlayerBank } from '../PlayerBank/PlayerBank';
 import { PlayerProperties } from '../PlayerProperties/PlayerProperties';
 import { type CardModel } from '../../../types/cards';
-import { type MockPropertySet } from '../../../mocks/mockGameData';
-import { type IncomingDebt } from '../../../mocks/useMockGame';
+import type { TablePropertySet, IncomingDebt } from '../../../types/table';
 import styles from './DefenseDebtModal.module.css';
 
 const DEBT_TIMEOUT_MS = 60000;
@@ -16,7 +15,7 @@ export interface DefenseDebtModalProps {
   isOpen: boolean;
   incomingDebt: IncomingDebt | null;
   bankCards: CardModel[];
-  propertySets?: MockPropertySet[];
+  propertySets?: TablePropertySet[];
   hasJustSayNo: boolean;
   onPay: (selectedCards: CardModel[]) => void;
   onJustSayNo: () => void;

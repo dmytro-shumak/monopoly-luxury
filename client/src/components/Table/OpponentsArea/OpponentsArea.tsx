@@ -1,14 +1,14 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { CardColor } from '../../../types/cards';
-import { type MockPlayer } from '../../../mocks/mockGameData';
+import { type TablePlayer } from '../../../types/table';
 import { Tooltip } from '../../Tooltip/Tooltip';
 import { PlayerBank } from '../PlayerBank/PlayerBank';
 import { PlayerProperties } from '../PlayerProperties/PlayerProperties';
 import styles from './OpponentsArea.module.css';
 
 export interface OpponentsAreaProps {
-  opponents: MockPlayer[];
+  opponents: TablePlayer[];
   activePlayerId: string;
   isSelectingTarget?: boolean;
   targetDemandAmount?: number;

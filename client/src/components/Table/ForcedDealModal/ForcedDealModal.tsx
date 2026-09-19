@@ -3,12 +3,12 @@ import { useTranslation } from 'react-i18next';
 import { Modal } from '../../Modal';
 import { PlayerProperties } from '../PlayerProperties/PlayerProperties';
 import { CardType, type CardModel } from '../../../types/cards';
-import { type MockPlayer } from '../../../mocks/mockGameData';
+import { type TablePlayer } from '../../../types/table';
 import styles from './ForcedDealModal.module.css';
 
 export interface ForcedDealModalProps {
   isOpen: boolean;
-  opponent: MockPlayer;
+  opponent: TablePlayer;
   myCard: CardModel;
   onSwapCard: (opponentCard: CardModel) => void;
   onClose: () => void;

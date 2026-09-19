@@ -2,12 +2,12 @@ import React, { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal } from '../../Modal';
 import { PlayerProperties } from '../PlayerProperties/PlayerProperties';
-import { type MockPlayer } from '../../../mocks/mockGameData';
+import { type TablePlayer } from '../../../types/table';
 import styles from './DealBreakerModal.module.css';
 
 export interface DealBreakerModalProps {
   isOpen: boolean;
-  opponent: MockPlayer;
+  opponent: TablePlayer;
   onStealSet: (setIndex: number) => void;
   onClose: () => void;
 }
