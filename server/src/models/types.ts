@@ -114,6 +114,7 @@ export interface DebtState {
 
 export interface GameState {
   roomId: string;
+  gameId?: string | null;
   status: GamePhase;
   hostId: string | null;
   activePlayerId: string | null;

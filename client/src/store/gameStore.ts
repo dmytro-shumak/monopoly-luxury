@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { socket } from '../services/socket';
-import { getSessionId, savePlayerName, saveLastRoomId, clearLastRoomId } from '../services/session';
+import { getSessionId, savePlayerName, saveLastRoomId, clearLastRoomId, saveLastGameId, clearLastGameId } from '../services/session';
 
 export type GamePhase = 
   | 'LOBBY'
@@ -29,10 +29,10 @@ export interface PlayerState {
 }
 
 export interface TimerState {
-  expiresAt: number;
   type: 'REACTION' | 'DEBT';
   targetPlayerId?: string;
   durationMs: number;
+  expiresAt: number;
 }
 
 export interface PendingAction {
@@ -53,6 +53,7 @@ export interface DebtState {
 
 export interface GameState {
   roomId: string;
+  gameId?: string | null;
   status: GamePhase;
   hostId: string | null;
   activePlayerId: string | null;
@@ -117,6 +118,9 @@ export const useGameStore = create<GameStore>((set, get) => {
     if (state.roomId) {
       saveLastRoomId(state.roomId);
     }
+    if (state.gameId) {
+      saveLastGameId(state.gameId);
+    }
     set({
       roomState: state,
       roomId: state.roomId,
@@ -167,8 +171,8 @@ export const useGameStore = create<GameStore>((set, get) => {
         set({ errorMessage: 'Please enter room code' });
         return;
       }
-      // If player entered short code like "a1b2", prefix with "room_"
-      if (!normalizedRoomId.startsWith('room_')) {
+      // If player entered short code like "a1b2", prefix with "room_" (unless it's already "room_" or "game_")
+      if (!normalizedRoomId.startsWith('room_') && !normalizedRoomId.startsWith('game_')) {
         normalizedRoomId = `room_${normalizedRoomId}`;
       }
       if (!trimmedName) {
@@ -210,6 +214,7 @@ export const useGameStore = create<GameStore>((set, get) => {
 
     leaveRoom: () => {
       clearLastRoomId();
+      clearLastGameId();
       socket.disconnect();
       set({
         roomId: null,

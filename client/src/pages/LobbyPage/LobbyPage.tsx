@@ -2,9 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams, useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useGameStore } from '../../store/gameStore';
-import { getSavedPlayerName, getLastRoomId } from '../../services/session';
+import { getSavedPlayerName, getLastRoomId, getLastGameId } from '../../services/session';
 import { LanguageSwitcher } from '../../components/LanguageSwitcher/LanguageSwitcher';
-import { OnlineGameBoard } from '../../components/Table/OnlineGameBoard/OnlineGameBoard';
 import styles from './LobbyPage.module.css';
 
 export const LobbyPage: React.FC = () => {
@@ -30,7 +29,6 @@ export const LobbyPage: React.FC = () => {
   const queryRoom = searchParams.get('room')?.trim() || '';
   const [inputRoomCode, setInputRoomCode] = useState('');
   const [isCopied, setIsCopied] = useState(false);
-  const [hasAttemptedJoin, setHasAttemptedJoin] = useState(false);
 
   // If entered via query param e.g. /?room=room_xxx, redirect to /room/room_xxx
   useEffect(() => {
@@ -39,42 +37,26 @@ export const LobbyPage: React.FC = () => {
     }
   }, [queryRoom, navigate]);
 
-  // Synchronize route with active roomId
+  // When game starts, navigate immediately to dedicated game route /game/:gameId
   useEffect(() => {
-    if (roomId && routeRoomId !== roomId) {
+    if (roomState && roomState.status !== 'LOBBY' && roomState.gameId) {
+      navigate(`/game/${roomState.gameId}`, { replace: true });
+    }
+  }, [roomState, navigate]);
+
+  // Synchronize route with active roomId while in lobby
+  useEffect(() => {
+    if (roomId && routeRoomId !== roomId && (!roomState || roomState.status === 'LOBBY')) {
       navigate(`/room/${roomId}`, { replace: true });
     }
-  }, [roomId, routeRoomId, navigate]);
+  }, [roomId, routeRoomId, roomState, navigate]);
 
   const activeTargetRoomId = routeRoomId || '';
   const lastSavedRoomId = getLastRoomId();
+  const lastSavedGameId = getLastGameId();
 
-  // Reset attempt flag if route changes
-  useEffect(() => {
-    setHasAttemptedJoin(false);
-  }, [activeTargetRoomId]);
-
-  // Automatic join / reconnect if user opened /room/:roomId and has saved name
-  useEffect(() => {
-    if (!activeTargetRoomId) return;
-
-    // Already connected to this room
-    if (roomId === activeTargetRoomId && roomState) return;
-
-    // Attempt auto-join once if player name exists and not currently connecting
-    if (!hasAttemptedJoin && playerName.trim() && !errorMessage && !isConnecting) {
-      setHasAttemptedJoin(true);
-      joinRoom(activeTargetRoomId, playerName);
-    }
-  }, [activeTargetRoomId, roomId, roomState, playerName, errorMessage, isConnecting, hasAttemptedJoin, joinRoom]);
-
-  // Determine game and room states
+  // Determine room state
   const isInRoom = Boolean(roomId && roomState && (!activeTargetRoomId || roomId === activeTargetRoomId));
-  const isGameActive = Boolean(isInRoom && roomState && roomState.status !== 'LOBBY');
-
-  if (isGameActive) {
-    return <OnlineGameBoard />;
-  }
 
   const isHost = Boolean(roomState && myPlayerId && roomState.hostId === myPlayerId);
   const playersList = roomState ? roomState.playerOrder.map((id) => roomState.players[id]).filter(Boolean) : [];
@@ -100,7 +82,6 @@ export const LobbyPage: React.FC = () => {
   };
 
   const handleBackToMainMenu = () => {
-    setHasAttemptedJoin(false);
     clearError();
     navigate('/');
   };
@@ -131,13 +112,6 @@ export const LobbyPage: React.FC = () => {
     }
   };
 
-  const isAutoConnecting = Boolean(
-    activeTargetRoomId &&
-    !isInRoom &&
-    !errorMessage &&
-    (isConnecting || hasAttemptedJoin)
-  );
-
   return (
     <div className={styles.lobbyContainer}>
       {/* Top Bar */}
@@ -166,28 +140,9 @@ export const LobbyPage: React.FC = () => {
         )}
 
         {!isInRoom || !roomState ? (
-          isAutoConnecting ? (
+          activeTargetRoomId ? (
             /* ======================================================= */
-            /* 1A. RECONNECTING / AUTO-CONNECTING STATE                */
-            /* ======================================================= */
-            <div className={styles.reconnectCard}>
-              <div className={styles.reconnectSpinner} />
-              <h2 className={styles.reconnectTitle}>{t('lobby.reconnectingTitle')}</h2>
-              <p className={styles.reconnectSubtitle}>
-                {t('lobby.reconnectingSubtitle', { roomId: activeTargetRoomId })}
-              </p>
-              <button
-                type="button"
-                className={styles.leaveBtn}
-                onClick={handleBackToMainMenu}
-                style={{ marginTop: 8 }}
-              >
-                {t('lobby.backToMainMenuBtn')}
-              </button>
-            </div>
-          ) : activeTargetRoomId ? (
-            /* ======================================================= */
-            /* 1B. INVITE MODE: Direct room URL without auto-connect   */
+            /* 1B. INVITE MODE: Direct room URL                        */
             /* ======================================================= */
             <form onSubmit={handleJoinInvite}>
               <div className={styles.titleWrapper}>
@@ -249,17 +204,23 @@ export const LobbyPage: React.FC = () => {
                 <p className={styles.lobbySubtitle}>{t('lobby.subtitle')}</p>
               </div>
 
-              {/* Resume Last Room Shortcut if available */}
-              {lastSavedRoomId && (
+              {/* Resume Last Game or Room Shortcut if available */}
+              {(lastSavedGameId || lastSavedRoomId) && (
                 <div className={styles.resumeLastRoomCard}>
                   <div className={styles.resumeLastRoomText}>
                     <span className={styles.resumeLastRoomLabel}>{t('lobby.resumeGameLabel')}</span>
-                    <span className={styles.resumeLastRoomCode}>{lastSavedRoomId}</span>
+                    <span className={styles.resumeLastRoomCode}>{lastSavedGameId || lastSavedRoomId}</span>
                   </div>
                   <button
                     type="button"
                     className={styles.resumeLastRoomBtn}
-                    onClick={() => navigate(`/room/${lastSavedRoomId}`)}
+                    onClick={() => {
+                      if (lastSavedGameId) {
+                        navigate(`/game/${lastSavedGameId}`);
+                      } else {
+                        navigate(`/room/${lastSavedRoomId}`);
+                      }
+                    }}
                   >
                     {t('lobby.resumeGameBtn')}
                   </button>

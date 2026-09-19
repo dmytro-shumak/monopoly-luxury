@@ -411,6 +411,11 @@
     "leaveGameBtn": "Вийти з гри",
     "actionsRemaining": "Залишилось дій: {{count}}",
     "noActionsLeft": "Дії закінчились, завершіть хід",
-    "cancelCardSelect": "✕ Скасувати"
+    "cancelCardSelect": "✕ Скасувати",
+    "reconnectingGame": "Відновлення з'єднання з грою...",
+    "reconnectingGameSubtitle": "Синхронізація ігрового столу...",
+    "gameNotFound": "Гру не знайдено",
+    "gameNotFoundDesc": "Кімнату не знайдено або термін дії сесії вичерпано",
+    "backToLobby": "← До головного меню"
   }
 }

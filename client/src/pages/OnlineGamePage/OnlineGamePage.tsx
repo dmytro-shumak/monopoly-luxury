@@ -1,0 +1,121 @@
+import React, { useEffect, useRef } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { useGameStore } from '../../store/gameStore';
+import { getSavedPlayerName } from '../../services/session';
+import { LanguageSwitcher } from '../../components/LanguageSwitcher/LanguageSwitcher';
+import { OnlineGameBoard } from '../../components/Table/OnlineGameBoard/OnlineGameBoard';
+import styles from './OnlineGamePage.module.css';
+
+export const OnlineGamePage: React.FC = () => {
+  const { t } = useTranslation();
+  const { gameId } = useParams<{ gameId: string }>();
+  const navigate = useNavigate();
+
+  const {
+    roomState,
+    joinRoom,
+    errorMessage,
+    clearError,
+  } = useGameStore();
+
+  const hasAttemptedJoin = useRef(false);
+
+  // If page was refreshed or accessed directly, attempt reconnect using stored session
+  useEffect(() => {
+    if (!gameId) return;
+
+    if (!roomState && !hasAttemptedJoin.current) {
+      hasAttemptedJoin.current = true;
+      const savedName = getSavedPlayerName() || 'Player';
+      joinRoom(gameId, savedName);
+    }
+  }, [gameId, roomState, joinRoom]);
+
+  // If the room is still in pre-game LOBBY state, redirect back to the room lobby
+  useEffect(() => {
+    if (roomState && roomState.status === 'LOBBY' && roomState.roomId) {
+      navigate(`/room/${roomState.roomId}`, { replace: true });
+    }
+  }, [roomState, navigate]);
+
+  // Active game in progress: render the full online game board
+  if (roomState && roomState.gameId === gameId && roomState.status !== 'LOBBY') {
+    return <OnlineGameBoard />;
+  }
+
+  const handleBackToMainMenu = () => {
+    clearError();
+    navigate('/');
+  };
+
+  return (
+    <div className={styles.gamePageContainer}>
+      {/* Top Navigation */}
+      <header className={styles.topNav}>
+        <div className={styles.brand}>
+          <span className={styles.brandIcon}>💎</span>
+          <span>Monopoly Deal</span>
+        </div>
+        <LanguageSwitcher />
+      </header>
+
+      {/* Loading / Reconnecting / Error Card */}
+      <main className={styles.statusCard}>
+        {errorMessage ? (
+          <>
+            <div className={styles.titleWrapper}>
+              <h1 className={styles.title}>{t('onlineGame.gameNotFound', 'Гру не знайдено')}</h1>
+              <p className={styles.subtitle}>
+                {t('onlineGame.gameNotFoundDesc', 'Кімнату не знайдено або термін дії сесії вичерпано')}
+              </p>
+            </div>
+
+            <div className={styles.errorBox}>
+              <span>⚠️ {errorMessage}</span>
+            </div>
+
+            <button
+              type="button"
+              className={styles.backBtn}
+              onClick={handleBackToMainMenu}
+            >
+              {t('onlineGame.backToLobby', '← До головного меню')}
+            </button>
+          </>
+        ) : (
+          <>
+            <div className={styles.spinnerWrapper}>
+              <div className={styles.spinnerRing} />
+              <span className={styles.spinnerIcon}>🎲</span>
+            </div>
+
+            <div className={styles.titleWrapper}>
+              <h1 className={styles.title}>
+                {t('onlineGame.reconnectingGame', 'Відновлення з\'єднання з грою...')}
+              </h1>
+              <p className={styles.subtitle}>
+                {t('onlineGame.reconnectingGameSubtitle', 'Синхронізація ігрового столу...')}
+              </p>
+            </div>
+
+            {gameId && (
+              <div className={styles.gamePill}>
+                <span>🎮</span>
+                <span>{gameId}</span>
+              </div>
+            )}
+
+            <button
+              type="button"
+              className={styles.backBtn}
+              onClick={handleBackToMainMenu}
+            >
+              {t('onlineGame.backToLobby', '← До головного меню')}
+            </button>
+          </>
+        )}
+      </main>
+    </div>
+  );
+};

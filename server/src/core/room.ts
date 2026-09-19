@@ -20,6 +20,7 @@ export class GameRoom implements IGameRoom {
     this.onStateChange = onStateChange;
     this.state = {
       roomId,
+      gameId: null,
       status: "LOBBY",
       hostId: null,
       activePlayerId: null,
@@ -140,6 +141,8 @@ export class GameRoom implements IGameRoom {
     if (this.state.status !== "LOBBY") return { success: false, error: "Already started" };
     if (this.state.hostId !== playerId) return { success: false, error: "Only the host can start the game" };
     if (this.state.playerOrder.length < 2) return { success: false, error: "Not enough players" };
+
+    this.state.gameId = `game_${this.state.roomId.replace("room_", "")}_${Math.random().toString(36).substring(2, 6)}`;
 
     this.deckManager.initDeck();
     for (const playerId of this.state.playerOrder) {

@@ -604,6 +604,17 @@ describe('Monopoly Deal - Exhaustive Test Suite', () => {
       expect(r.state.players[join1.playerId!]!.name).toBe("Alice Renamed");
       expect(r.state.status).toBe("ACTION_PHASE");
     });
+
+    it('generates unique gameId on startGame', () => {
+      const r = new GameRoom("room_unique", () => {});
+      expect(r.state.gameId).toBeNull();
+      const p1 = r.join("s1", "P1").playerId!;
+      r.join("s2", "P2");
+      const res = r.startGame(p1);
+      expect(res.success).toBe(true);
+      expect(r.state.gameId).toBeDefined();
+      expect(r.state.gameId).toMatch(/^game_unique_[a-z0-9]+$/);
+    });
   });
 });
 

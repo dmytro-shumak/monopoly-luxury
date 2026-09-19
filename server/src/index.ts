@@ -32,10 +32,20 @@ const broadcastState = (roomId: string) => {
   const room = rooms.get(roomId);
   if (!room) return;
 
-  const socketsInRoom = io.sockets.adapter.rooms.get(roomId);
-  if (!socketsInRoom) return;
+  const sockets = new Set<string>();
+  const roomSockets = io.sockets.adapter.rooms.get(room.state.roomId);
+  if (roomSockets) {
+    for (const s of roomSockets) sockets.add(s);
+  }
+  if (room.state.gameId) {
+    const gameSockets = io.sockets.adapter.rooms.get(room.state.gameId);
+    if (gameSockets) {
+      for (const s of gameSockets) sockets.add(s);
+    }
+  }
+  if (sockets.size === 0) return;
 
-  for (const socketId of socketsInRoom) {
+  for (const socketId of sockets) {
     const socket = io.sockets.sockets.get(socketId);
     if (!socket) continue;
 
@@ -99,12 +109,16 @@ io.on("connection", (socket: Socket) => {
 
     const res = room.join(data.sessionId, data.name);
     if (res.success && res.playerId) {
-      socket.join(data.roomId);
-      socketToSession.set(socket.id, { sessionId: data.sessionId, roomId: data.roomId, playerId: res.playerId });
+      // Join socket rooms for both canonical roomId and gameId if active
+      socket.join(room.state.roomId);
+      if (room.state.gameId) {
+        socket.join(room.state.gameId);
+      }
+      socketToSession.set(socket.id, { sessionId: data.sessionId, roomId: room.state.roomId, playerId: res.playerId });
       playerActiveSocket.set(res.playerId, socket.id);
       room.connectPlayer(res.playerId);
-      socket.emit("room_joined", { roomId: data.roomId, playerId: res.playerId });
-      broadcastState(data.roomId);
+      socket.emit("room_joined", { roomId: room.state.roomId, playerId: res.playerId });
+      broadcastState(room.state.roomId);
     } else {
       handleError(res.error);
     }
@@ -123,7 +137,13 @@ io.on("connection", (socket: Socket) => {
   socket.on("start_game", () => {
     const ctx = getPlayerContext();
     if (!ctx) return;
-    safeAction("start_game", () => ctx.room.startGame(ctx.playerId));
+    safeAction("start_game", () => {
+      const res = ctx.room.startGame(ctx.playerId);
+      if (res.success && ctx.room.state.gameId) {
+        rooms.set(ctx.room.state.gameId, ctx.room);
+      }
+      return res;
+    });
   });
 
   socket.on("move_property", ({ cardId, toColor }: { cardId: string; toColor: string }) => {

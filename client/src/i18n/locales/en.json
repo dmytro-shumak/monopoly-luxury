@@ -275,6 +275,11 @@
     "leaveGameBtn": "Leave Game",
     "actionsRemaining": "Actions left: {{count}}",
     "noActionsLeft": "No actions left, end your turn",
-    "cancelCardSelect": "✕ Cancel"
+    "cancelCardSelect": "✕ Cancel",
+    "reconnectingGame": "Reconnecting to game...",
+    "reconnectingGameSubtitle": "Synchronizing game table...",
+    "gameNotFound": "Game not found",
+    "gameNotFoundDesc": "Room not found or session has expired",
+    "backToLobby": "← Main Menu"
   }
 }
