@@ -111,6 +111,31 @@
   text-transform: uppercase;
 }
 
+.pipsContainer {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(0, 0, 0, 0.35);
+  padding: 3px 6px;
+  border-radius: 10px;
+  border: 1px solid rgba(212, 175, 55, 0.25);
+}
+
+.pip {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  transition: all var(--transition-fast, 0.2s ease);
+}
+
+.pipActive {
+  background: var(--color-gold, #d4af37);
+  border-color: var(--color-gold-light, #f1c40f);
+  box-shadow: 0 0 6px rgba(212, 175, 55, 0.8);
+}
+
 .badgesWrapper {
   display: inline-flex;
   align-items: center;

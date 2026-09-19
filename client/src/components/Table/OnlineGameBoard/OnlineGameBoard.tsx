@@ -141,6 +141,7 @@ export const OnlineGameBoard: React.FC = () => {
           avatar: '👤',
           handCount: p.hand.length,
           bankCards: p.bank.map(getCardModel),
+          actionsRemaining: p.actionsRemaining,
           propertySets: p.table.map((set) => {
             const cards = set.cards.map(getCardModel);
             const hasHouse = cards.some(

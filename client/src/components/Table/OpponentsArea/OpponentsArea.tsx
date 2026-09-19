@@ -77,6 +77,16 @@ export const OpponentsArea: React.FC<OpponentsAreaProps> = ({
                 {isActive && (
                   <span className={styles.activeBadge}>{t('board.turn')}</span>
                 )}
+                {isActive && opponent.actionsRemaining !== undefined && (
+                  <div className={styles.pipsContainer}>
+                    {Array.from({ length: 3 }).map((_, i) => (
+                      <div
+                        key={i}
+                        className={`${styles.pip} ${i < (opponent.actionsRemaining ?? 0) ? styles.pipActive : ''}`}
+                      />
+                    ))}
+                  </div>
+                )}
                 {isSelectingTarget && (
                   <span className={styles.opponentTargetBadge}>
                     🎯 {t('board.demandRent', { amount: targetDemandAmount })}

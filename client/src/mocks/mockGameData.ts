@@ -33,6 +33,7 @@ export interface MockPlayer {
   handCards?: CardModel[];
   bankCards: CardModel[];
   propertySets: MockPropertySet[];
+  actionsRemaining?: number;
 }
 
 export interface MockTableState {
