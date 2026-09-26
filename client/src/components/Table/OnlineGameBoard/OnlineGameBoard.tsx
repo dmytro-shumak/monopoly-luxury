@@ -31,6 +31,7 @@ import { SlyDealModal } from '../SlyDealModal/SlyDealModal';
 import { ForcedDealModal } from '../ForcedDealModal/ForcedDealModal';
 import { DealBreakerModal } from '../DealBreakerModal/DealBreakerModal';
 import { DoubleRentModal } from '../DoubleRentModal/DoubleRentModal';
+import { ToastContainer } from '../../Toast/ToastContainer';
 import { LanguageSwitcher } from '../../LanguageSwitcher/LanguageSwitcher';
 import styles from './OnlineGameBoard.module.css';
 
@@ -109,6 +110,43 @@ export const OnlineGameBoard: React.FC = () => {
     }
     prevIsMyTurnRef.current = isMyTurn;
   }, [isMyTurn, isGameOver]);
+
+  // Check if player is waiting for an opponent to react or pay debt
+  const isWaitingForOpponent = Boolean(
+    roomState &&
+    (
+      (roomState.status === 'REACTION_PHASE' && roomState.currentAction && roomState.currentAction.targetId !== myPlayerId) ||
+      (roomState.status === 'DEBT_PAYMENT_PHASE' && roomState.currentDebt && roomState.currentDebt.debtorId !== myPlayerId)
+    )
+  );
+
+  const waitingOpponentId =
+    roomState?.status === 'REACTION_PHASE'
+      ? roomState.currentAction?.targetId
+      : roomState?.status === 'DEBT_PAYMENT_PHASE'
+      ? roomState.currentDebt?.debtorId
+      : null;
+
+  const waitingOpponentName = waitingOpponentId && roomState?.players[waitingOpponentId]
+    ? roomState.players[waitingOpponentId].name
+    : t('board.opponent');
+
+  const waitingReason =
+    roomState?.status === 'REACTION_PHASE'
+      ? t('board.waitingReactionReason')
+      : roomState?.status === 'DEBT_PAYMENT_PHASE'
+      ? t('board.waitingDebtReason')
+      : '';
+
+  // Timer countdown
+  const timerExpiresAt = roomState?.activeTimer?.expiresAt;
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (!timerExpiresAt) return;
+    const interval = setInterval(() => setNow(Date.now()), 500);
+    return () => clearInterval(interval);
+  }, [timerExpiresAt]);
+  const remainingTimerSeconds = timerExpiresAt ? Math.max(0, Math.ceil((timerExpiresAt - now) / 1000)) : null;
 
   // Map Current Player Cards
   const handCards: CardModel[] = useMemo(() => {
@@ -342,7 +380,7 @@ export const OnlineGameBoard: React.FC = () => {
 
   // Card Selection handler
   const handleSelectCard = (cardId: string) => {
-    if (!isMyTurn || actionsRemaining <= 0) return;
+    if (!isMyTurn || actionsRemaining <= 0 || isWaitingForOpponent || roomState?.status !== 'ACTION_PHASE') return;
 
     if (selectedCardId === cardId) {
       resetSelection();
@@ -902,16 +940,16 @@ export const OnlineGameBoard: React.FC = () => {
           {/* Left Column: Bank on top, Hand on bottom */}
           <section className={styles.leftColumn}>
             {/* 🟡 Gold Zone: Bank */}
-            <div className={styles.bankWrapper}>
+            <div className={`${styles.bankWrapper} ${isWaitingForOpponent ? styles.boardDisabled : ''}`}>
               <PlayerBank
                 bankCards={bankCards}
-                validDropTarget={validDropTarget}
+                validDropTarget={isWaitingForOpponent ? null : validDropTarget}
                 onPlayToBank={handlePlayToBank}
               />
             </div>
 
             {/* Hand Cards */}
-            <div className={styles.handWrapper}>
+            <div className={`${styles.handWrapper} ${isWaitingForOpponent ? styles.boardDisabled : ''}`}>
               <PlayerHand
                 cards={handCards}
                 selectedCardId={selectedCardId}
@@ -927,13 +965,13 @@ export const OnlineGameBoard: React.FC = () => {
               <CenterTable
                 discardPile={reversedDiscard}
                 activeActionCard={activeActionCard}
-                validDropTarget={validDropTarget}
+                validDropTarget={isWaitingForOpponent ? null : validDropTarget}
                 onPlayAction={handlePlayActionDirect}
               />
             </div>
 
             {/* 🟢 Green Zone: Player Properties (Extends below Action Arena) */}
-            <div className={styles.propertiesWrapper}>
+            <div className={`${styles.propertiesWrapper} ${isWaitingForOpponent ? styles.boardDisabled : ''}`}>
               {pendingStolenCardPlacement && (
                 <div className={styles.placementNoticeBanner}>
                   <div className={styles.placementNoticeText}>
@@ -994,6 +1032,10 @@ export const OnlineGameBoard: React.FC = () => {
         actionsRemaining={actionsRemaining}
         maxActions={3}
         onEndTurn={endTurn}
+        isWaitingForOpponent={isWaitingForOpponent}
+        waitingOpponentName={waitingOpponentName}
+        waitingReason={waitingReason}
+        timerSeconds={remainingTimerSeconds}
       />
 
       {/* ----------------------------------------------------------- */}
@@ -1120,6 +1162,8 @@ export const OnlineGameBoard: React.FC = () => {
           </div>
         </div>
       )}
+      {/* Toast Notifications */}
+      <ToastContainer />
     </div>
   );
 };

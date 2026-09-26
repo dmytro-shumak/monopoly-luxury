@@ -9,6 +9,10 @@ export interface TurnHUDProps {
   actionsRemaining: number;
   maxActions: number;
   onEndTurn: () => void;
+  isWaitingForOpponent?: boolean;
+  waitingOpponentName?: string;
+  waitingReason?: string;
+  timerSeconds?: number | null;
 }
 
 export const TurnHUD: React.FC<TurnHUDProps> = ({
@@ -17,6 +21,10 @@ export const TurnHUD: React.FC<TurnHUDProps> = ({
   actionsRemaining,
   maxActions,
   onEndTurn,
+  isWaitingForOpponent,
+  waitingOpponentName,
+  waitingReason,
+  timerSeconds,
 }) => {
   const { t } = useTranslation();
 
@@ -46,7 +54,17 @@ export const TurnHUD: React.FC<TurnHUDProps> = ({
         )}
       </div>
 
-      {/* Right controls: Actions */}
+      {/* Center controls: Waiting for opponent badge */}
+      {isWaitingForOpponent && (
+        <div className={styles.waitingIndicator}>
+          <span className={styles.waitingIcon}>⏳</span>
+          <span className={styles.waitingText}>
+            {t('board.waitingForOpponent', { name: waitingOpponentName || t('board.opponent') })}
+            {timerSeconds !== null && timerSeconds !== undefined ? ` (${timerSeconds}с)` : ''}
+          </span>
+          {waitingReason && <span className={styles.waitingSubtext}>— {waitingReason}</span>}
+        </div>
+      )}
 
       {/* Right controls: Actions */}
       <div className={styles.rightControls}>
@@ -54,7 +72,7 @@ export const TurnHUD: React.FC<TurnHUDProps> = ({
           type="button"
           className={styles.endTurnBtn}
           onClick={onEndTurn}
-          disabled={!isMyTurn}
+          disabled={!isMyTurn || isWaitingForOpponent}
         >
           <span>{t('board.endTurn')}</span>
           <span>➔</span>

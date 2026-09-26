@@ -1,4 +1,4 @@
-import type { PropertySet, GameState, IGameRoom } from "../models/types.js";
+import type { PropertySet, GameState, IGameRoom, GameNotification } from "../models/types.js";
 import { CardType, CardColor } from '../models/types.js';
 import { DeckManager } from "./deck.js";
 import { CARDS_DICTIONARY } from "./cards.js";
@@ -10,6 +10,7 @@ const DEBT_TIMEOUT_MS = 60 * 1000;
 
 export class GameRoom implements IGameRoom {
   public state: GameState;
+  public onNotification?: (notification: GameNotification) => void;
   private deckManager: DeckManager;
   private disconnectTimers: Record<string, NodeJS.Timeout> = {};
   private gameTimers: Record<string, NodeJS.Timeout> = {};
@@ -42,6 +43,17 @@ export class GameRoom implements IGameRoom {
 
   public notify() {
     this.onStateChange();
+  }
+
+  public sendNotification(notification: Omit<GameNotification, "id" | "timestamp">) {
+    const fullNotification: GameNotification = {
+      ...notification,
+      id: `notif_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      timestamp: Date.now(),
+    };
+    if (this.onNotification) {
+      this.onNotification(fullNotification);
+    }
   }
 
   // --- LOBBY & CONNECTION LOGIC ---
@@ -122,6 +134,14 @@ export class GameRoom implements IGameRoom {
     this.notify();
     this.gameTimers["main"] = setTimeout(() => {
       this.state.activeTimer = null;
+      const targetPlayer = this.state.players[targetId];
+      if (targetPlayer) {
+        this.sendNotification({
+          type: "TIMEOUT",
+          actorId: targetId,
+          actorName: targetPlayer.name,
+        });
+      }
       callback();
       this.notify();
     }, durationMs);
@@ -521,6 +541,16 @@ export class GameRoom implements IGameRoom {
       this.discardCard(cardId);
       action.cancelChain.push(playerId);
 
+      const initiator = this.state.players[action.initiatorId];
+      this.sendNotification({
+        type: "JUST_SAY_NO",
+        actorId: playerId,
+        actorName: player.name,
+        targetId: action.initiatorId,
+        targetName: initiator?.name || "Player",
+        cardId,
+      });
+
       this.clearActiveTimer();
       this.executePendingAction(); 
       return { success: true };
@@ -530,6 +560,16 @@ export class GameRoom implements IGameRoom {
       
       player.hand.splice(handIndex, 1);
       this.discardCard(cardId);
+
+      const creditor = this.state.players[debt.creditorId];
+      this.sendNotification({
+        type: "JUST_SAY_NO",
+        actorId: playerId,
+        actorName: player.name,
+        targetId: debt.creditorId,
+        targetName: creditor?.name || "Player",
+        cardId,
+      });
       
       this.clearActiveTimer();
       this.state.currentDebt = null;
@@ -550,6 +590,23 @@ export class GameRoom implements IGameRoom {
     if (action && action.cancelChain.length === 0) {
       // Execute the effect
       executePendingAction(this, action);
+
+      const initiator = this.state.players[action.initiatorId];
+      const target = this.state.players[action.targetId];
+      this.sendNotification({
+        type: "DEAL_COMPLETED",
+        actorId: action.initiatorId,
+        actorName: initiator?.name || "Player",
+        targetId: action.targetId,
+        targetName: target?.name || "Player",
+        cardId: action.cardId,
+        details: {
+          actionType: action.actionType,
+          propertyColor: action.payload?.propertyColor,
+          targetCardId: action.payload?.targetCardId,
+          myCardId: action.payload?.myCardId,
+        },
+      });
     }
 
     this.checkWinCondition();
@@ -679,6 +736,40 @@ export class GameRoom implements IGameRoom {
         creditorSet.cards.push(asset.id);
         this.updateSetCompletion(creditorSet);
       }
+    }
+
+    const currentDebtSnapshot = this.state.currentDebt;
+    if (assetsToRemove.length === 0) {
+      this.sendNotification({
+        type: "DEBT_EMPTY",
+        actorId: playerId,
+        actorName: debtor.name,
+        targetId: currentDebtSnapshot.creditorId,
+        targetName: creditor.name,
+      });
+    } else {
+      let bankVal = 0;
+      let propCount = 0;
+      for (const asset of assetsToRemove) {
+        if (asset.source === "BANK") {
+          const cardDef = CARDS_DICTIONARY[asset.id];
+          bankVal += cardDef?.value || 0;
+        } else {
+          propCount++;
+        }
+      }
+      this.sendNotification({
+        type: "DEBT_PAID",
+        actorId: playerId,
+        actorName: debtor.name,
+        targetId: currentDebtSnapshot.creditorId,
+        targetName: creditor.name,
+        details: {
+          totalAmount: totalValue,
+          bankAmount: bankVal,
+          propertiesCount: propCount,
+        },
+      });
     }
 
     this.clearActiveTimer();

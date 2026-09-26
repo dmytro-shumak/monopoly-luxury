@@ -69,6 +69,33 @@ export interface GameState {
   winnerId: string | null;
 }
 
+export type GameNotificationType =
+  | 'JUST_SAY_NO'
+  | 'DEAL_COMPLETED'
+  | 'DEBT_PAID'
+  | 'DEBT_EMPTY'
+  | 'TIMEOUT';
+
+export interface GameNotification {
+  id: string;
+  type: GameNotificationType;
+  actorId: string;
+  actorName: string;
+  targetId?: string;
+  targetName?: string;
+  cardId?: string;
+  details?: {
+    totalAmount?: number;
+    bankAmount?: number;
+    propertiesCount?: number;
+    actionType?: string;
+    propertyColor?: string;
+    targetCardId?: string;
+    myCardId?: string;
+  };
+  timestamp: number;
+}
+
 interface GameStore {
   // Connection & Room state
   isConnected: boolean;
@@ -77,8 +104,10 @@ interface GameStore {
   roomState: GameState | null;
   errorMessage: string | null;
   isConnecting: boolean;
+  notifications: GameNotification[];
 
   // Actions
+  dismissNotification: (id: string) => void;
   createRoom: (playerName: string) => void;
   joinRoom: (roomId: string, playerName: string) => void;
   startGame: () => void;
@@ -134,6 +163,12 @@ export const useGameStore = create<GameStore>((set, get) => {
     set({ errorMessage: msg, isConnecting: false });
   });
 
+  socket.on('game_notification', (notification: GameNotification) => {
+    set((state) => ({
+      notifications: [...state.notifications.slice(-4), notification],
+    }));
+  });
+
   return {
     isConnected: socket.connected,
     roomId: null,
@@ -141,6 +176,13 @@ export const useGameStore = create<GameStore>((set, get) => {
     roomState: null,
     errorMessage: null,
     isConnecting: false,
+    notifications: [],
+
+    dismissNotification: (id: string) => {
+      set((state) => ({
+        notifications: state.notifications.filter((n) => n.id !== id),
+      }));
+    },
 
     createRoom: (playerName: string) => {
       const trimmed = playerName.trim();

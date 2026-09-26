@@ -129,7 +129,11 @@
     "wildcardModalTitle": "Change Card Color",
     "wildcardModalSubtitle": "Choose set to move the wildcard to (1 action)",
     "changeColorHint": "Click to change color (1 action)",
-    "current": "Current"
+    "current": "Current",
+    "waitingForOpponent": "Waiting for {{name}}",
+    "waitingForOpponentTimer": "Waiting for {{name}} ({{seconds}}s)",
+    "waitingReactionReason": "Deciding whether to play Just Say No...",
+    "waitingDebtReason": "Paying debt..."
   },
   "colors": {
     "PINK": "Pink",
@@ -281,5 +285,17 @@
     "inspectTableBtn": "👁️ Inspect Table",
     "showSummaryBtn": "📋 Show Summary",
     "waitingForHostRestart": "⏳ Waiting for host to start a new game..."
+  },
+  "toast": {
+    "justSayNoTitle": "Just Say No!",
+    "justSayNoDesc": "{{actor}} blocked {{target}}'s action using Just Say No!",
+    "dealCompletedTitle": "Deal Completed",
+    "dealCompletedDesc": "{{actor}} successfully applied action against {{target}}.",
+    "debtPaidTitle": "Debt Paid",
+    "debtPaidDesc": "{{actor}} paid ${{amount}}M to {{target}} (bank: ${{bank}}M, properties: {{props}}).",
+    "debtEmptyTitle": "No Assets",
+    "debtEmptyDesc": "{{actor}} has no assets to pay debt ($0).",
+    "timeoutTitle": "Time Expired",
+    "timeoutDesc": "{{actor}} did not respond in time."
   }
 }

@@ -85,6 +85,12 @@ io.on("connection", (socket: Socket) => {
   socket.on("create_room", (data: { sessionId: string; name: string }) => {
     const roomId = `room_${Math.random().toString(36).substring(2, 6)}`;
     const room = new GameRoom(roomId, () => broadcastState(roomId));
+    room.onNotification = (notification) => {
+      io.to(roomId).emit("game_notification", notification);
+      if (room.state.gameId) {
+        io.to(room.state.gameId).emit("game_notification", notification);
+      }
+    };
     rooms.set(roomId, room);
 
     const res = room.join(data.sessionId, data.name);

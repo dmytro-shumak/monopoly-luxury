@@ -124,7 +124,11 @@
     "discardSelectedProgress": "Обрано: {{selected}} з {{required}}",
     "discardBtn": "Скинути {{count}} карт(и) та завершити хід",
     "discardBackBtn": "Повернутися",
-    "discardActionMessage": "Ви скинули {{count}} карт(и) у відбій."
+    "discardActionMessage": "Ви скинули {{count}} карт(и) у відбій.",
+    "waitingForOpponent": "Очікуємо відповіді: {{name}}",
+    "waitingForOpponentTimer": "Очікуємо відповіді від {{name}} ({{seconds}}с)",
+    "waitingReactionReason": "Вирішує, чи грати «Just Say No»...",
+    "waitingDebtReason": "Сплачує борг..."
   },
   "deckPreview": {
     "title": "Monopoly Deal — Повна колода ({{count}} карт)",
@@ -417,5 +421,17 @@
     "inspectTableBtn": "👁️ Оглянути стіл",
     "showSummaryBtn": "📋 Відкрити підсумок",
     "waitingForHostRestart": "⏳ Очікуємо рішення хоста щодо нової гри..."
+  },
+  "toast": {
+    "justSayNoTitle": "Just Say No!",
+    "justSayNoDesc": "{{actor}} відбив дію гравця {{target}} за допомогою «Just Say No»!",
+    "dealCompletedTitle": "Угоду завершено",
+    "dealCompletedDesc": "{{actor}} успішно застосував дію проти {{target}}.",
+    "debtPaidTitle": "Борг сплачено",
+    "debtPaidDesc": "{{actor}} сплатив ${{amount}}M для {{target}} (банк: ${{bank}}M, карток нерухомості: {{props}}).",
+    "debtEmptyTitle": "Немає активів",
+    "debtEmptyDesc": "У гравця {{actor}} немає грошей або нерухомості для сплати боргу ($0).",
+    "timeoutTitle": "Час вичерпано",
+    "timeoutDesc": "{{actor}} не встиг надати відповідь вчасно."
   }
 }

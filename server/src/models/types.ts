@@ -82,8 +82,37 @@ export interface TimerState {
   durationMs: number;
 }
 
+export type GameNotificationType =
+  | "JUST_SAY_NO"
+  | "DEAL_COMPLETED"
+  | "DEBT_PAID"
+  | "DEBT_EMPTY"
+  | "TIMEOUT";
+
+export interface GameNotification {
+  id: string;
+  type: GameNotificationType;
+  actorId: string;
+  actorName: string;
+  targetId?: string;
+  targetName?: string;
+  cardId?: string;
+  details?: {
+    totalAmount?: number;
+    bankAmount?: number;
+    propertiesCount?: number;
+    actionType?: string;
+    propertyColor?: string;
+    targetCardId?: string;
+    myCardId?: string;
+  };
+  timestamp: number;
+}
+
 export interface IGameRoom {
   state: GameState;
+  onNotification?: (notification: GameNotification) => void;
+  sendNotification(notification: Omit<GameNotification, "id" | "timestamp">): void;
   discardCard(cardId: string): void;
   clearActiveTimer(): void;
   startTimer(ms: number, type: string, playerId: string, callback: () => void): void;

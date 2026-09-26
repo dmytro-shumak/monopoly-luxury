@@ -232,6 +232,13 @@
   display: flex;
 }
 
+.boardDisabled {
+  opacity: 0.6;
+  pointer-events: none;
+  filter: grayscale(15%);
+  transition: opacity 0.25s ease, filter 0.25s ease;
+}
+
 /* Game Over Overlay */
 .gameOverOverlay {
   position: fixed;
