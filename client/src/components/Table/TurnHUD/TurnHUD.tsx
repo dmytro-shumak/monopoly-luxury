@@ -2,6 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import styles from './TurnHUD.module.css';
 
+
 export interface TurnHUDProps {
   isMyTurn: boolean;
   activePlayerName: string;
@@ -44,6 +45,8 @@ export const TurnHUD: React.FC<TurnHUDProps> = ({
           </div>
         )}
       </div>
+
+      {/* Right controls: Actions */}
 
       {/* Right controls: Actions */}
       <div className={styles.rightControls}>

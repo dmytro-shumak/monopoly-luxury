@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useGameStore } from '../../../store/gameStore';
@@ -17,6 +17,7 @@ import {
   computeBestRentForCard,
   computeFlipTargetForTableCard,
 } from '../../../utils/tableCalculations';
+import { playTurnNotification } from '../../../utils/sound';
 import { OpponentsArea } from '../OpponentsArea/OpponentsArea';
 import { CenterTable } from '../CenterTable/CenterTable';
 import { PlayerBank } from '../PlayerBank/PlayerBank';
@@ -94,6 +95,20 @@ export const OnlineGameBoard: React.FC = () => {
   const actionsRemaining = myPlayer?.actionsRemaining ?? 0;
   const activePlayer = roomState?.activePlayerId ? roomState.players[roomState.activePlayerId] : null;
   const activePlayerName = isMyTurn ? t('board.you') : activePlayer?.name || 'Opponent';
+
+  // Sound notification when turn switches to current player
+  const prevIsMyTurnRef = useRef<boolean>(false);
+  const isGameOver = roomState?.status === 'GAME_OVER';
+  useEffect(() => {
+    if (
+      !isGameOver &&
+      !prevIsMyTurnRef.current &&
+      isMyTurn
+    ) {
+      playTurnNotification();
+    }
+    prevIsMyTurnRef.current = isMyTurn;
+  }, [isMyTurn, isGameOver]);
 
   // Map Current Player Cards
   const handCards: CardModel[] = useMemo(() => {
@@ -783,7 +798,6 @@ export const OnlineGameBoard: React.FC = () => {
   };
 
   // Game Over
-  const isGameOver = roomState.status === 'GAME_OVER';
   const winnerPlayer = roomState.winnerId ? roomState.players[roomState.winnerId] : null;
   const isHost = Boolean(roomState?.hostId && roomState.hostId === myPlayerId);
 
