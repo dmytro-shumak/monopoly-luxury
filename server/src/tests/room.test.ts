@@ -33,11 +33,13 @@ describe('Monopoly Deal - Exhaustive Test Suite', () => {
     it('deals 5 cards to each player on start', () => {
       const room2 = new GameRoom("test_room_2");
       const p1 = room2.join("session_1", "P1").playerId!;
-      const p2 = room2.join("session_2", "P2").playerId!;
+      room2.join("session_2", "P2");
       room2.startGame(p1);
       
-      expect(room2.state.players[p1]!.hand.length).toBeGreaterThanOrEqual(5);
-      expect(room2.state.players[p2]!.hand.length).toBe(5); // Active player draws 2 immediately, so P1 has 7
+      const activeP = room2.state.players[room2.state.activePlayerId!];
+      const inactiveP = room2.state.players[room2.state.playerOrder.find(id => id !== room2.state.activePlayerId)!];
+      expect(activeP!.hand.length).toBe(7); // 5 dealt + 2 drawn on turn start
+      expect(inactiveP!.hand.length).toBe(5);
     });
 
     it('allows exactly 3 actions per turn, then rejects', () => {
@@ -680,9 +682,25 @@ describe('Monopoly Deal - Exhaustive Test Suite', () => {
       expect(r.state.players[p1]!.bank.length).toBe(0);
       expect(r.state.players[p1]!.table.length).toBe(0);
       expect(r.state.players[p2]!.table.length).toBe(0);
-      // P1 is active and drew 2 cards on start turn -> 5 + 2 = 7 cards
-      expect(r.state.players[p1]!.hand.length).toBe(7);
-      expect(r.state.players[p2]!.hand.length).toBe(5);
+      // Active player drew 2 cards on start turn -> 5 + 2 = 7 cards, inactive has 5
+      const activeP = r.state.players[r.state.activePlayerId!];
+      const inactiveP = r.state.players[r.state.playerOrder.find(id => id !== r.state.activePlayerId)!];
+      expect(activeP!.hand.length).toBe(7);
+      expect(inactiveP!.hand.length).toBe(5);
+    });
+
+    it('randomizes starting player across multiple games', () => {
+      const startingIndices = new Set<number>();
+      for (let i = 0; i < 30; i++) {
+        const r = new GameRoom(`room_rand_${i}`, () => {});
+        const p1 = r.join("s1", "P1").playerId!;
+        r.join("s2", "P2");
+        r.startGame(p1);
+        const idx = r.state.playerOrder.indexOf(r.state.activePlayerId!);
+        startingIndices.add(idx);
+      }
+      expect(startingIndices.has(0)).toBe(true);
+      expect(startingIndices.has(1)).toBe(true);
     });
 
     it('handles player leaving in LOBBY mode', () => {

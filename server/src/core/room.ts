@@ -190,7 +190,8 @@ export class GameRoom implements IGameRoom {
       this.state.players[playerId]!.hand = this.drawCardsFromDeck(5);
     }
 
-    this.state.activePlayerId = this.state.playerOrder[0] ?? null;
+    const randomIndex = Math.floor(Math.random() * this.state.playerOrder.length);
+    this.state.activePlayerId = this.state.playerOrder[randomIndex] ?? null;
     this.startTurn(); // calls notify
     return { success: true };
   }
@@ -221,7 +222,8 @@ export class GameRoom implements IGameRoom {
       }
     }
 
-    this.state.activePlayerId = this.state.playerOrder[0] ?? null;
+    const restartRandomIndex = Math.floor(Math.random() * this.state.playerOrder.length);
+    this.state.activePlayerId = this.state.playerOrder[restartRandomIndex] ?? null;
     this.startTurn(); // calls notify and updates deck count
     return { success: true };
   }
