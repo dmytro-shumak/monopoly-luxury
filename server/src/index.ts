@@ -210,6 +210,12 @@ io.on("connection", (socket: Socket) => {
     safeAction("discard", () => ctx.room.discardExcess(ctx.playerId, data.cardIds));
   });
 
+  socket.on("cancel_discard", () => {
+    const ctx = getPlayerContext();
+    if (!ctx) return;
+    safeAction("cancel_discard", () => ctx.room.cancelDiscard(ctx.playerId));
+  });
+
   socket.on("end_turn", () => {
     const ctx = getPlayerContext();
     if (!ctx) return;

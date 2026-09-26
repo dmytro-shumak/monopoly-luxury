@@ -258,6 +258,15 @@ export class GameRoom implements IGameRoom {
     return { success: true };
   }
 
+  public cancelDiscard(playerId: string): { success: boolean; error?: string } {
+    if (this.state.status !== "DISCARD_PHASE" || this.state.activePlayerId !== playerId) {
+      return { success: false, error: "Not allowed" };
+    }
+    this.state.status = "ACTION_PHASE";
+    this.notify();
+    return { success: true };
+  }
+
   private passTurnToNextPlayer() {
     const currentIndex = this.state.playerOrder.indexOf(this.state.activePlayerId!);
     const nextIndex = (currentIndex + 1) % this.state.playerOrder.length;

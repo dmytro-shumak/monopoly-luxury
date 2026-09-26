@@ -118,6 +118,7 @@ interface GameStore {
   playCard: (cardId: string, options?: { targetId?: string; propertyColor?: string; payload?: any; modifierCardId?: string; targetSetCardId?: string }) => void;
   endTurn: () => void;
   discardCards: (cardIds: string[]) => void;
+  cancelDiscard: () => void;
   reactJustSayNo: (cardId: string) => void;
   passReaction: () => void;
   payDebt: (assetIds: string[]) => void;
@@ -294,6 +295,10 @@ export const useGameStore = create<GameStore>((set, get) => {
 
     discardCards: (cardIds: string[]) => {
       socket.emit('discard', { cardIds });
+    },
+
+    cancelDiscard: () => {
+      socket.emit('cancel_discard');
     },
 
     reactJustSayNo: (cardId: string) => {

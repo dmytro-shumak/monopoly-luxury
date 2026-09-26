@@ -46,6 +46,7 @@ export const OnlineGameBoard: React.FC = () => {
     playCard,
     endTurn,
     discardCards,
+    cancelDiscard,
     reactJustSayNo,
     passReaction,
     payDebt,
@@ -1048,7 +1049,7 @@ export const OnlineGameBoard: React.FC = () => {
         handCards={handCards}
         excessCount={excessCardsCount}
         onConfirmDiscard={handleConfirmDiscard}
-        onClose={() => {}}
+        onClose={cancelDiscard}
       />
 
       {/* B. Defense Action Modal (Sly Deal / Forced Deal / Deal Breaker attack against you) */}

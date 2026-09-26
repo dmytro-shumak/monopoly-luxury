@@ -70,6 +70,18 @@ describe('Monopoly Deal - Exhaustive Test Suite', () => {
       expect(room.state.status).toBe("DISCARD_PHASE");
     });
 
+    it('allows canceling discard to return to ACTION_PHASE', () => {
+      const { p1 } = setupGame();
+      room.state.players[p1]!.hand = ["c1","c2","c3","c4","c5","c6","c7","c8"];
+      room.endTurn(p1);
+      expect(room.state.status).toBe("DISCARD_PHASE");
+
+      const cancelRes = room.cancelDiscard(p1);
+      expect(cancelRes.success).toBe(true);
+      expect(room.state.status).toBe("ACTION_PHASE");
+      expect(room.state.activePlayerId).toBe(p1);
+    });
+
     it('reshuffles discard pile into deck when deck is empty', () => {
       setupGame();
       room.state.discardPile = ["money_1_1", "money_2_1"];
