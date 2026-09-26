@@ -222,6 +222,26 @@ io.on("connection", (socket: Socket) => {
     safeAction("end_turn", () => ctx.room.endTurn(ctx.playerId));
   });
 
+  socket.on("leave_room", () => {
+    const ctx = getPlayerContext();
+    if (!ctx) return;
+    socketToSession.delete(socket.id);
+    if (playerActiveSocket.get(ctx.playerId) === socket.id) {
+      playerActiveSocket.delete(ctx.playerId);
+    }
+    ctx.room.leavePlayer(ctx.playerId);
+    socket.leave(ctx.roomId);
+    if (ctx.room.state.gameId) {
+      socket.leave(ctx.room.state.gameId);
+    }
+    if (ctx.room.state.playerOrder.length === 0) {
+      rooms.delete(ctx.roomId);
+      if (ctx.room.state.gameId) {
+        rooms.delete(ctx.room.state.gameId);
+      }
+    }
+  });
+
   socket.on("disconnect", () => {
     console.log(`Client disconnected: ${socket.id}`);
     const info = socketToSession.get(socket.id);

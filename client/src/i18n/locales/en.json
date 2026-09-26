@@ -294,7 +294,8 @@
     "restartGameBtn": "🔄 Play Again",
     "inspectTableBtn": "👁️ Inspect Table",
     "showSummaryBtn": "📋 Show Summary",
-    "waitingForHostRestart": "⏳ Waiting for host to start a new game..."
+    "waitingForHostRestart": "⏳ Waiting for host to start a new game...",
+    "opponentLeft": "Opponent left the game"
   },
   "toast": {
     "justSayNoTitle": "Just Say No!",

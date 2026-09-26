@@ -56,8 +56,8 @@ export const OnlineGameBoard: React.FC = () => {
   } = useGameStore();
 
   const handleLeaveGame = () => {
+    navigate('/', { replace: true });
     leaveRoom();
-    navigate('/');
   };
 
   // Selection state
@@ -1117,17 +1117,21 @@ export const OnlineGameBoard: React.FC = () => {
       )}
 
       {/* H. Game Over Modal / Floating Banner */}
-      {isGameOver && winnerPlayer && !isInspectTableMode && (
+      {isGameOver && !isInspectTableMode && (
         <div className={styles.gameOverOverlay}>
           <div className={styles.gameOverCard}>
             <span className={styles.trophyIcon}>🏆</span>
             <h2 className={styles.gameOverTitle}>{t('onlineGame.gameOverTitle')}</h2>
             <p className={styles.gameOverSubtitle}>
-              {t('onlineGame.gameOverSubtitle', { name: winnerPlayer.name })}
+              {winnerPlayer
+                ? t('onlineGame.gameOverSubtitle', { name: winnerPlayer.name })
+                : t('onlineGame.opponentLeft')}
             </p>
-            <div className={styles.winnerPill}>
-              {t('onlineGame.winnerBadge', { name: winnerPlayer.name })}
-            </div>
+            {winnerPlayer && (
+              <div className={styles.winnerPill}>
+                {t('onlineGame.winnerBadge', { name: winnerPlayer.name })}
+              </div>
+            )}
 
             <div className={styles.gameOverActions}>
               {isHost ? (

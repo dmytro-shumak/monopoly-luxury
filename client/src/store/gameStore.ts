@@ -269,6 +269,9 @@ export const useGameStore = create<GameStore>((set, get) => {
     leaveRoom: () => {
       clearLastRoomId();
       clearLastGameId();
+      if (socket.connected) {
+        socket.emit('leave_room');
+      }
       socket.disconnect();
       set({
         roomId: null,

@@ -450,7 +450,8 @@
     "restartGameBtn": "🔄 Грати знову",
     "inspectTableBtn": "👁️ Оглянути стіл",
     "showSummaryBtn": "📋 Відкрити підсумок",
-    "waitingForHostRestart": "⏳ Очікуємо рішення хоста щодо нової гри..."
+    "waitingForHostRestart": "⏳ Очікуємо рішення хоста щодо нової гри...",
+    "opponentLeft": "Суперник покинув гру"
   },
   "toast": {
     "justSayNoTitle": "Just Say No!",

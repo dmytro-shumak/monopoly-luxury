@@ -684,6 +684,32 @@ describe('Monopoly Deal - Exhaustive Test Suite', () => {
       expect(r.state.players[p1]!.hand.length).toBe(7);
       expect(r.state.players[p2]!.hand.length).toBe(5);
     });
+
+    it('handles player leaving in LOBBY mode', () => {
+      const r = new GameRoom("room_leave_lobby", () => {});
+      const p1 = r.join("s1", "Host").playerId!;
+      const p2 = r.join("s2", "Guest").playerId!;
+      expect(r.state.playerOrder).toEqual([p1, p2]);
+      expect(r.state.hostId).toBe(p1);
+
+      // Host leaves in lobby -> host transferred to guest
+      r.leavePlayer(p1);
+      expect(r.state.players[p1]).toBeUndefined();
+      expect(r.state.playerOrder).toEqual([p2]);
+      expect(r.state.hostId).toBe(p2);
+    });
+
+    it('handles player leaving during active game', () => {
+      const r = new GameRoom("room_leave_game", () => {});
+      const p1 = r.join("s1", "P1").playerId!;
+      const p2 = r.join("s2", "P2").playerId!;
+      r.startGame(p1);
+      expect(r.state.status).toBe("ACTION_PHASE");
+
+      r.leavePlayer(p2);
+      expect(r.state.players[p2]!.isConnected).toBe(false);
+      expect(r.state.status).toBe("GAME_OVER");
+    });
   });
 });
 

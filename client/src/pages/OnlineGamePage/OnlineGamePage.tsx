@@ -14,23 +14,26 @@ export const OnlineGamePage: React.FC = () => {
 
   const {
     roomState,
-    joinRoom,
+    leaveRoom,
     errorMessage,
     clearError,
   } = useGameStore();
 
-  const hasAttemptedJoin = useRef(false);
+  const lastAttemptedGameIdRef = useRef<string | null>(null);
 
   // If page was refreshed or accessed directly, attempt reconnect using stored session
   useEffect(() => {
     if (!gameId) return;
 
-    if (!roomState && !hasAttemptedJoin.current) {
-      hasAttemptedJoin.current = true;
+    if (lastAttemptedGameIdRef.current === gameId) return;
+    lastAttemptedGameIdRef.current = gameId;
+
+    const currentRoomState = useGameStore.getState().roomState;
+    if (!currentRoomState || currentRoomState.gameId !== gameId) {
       const savedName = getSavedPlayerName() || 'Player';
-      joinRoom(gameId, savedName);
+      useGameStore.getState().joinRoom(gameId, savedName);
     }
-  }, [gameId, roomState, joinRoom]);
+  }, [gameId]);
 
   // If the room is still in pre-game LOBBY state, redirect back to the room lobby
   useEffect(() => {
@@ -52,8 +55,9 @@ export const OnlineGamePage: React.FC = () => {
   }
 
   const handleBackToMainMenu = () => {
+    leaveRoom();
     clearError();
-    navigate('/');
+    navigate('/', { replace: true });
   };
 
   return (

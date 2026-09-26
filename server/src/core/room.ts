@@ -106,13 +106,34 @@ export class GameRoom implements IGameRoom {
     }
   }
 
+  public leavePlayer(playerId: string) {
+    if (this.disconnectTimers[playerId]) {
+      clearTimeout(this.disconnectTimers[playerId]);
+      delete this.disconnectTimers[playerId];
+    }
+    this.handlePlayerAbandon(playerId);
+  }
+
   private handlePlayerAbandon(playerId: string) {
     if (this.state.status === "LOBBY") {
       delete this.state.players[playerId];
       this.state.playerOrder = this.state.playerOrder.filter(id => id !== playerId);
+      if (this.state.hostId === playerId) {
+        this.state.hostId = this.state.playerOrder[0] || null;
+      }
     } else {
-      // Just mark as game over for now
+      const player = this.state.players[playerId];
+      if (player) {
+        player.isConnected = false;
+      }
+      this.clearActiveTimer();
       this.state.status = "GAME_OVER";
+      const remainingConnected = this.state.playerOrder.filter(
+        id => id !== playerId && this.state.players[id]?.isConnected
+      );
+      if (remainingConnected.length === 1) {
+        this.state.winnerId = remainingConnected[0]!;
+      }
     }
     this.notify();
   }
