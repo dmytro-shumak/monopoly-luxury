@@ -66,7 +66,7 @@ export const DoubleRentModal: React.FC<DoubleRentModalProps> = ({
           <div className={styles.calcRow}>
             <span className={styles.calcRowLabel}>{t('board.baseRent')}:</span>
             <span className={styles.calcRowVal}>
-              ${baseAmount} {colorName ? `(${colorName.replace('_', ' ')})` : ''}
+              ${baseAmount} {colorName ? `(${t(`colors.${colorName}`, { defaultValue: colorName.replace('_', ' ') })})` : ''}
             </span>
           </div>
 

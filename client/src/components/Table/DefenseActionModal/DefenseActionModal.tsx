@@ -114,7 +114,7 @@ export const DefenseActionModal: React.FC<DefenseActionModalProps> = ({
         {/* Timer Bar */}
         <div className={styles.timerBarWrapper}>
           <div className={styles.timerHeader}>
-            <span className={styles.timerLabel}>⏱️ Час на реакцію:</span>
+            <span className={styles.timerLabel}>⏱️ {t('board.reactionTimer')}:</span>
             <span className={`${styles.timerCountdown} ${secondsLeft <= 5 ? styles.timerUrgent : ''}`}>
               {t('board.defenseTimerSeconds', { seconds: secondsLeft })}
             </span>
@@ -131,7 +131,7 @@ export const DefenseActionModal: React.FC<DefenseActionModalProps> = ({
         {incomingAction.type === 'sly_deal' && incomingAction.stolenCard && (
           <div className={styles.attackShowcase}>
             <div className={styles.targetCardBadge}>
-              ⚡ {incomingAction.attackerName} викрадає карту нерухомості:
+              {t('board.defenseSlySteals', { name: incomingAction.attackerName })}
             </div>
             <div className={styles.singleCardPreview}>
               <Card card={incomingAction.stolenCard} />
@@ -143,7 +143,7 @@ export const DefenseActionModal: React.FC<DefenseActionModalProps> = ({
         {incomingAction.type === 'deal_breaker' && incomingAction.stolenSet && (
           <div className={styles.attackShowcase}>
             <div className={styles.targetCardBadge}>
-              ⚡ {incomingAction.attackerName} захоплює повний комплект:
+              {t('board.defenseDealBreakerSteals', { name: incomingAction.attackerName })}
             </div>
             <div className={styles.setCardsRow}>
               {incomingAction.stolenSet.cards.map((card, idx) => (
@@ -160,7 +160,7 @@ export const DefenseActionModal: React.FC<DefenseActionModalProps> = ({
           <div className={styles.forcedDealShowcase}>
             <div className={styles.tradeCardCol}>
               <div className={styles.tradeCardLabelNegative}>
-                Втрачаєте (ваша карта):
+                {t('board.defenseForcedLosing')}
               </div>
               <div className={styles.singleCardPreview}>
                 <Card card={incomingAction.myTargetCard} />
@@ -173,7 +173,7 @@ export const DefenseActionModal: React.FC<DefenseActionModalProps> = ({
 
             <div className={styles.tradeCardCol}>
               <div className={styles.tradeCardLabelPositive}>
-                Отримуєте (карта {incomingAction.attackerName}):
+                {t('board.defenseForcedReceiving', { name: incomingAction.attackerName })}
               </div>
               <div className={styles.singleCardPreview}>
                 <Card card={incomingAction.theirCard} />

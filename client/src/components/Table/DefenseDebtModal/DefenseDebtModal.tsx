@@ -355,7 +355,7 @@ export const DefenseDebtModal: React.FC<DefenseDebtModalProps> = ({
         {/* 60s Countdown Timer */}
         <div className={styles.timerBarWrapper}>
           <div className={styles.timerHeader}>
-            <span className={styles.timerLabel}>⏱️ {t('board.timer') || 'Час на оплату'}:</span>
+            <span className={styles.timerLabel}>⏱️ {t('board.timer')}:</span>
             <span className={`${styles.timerCountdown} ${secondsLeft <= 10 ? styles.timerUrgent : ''}`}>
               {t('board.defenseTimerSeconds', { seconds: secondsLeft })}
             </span>
@@ -371,14 +371,14 @@ export const DefenseDebtModal: React.FC<DefenseDebtModalProps> = ({
         {/* Debt Amount Summary Header */}
         <div className={styles.summaryRow}>
           <div className={styles.summaryBadgeRequired}>
-            <span className={styles.summaryLabel}>{t('board.demand') || 'Вимога'}:</span>
+            <span className={styles.summaryLabel}>{t('board.demand')}:</span>
             <span className={styles.summaryValue}>${requiredAmount}</span>
           </div>
 
           <div
             className={`${styles.summaryBadgeSelected} ${isDebtFullyCovered ? styles.summaryBadgeValid : ''}`}
           >
-            <span className={styles.summaryLabel}>{t('board.selected') || 'Виділено'}:</span>
+            <span className={styles.summaryLabel}>{t('board.selected')}:</span>
             <span className={styles.summaryValue}>${selectedTotal}</span>
           </div>
         </div>

@@ -72,9 +72,9 @@ export const OnlineGamePage: React.FC = () => {
         {errorMessage ? (
           <>
             <div className={styles.titleWrapper}>
-              <h1 className={styles.title}>{t('onlineGame.gameNotFound', 'Гру не знайдено')}</h1>
+              <h1 className={styles.title}>{t('onlineGame.gameNotFound')}</h1>
               <p className={styles.subtitle}>
-                {t('onlineGame.gameNotFoundDesc', 'Кімнату не знайдено або термін дії сесії вичерпано')}
+                {t('onlineGame.gameNotFoundDesc')}
               </p>
             </div>
 
@@ -87,7 +87,7 @@ export const OnlineGamePage: React.FC = () => {
               className={styles.backBtn}
               onClick={handleBackToMainMenu}
             >
-              {t('onlineGame.backToLobby', '← До головного меню')}
+              {t('onlineGame.backToLobby')}
             </button>
           </>
         ) : (
@@ -99,10 +99,10 @@ export const OnlineGamePage: React.FC = () => {
 
             <div className={styles.titleWrapper}>
               <h1 className={styles.title}>
-                {t('onlineGame.reconnectingGame', 'Відновлення з\'єднання з грою...')}
+                {t('onlineGame.reconnectingGame')}
               </h1>
               <p className={styles.subtitle}>
-                {t('onlineGame.reconnectingGameSubtitle', 'Синхронізація ігрового столу...')}
+                {t('onlineGame.reconnectingGameSubtitle')}
               </p>
             </div>
 
@@ -118,7 +118,7 @@ export const OnlineGamePage: React.FC = () => {
               className={styles.backBtn}
               onClick={handleBackToMainMenu}
             >
-              {t('onlineGame.backToLobby', '← До головного меню')}
+              {t('onlineGame.backToLobby')}
             </button>
           </>
         )}

@@ -133,7 +133,17 @@
     "waitingForOpponent": "Waiting for {{name}}",
     "waitingForOpponentTimer": "Waiting for {{name}} ({{seconds}}s)",
     "waitingReactionReason": "Deciding whether to play Just Say No...",
-    "waitingDebtReason": "Paying debt..."
+    "waitingDebtReason": "Paying debt...",
+    "opponent": "Opponent",
+    "timer": "Time to pay",
+    "demand": "Demand",
+    "selected": "Selected",
+    "reactionTimer": "Reaction time",
+    "defenseSlySteals": "⚡ {{name}} steals a property card:",
+    "defenseDealBreakerSteals": "⚡ {{name}} steals a complete set:",
+    "defenseForcedLosing": "You lose (your card):",
+    "defenseForcedReceiving": "You receive (card from {{name}}):",
+    "stolenCardPlacedNotice": "Card \"{{card}}\" received! Choose a set or an empty slot on your table to place it."
   },
   "colors": {
     "PINK": "Pink",

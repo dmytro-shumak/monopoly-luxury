@@ -988,7 +988,7 @@ export const OnlineGameBoard: React.FC = () => {
                         ? t('board.slyDealPlaceWildPrompt', { card: pendingStolenCardPlacement.card.name })
                         : pendingStolenCardPlacement.actionType === ActionCardType.FORCED_DEAL
                         ? t('board.forcedDealPlaceWildPrompt', { card: pendingStolenCardPlacement.card.name })
-                        : `Картку «${pendingStolenCardPlacement.card.name}» отримано! Оберіть набір або новий слот на своєму столі для її розміщення.`}
+                        : t('board.stolenCardPlacedNotice', { card: pendingStolenCardPlacement.card.name })}
                     </span>
                   </div>
                   <button
